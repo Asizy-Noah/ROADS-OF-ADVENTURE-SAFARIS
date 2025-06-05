@@ -1,0 +1,229 @@
+<div class="dashboard-content">
+    <form action="/tours/dashboard/tours/add" method="POST" enctype="multipart/form-data" id="addTourForm" class="add-tour-form">
+        <div class="form-section">
+            <div class="form-group">
+                <label for="tourTitle">Title</label>
+                <input type="text" id="tourTitle" name="title" class="form-control" value="<%= typeof oldInput !== 'undefined' ? oldInput.title : '' %>" required>
+            </div>
+
+            <div class="form-group">
+                <label for="tourOverview">Tour Overview</label>
+                <div id="tourOverviewEditor" class="editor-container"><%- typeof oldInput !== 'undefined' ? oldInput.overview : '' %></div>
+                <input type="hidden" name="overview" id="tourOverview" value="<%= typeof oldInput !== 'undefined' ? oldInput.overview : '' %>">
+            </div> 
+
+            <div class="column-inputs">
+                <div class="form-group">
+                <label for="tourHighlights">Tour Highlights</label>
+                <textarea id="tourHighlights" name="highlights" class="form-control" rows="6" placeholder="Write each highlight on a new line"><%= typeof oldInput !== 'undefined' ? oldInput.highlights : '' %></textarea>
+                </div>
+
+                <div class="form-group">
+                <label for="coverImage">Upload Cover Image</label>
+                <div class="file-upload-container">
+                    <input type="file" id="coverImage" name="coverImage" class="file-input" accept="image/*">
+                    <div class="file-upload-box">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span>Drag & drop image or click to browse</span>
+                    </div>
+                    <div class="file-preview" id="imagePreview"></div>
+                </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="form-section">
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="country">Country</label>
+                    <select id="country" name="country" class="form-control" required>
+                        <option value="">Select Country</option>
+                        <% countries.forEach(function(country) { %>
+                            <option value="<%= country._id %>" <%= (typeof oldInput !== 'undefined' && oldInput.country && oldInput.country.toString() === country._id.toString()) ? 'selected' : '' %>>
+                                <%= country.name %>
+                            </option>
+                        <% }); %>
+                    </select>
+                </div>
+
+                <div class="form-group col-md-6">
+                    <label for="category">Category</label>
+                    <select id="category" name="category" class="form-control" required>
+                        <option value="">Select Category</option>
+                        <% categories.forEach(function(category) { %>
+                            <option value="<%= category._id %>" <%= (typeof oldInput !== 'undefined' && oldInput.category && oldInput.category.toString() === category._id.toString()) ? 'selected' : '' %>>
+                                <%= category.name %>
+                            </option>
+                        <% }); %>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="days">Number of Days</label>
+                    <input type="number" id="days" name="days" class="form-control" min="1" value="<%= typeof oldInput !== 'undefined' ? oldInput.days : '' %>" required>
+                </div>
+
+                <div class="form-group col-md-6">
+                    <label for="price">Price ($)</label>
+                    <input type="number" id="price" name="price" class="form-control" min="0" step="0.01" value="<%= typeof oldInput !== 'undefined' ? oldInput.price : '' %>" required>
+                </div>
+            </div>
+
+            <div class="column-inputs">
+                <div class="form-group">
+                <label for="priceIncludes">Cost Includes</label>
+                <textarea id="priceIncludes" name="priceIncludes" class="form-control" rows="5" placeholder="Write each item on a new line"><%= typeof oldInput !== 'undefined' ? oldInput.priceIncludes : '' %></textarea>
+                </div>
+
+                <div class="form-group">
+                <label for="priceExcludes">Cost Excludes</label>
+                <textarea id="priceExcludes" name="priceExcludes" class="form-control" rows="5" placeholder="Write each item on a new line"><%= typeof oldInput !== 'undefined' ? oldInput.priceExcludes : '' %></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3 class="section-title">Itineraries</h3>
+            <div id="itinerariesContainer">
+                <% if (typeof oldInput !== 'undefined' && oldInput.itineraries && oldInput.itineraries.length > 0) { %>
+                    <% oldInput.itineraries.forEach(function(itinerary, index) { %>
+                        <div class="itinerary-item">
+                            <div class="itinerary-header">
+                                <h4>Itinerary <%= index + 1 %></h4>
+                                <button type="button" class="remove-itinerary-btn" title="Remove Itinerary">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group col-md-2">
+                                    <label>Day</label>
+                                    <input type="number" name="itineraries[<%= index %>][day]" class="form-control" min="1" value="<%= itinerary.day %>" required>
+                                </div>
+
+                                <div class="form-group col-md-10">
+                                    <label>Itinerary Title</label>
+                                    <input type="text" name="itineraries[<%= index %>][title]" class="form-control" value="<%= itinerary.title %>" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Itinerary Description</label>
+                                <div class="itinerary-editor editor-container"><%- itinerary.description %></div>
+                                <input type="hidden" name="itineraries[<%= index %>][description]" value="<%= itinerary.description %>">
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label>Meal Plan</label>
+                                    <select name="itineraries[<%= index %>][mealPlan]" class="form-control" required>
+                                        <option value="">Select Meal Plan</option>
+                                        <option value="Lunch & Dinner" <%= (itinerary.mealPlan === 'Lunch & Dinner') ? 'selected' : '' %>>Lunch & Dinner</option>
+                                        <option value="Breakfast, Lunch & Dinner" <%= (itinerary.mealPlan === 'Breakfast, Lunch & Dinner') ? 'selected' : '' %>>Breakfast, Lunch & Dinner</option>
+                                        <option value="Breakfast & Lunch" <%= (itinerary.mealPlan === 'Breakfast & Lunch') ? 'selected' : '' %>>Breakfast & Lunch</option>
+                                        <option value="Breakfast Only" <%= (itinerary.mealPlan === 'Breakfast Only') ? 'selected' : '' %>>Breakfast Only</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group col-md-6">
+                                    <label>Accommodation</label>
+                                    <input type="text" name="itineraries[<%= index %>][accommodation]" class="form-control" placeholder="e.g., Serena Lodge or similar" value="<%= itinerary.accommodation %>">
+                                </div>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <div class="itinerary-item">
+                        <div class="itinerary-header">
+                            <h4>Itinerary 1</h4>
+                            <button type="button" class="remove-itinerary-btn" title="Remove Itinerary">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col-md-2">
+                                <label>Day</label>
+                                <input type="number" name="itineraries[0][day]" class="form-control" min="1" value="1" required>
+                            </div>
+
+                            <div class="form-group col-md-10">
+                                <label>Itinerary Title</label>
+                                <input type="text" name="itineraries[0][title]" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Itinerary Description</label>
+                            <div class="itinerary-editor editor-container"></div>
+                            <input type="hidden" name="itineraries[0][description]">
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label>Meal Plan</label>
+                                <select name="itineraries[0][mealPlan]" class="form-control" required>
+                                    <option value="">Select Meal Plan</option>
+                                    <option value="Lunch & Dinner">Lunch & Dinner</option>
+                                    <option value="Breakfast, Lunch & Dinner">Breakfast, Lunch & Dinner</option>
+                                    <option value="Breakfast & Lunch">Breakfast & Lunch</option>
+                                    <option value="Breakfast Only">Breakfast Only</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group col-md-6">
+                                <label>Accommodation</label>
+                                <input type="text" name="itineraries[0][accommodation]" class="form-control" placeholder="e.g., Serena Lodge or similar">
+                            </div>
+                        </div>
+                    </div>
+                <% } %>
+            </div>
+
+            <button type="button" id="addItineraryBtn" class="btn btn-outline">
+                <i class="fas fa-plus"></i> Add Itinerary
+            </button>
+        </div>
+
+        <div class="form-section">
+            <h3 class="section-title">SEO Information</h3>
+
+            <div class="form-group">
+                <label for="seoTitle">Meta Title</label>
+                <input type="text" id="seoTitle" name="seoTitle" class="form-control" value="<%= typeof oldInput !== 'undefined' ? oldInput.seoTitle : '' %>">
+                <small class="form-text text-muted">Recommended length: 50-60 characters (for browser tabs and search results).</small>
+            </div>
+
+            <div class="form-group">
+                <label for="seoDescription">Meta Description</label>
+                <textarea id="seoDescription" name="seoDescription" class="form-control" rows="3"><%= typeof oldInput !== 'undefined' ? oldInput.seoDescription : '' %></textarea>
+                <small class="form-text text-muted">Recommended length: 150-160 characters (for search result snippets).</small>
+            </div>
+
+            <div class="form-group">
+                <label for="seoKeywords">Meta Keywords</label>
+                <input type="text" id="seoKeywords" name="seoKeywords" class="form-control" value="<%= typeof oldInput !== 'undefined' ? oldInput.seoKeywords : '' %>">
+                <small class="form-text text-muted">Separate keywords with commas (e.g., "Uganda safaris, gorilla trekking Uganda").</small>
+            </div>
+
+            <div class="form-group">
+                <label for="seoCanonicalUrl">Canonical URL</label>
+                <input type="url" id="seoCanonicalUrl" name="seoCanonicalUrl" class="form-control" value="<%= typeof oldInput !== 'undefined' ? oldInput.seoCanonicalUrl : '' %>">
+                <small class="form-text text-muted">The preferred URL for this content to prevent duplicate content issues.</small>
+            </div>
+
+            <div class="form-group">
+                <label for="seoOgImage">Open Graph Image URL</label>
+                <input type="url" id="seoOgImage" name="seoOgImage" class="form-control" value="<%= typeof oldInput !== 'undefined' ? oldInput.seoOgImage : '' %>">
+                <small class="form-text text-muted">Image for social media sharing (e.g., Facebook, Twitter). Full URL required.</small>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Create Tour</button>
+        </div>
+    </form>
+</div>

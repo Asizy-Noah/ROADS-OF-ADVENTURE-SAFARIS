@@ -1,0 +1,298 @@
+// src/modules/tours/tours.service.ts
+
+import { Injectable, NotFoundException, ConflictException } from "@nestjs/common";
+import { InjectModel } from "@nestjs/mongoose";
+import { Model, Types } from "mongoose";
+import { Tour, TourStatus } from "./schemas/tour.schema";
+import { CreateTourDto } from "./dto/create-tour.dto";
+import { UpdateTourDto } from "./dto/update-tour.dto";
+import slugify from 'slugify'; // Make sure you have this installed: npm install slugify
+
+
+// Define an interface for the findAll options to ensure type safety
+export interface FindAllToursOptions {
+  page?: string;
+  limit?: string;
+  search?: string;
+  status?: TourStatus;
+  country?: string; // Expects country ID
+  category?: string; // Expects category ID
+  createdBy?: string; // Expects user ID
+  featured?: string; // 'true' or 'false'
+}
+
+@Injectable()
+export class ToursService {
+  constructor(
+    @InjectModel(Tour.name) private tourModel: Model<Tour>,
+  ) {}
+
+  async create(createTourDto: CreateTourDto, userId: string): Promise<Tour> {
+    // ALWAYS GENERATE THE SLUG from the title, as it's not provided by the DTO.
+    const generatedSlug = slugify(createTourDto.title, { lower: true, strict: true });
+
+    // Check if a tour with the same title OR the newly generated slug already exists.
+    const existingTour = await this.tourModel.findOne({
+      $or: [
+        { title: createTourDto.title }, // Check for duplicate title
+        { slug: generatedSlug }         // Check for duplicate generated slug
+      ],
+    });
+
+    if (existingTour) {
+      throw new ConflictException("Tour with this title or slug already exists.");
+    }
+
+    // Create a new tour instance, spreading the DTO (which has no slug field)
+    // and explicitly adding the backend-generated slug and user IDs.
+    const newTour = new this.tourModel({
+      ...createTourDto,
+      slug: generatedSlug, // Assign the GENERATED slug here
+      createdBy: userId,
+      updatedBy: userId,
+    });
+
+    return newTour.save();
+  }
+
+  
+
+  // Modified findAll to support pagination
+  async findAll(options?: FindAllToursOptions): Promise<{
+    tours: Tour[];
+    totalDocs: number;
+    limit: number;
+    totalPages: number;
+    page: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+    nextPage: number | null;
+    prevPage: number | null;
+  }> {
+    const filter: any = {};
+    const page = parseInt(options?.page || '1', 10);
+    const limit = parseInt(options?.limit || '10', 10);
+    const skip = (page - 1) * limit;
+
+    // Handle search query
+    if (options && options.search) {
+      filter.$text = { $search: options.search };
+    }
+
+    // Filter by status
+    if (options && options.status) {
+      filter.status = options.status;
+    }
+
+    // Filter by country (expects country ID)
+    if (options && options.country && options.country !== 'all') { // Added 'all' check
+      filter.countries = options.country;
+    }
+
+    // Filter by category (expects category ID)
+    if (options && options.category && options.category !== 'all') { // Added 'all' check
+      filter.categories = options.category;
+    }
+
+    // Filter by creator
+    if (options && options.createdBy) {
+      filter.createdBy = options.createdBy;
+    }
+
+    // Filter by featured
+    if (options && options.featured) {
+      filter.isFeatured = options.featured === "true";
+    }
+
+    const totalDocs = await this.tourModel.countDocuments(filter).exec();
+    const tours = await this.tourModel
+      .find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate("countries", "name slug")
+      .populate("categories", "name slug")
+      .populate("createdBy", "name email")
+      .exec();
+
+    const totalPages = Math.ceil(totalDocs / limit);
+    const hasNextPage = page < totalPages;
+    const hasPrevPage = page > 1;
+    const nextPage = hasNextPage ? page + 1 : null;
+    const prevPage = hasPrevPage ? page - 1 : null;
+
+    return {
+      tours,
+      totalDocs,
+      limit,
+      totalPages,
+      page,
+      hasNextPage,
+      hasPrevPage,
+      nextPage,
+      prevPage,
+    };
+  }
+
+  async findFeatured(limit?: number): Promise<Tour[]> {
+    const query = this.tourModel
+      .find({ isFeatured: true, status: TourStatus.PUBLISHED })
+      .sort({ createdAt: -1 })
+      .populate("countries", "name slug")
+      .populate("categories", "name slug");
+
+    if (limit) {
+      query.limit(limit);
+    }
+
+    return query.exec();
+  }
+
+  async findOne(id: string): Promise<Tour> {
+    const tour = await this.tourModel
+      .findById(id)
+      .populate("countries", "name slug")
+      .populate("categories", "name slug")
+      .populate("createdBy", "name email")
+      .exec();
+
+    if (!tour) {
+      throw new NotFoundException(`Tour with ID ${id} not found`);
+    }
+
+    return tour;
+  }
+
+  async findBySlug(slug: string): Promise<Tour> {
+    const tour = await this.tourModel
+      .findOne({ slug, status: TourStatus.PUBLISHED })
+      .populate("countries", "name slug")
+      .populate("categories", "name slug")
+      .populate("createdBy", "name email")
+      .exec();
+
+    if (!tour) {
+      throw new NotFoundException(`Tour with slug ${slug} not found`);
+    }
+
+    return tour;
+  }
+
+  async findByCountry(countryId: string, limit?: number): Promise<Tour[]> {
+    const query = this.tourModel
+      .find({ countries: countryId, status: TourStatus.PUBLISHED })
+      .sort({ createdAt: -1 })
+      .populate("countries", "name slug")
+      .populate("categories", "name slug");
+
+    if (limit) {
+      query.limit(limit);
+    }
+
+    return query.exec();
+  }
+
+  async findByCategory(categoryId: string, limit?: number): Promise<Tour[]> {
+    const query = this.tourModel
+      .find({ categories: categoryId, status: TourStatus.PUBLISHED })
+      .sort({ createdAt: -1 })
+      .populate("countries", "name slug")
+      .populate("categories", "name slug");
+
+    if (limit) {
+      query.limit(limit);
+    }
+
+    return query.exec();
+  }
+
+  async update(id: string, updateTourDto: UpdateTourDto, userId: string): Promise<Tour> {
+    let slugToUpdate: string; // This variable will hold the slug to be used for the update.
+
+    // Scenario 1: The title is being updated.
+    // In this case, we MUST generate a new slug based on the new title.
+    if (updateTourDto.title) {
+      slugToUpdate = slugify(updateTourDto.title, { lower: true, strict: true });
+    }
+    // Scenario 2: The title is NOT being updated.
+    // In this case, we need to preserve the *existing* slug of the tour.
+    else {
+      // Fetch the current tour's slug from the database.
+      const existingTour = await this.tourModel.findById(id, { slug: 1 }); // Project only the 'slug' field for efficiency.
+
+      if (!existingTour) {
+        throw new NotFoundException(`Tour with ID ${id} not found.`);
+      }
+      slugToUpdate = existingTour.slug; // Use the existing slug.
+    }
+
+    // Perform a uniqueness check for the `slugToUpdate`.
+    // This is crucial to ensure that even if the slug is regenerated or preserved,
+    // it doesn't conflict with another *different* tour's slug.
+    const existingTourWithSameSlug = await this.tourModel.findOne({
+      slug: slugToUpdate,
+      _id: { $ne: id }, // IMPORTANT: Exclude the current tour by its ID to avoid self-conflict.
+    });
+
+    if (existingTourWithSameSlug) {
+      throw new ConflictException("Another tour with this slug already exists.");
+    }
+
+    // Construct the update payload.
+    // It spreads the properties from `updateTourDto` (which doesn't contain 'slug'),
+    // then explicitly adds the backend-determined `slug` and `updatedBy` field.
+    const updatePayload: Record<string, any> = {
+      ...updateTourDto, // This DTO will NOT contain 'slug'
+      slug: slugToUpdate, // The backend-determined slug is added here.
+      updatedBy: userId,  // Always update the 'updatedBy' field.
+    };
+
+    // Find the tour by its ID and update it with the constructed payload.
+    const updatedTour = await this.tourModel
+      .findOneAndUpdate({ _id: id }, updatePayload, { new: true }) // `new: true` returns the updated document.
+      .exec();
+
+    // If the tour was not found (e.g., invalid ID), throw an exception.
+    if (!updatedTour) {
+      throw new NotFoundException(`Tour with ID ${id} not found.`);
+    }
+
+    return updatedTour;
+  }
+
+  async remove(id: string): Promise<Tour> {
+    const deletedTour = await this.tourModel.findByIdAndDelete(id).exec();
+
+    if (!deletedTour) {
+      throw new NotFoundException(`Tour with ID ${id} not found`);
+    }
+
+    return deletedTour;
+  }
+
+  async toggleFeatured(id: string, userId: string): Promise<Tour> {
+    const tour = await this.tourModel.findById(id).exec();
+
+    if (!tour) {
+      throw new NotFoundException(`Tour with ID ${id} not found`);
+    }
+
+    tour.isFeatured = !tour.isFeatured;
+    tour.updatedBy = new Types.ObjectId(userId);
+
+    return tour.save();
+  }
+
+  async updateStatus(id: string, status: TourStatus, userId: string): Promise<Tour> {
+    const tour = await this.tourModel.findById(id).exec();
+
+    if (!tour) {
+      throw new NotFoundException(`Tour with ID ${id} not found`);
+    }
+
+    tour.status = status;
+    tour.updatedBy = new Types.ObjectId(userId);
+
+    return tour.save();
+  }
+}

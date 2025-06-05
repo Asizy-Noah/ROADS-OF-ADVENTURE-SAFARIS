@@ -1,0 +1,338 @@
+<!-- Hero Carousel -->
+<div class="container-fluid p-0">
+    <div id="header-carousel" class="carousel slide" data-ride="carousel">
+        <div class="carousel-inner">
+            <div class="carousel-item active">
+                <img class="w-100" src="/img/carousel-1.jpg" alt="Safari Image">
+                <div class="carousel-caption d-flex flex-column align-items-center justify-content-center">
+                    <div class="p-3" style="max-width: 900px;">
+                        <h4 class="text-white text-uppercase mb-md-3">Tours & Travel</h4>
+                        <h1 class="display-3 text-white mb-md-4">Let's Discover The World Together</h1>
+                        <a href="/tours" class="btn btn-primary py-md-3 px-md-5 mt-2">Book Now</a>
+                    </div>
+                </div>
+            </div>
+            <div class="carousel-item">
+                <img class="w-100" src="/img/carousel-2.jpg" alt="Safari Image">
+                <div class="carousel-caption d-flex flex-column align-items-center justify-content-center">
+                    <div class="p-3" style="max-width: 900px;">
+                        <h4 class="text-white text-uppercase mb-md-3">Tours & Travel</h4>
+                        <h1 class="display-3 text-white mb-md-4">Discover Amazing Places With Us</h1>
+                        <a href="/tours" class="btn btn-primary py-md-3 px-md-5 mt-2">Book Now</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <a class="carousel-control-prev" href="#header-carousel" data-slide="prev">
+            <div class="btn btn-dark" style="width: 45px; height: 45px;">
+                <span class="carousel-control-prev-icon mb-n2"></span>
+            </div>
+        </a>
+        <a class="carousel-control-next" href="#header-carousel" data-slide="next">
+            <div class="btn btn-dark" style="width: 45px; height: 45px;">
+                <span class="carousel-control-next-icon mb-n2"></span>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- Booking Form -->
+<div class="container-fluid booking mt-5 pb-5">
+    <div class="container pb-5">
+        <div class="bg-light shadow" style="padding: 30px;">
+            <div class="row align-items-center" style="min-height: 60px;">
+                <div class="col-md-10">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3 mb-md-0">
+                                <select class="custom-select px-4" style="height: 47px;">
+                                    <option selected>Destination</option>
+                                    <option value="1">Uganda</option>
+                                    <option value="2">Kenya</option>
+                                    <option value="3">Tanzania</option>
+                                    <option value="4">Rwanda</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3 mb-md-0">
+                                <div class="date" id="date1" data-target-input="nearest">
+                                    <input type="text" class="form-control p-4 datetimepicker-input" placeholder="Depart Date" data-target="#date1" data-toggle="datetimepicker"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3 mb-md-0">
+                                <div class="date" id="date2" data-target-input="nearest">
+                                    <input type="text" class="form-control p-4 datetimepicker-input" placeholder="Return Date" data-target="#date2" data-toggle="datetimepicker"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3 mb-md-0">
+                                <select class="custom-select px-4" style="height: 47px;">
+                                    <option selected>Duration</option>
+                                    <option value="1">1-3 Days</option>
+                                    <option value="2">3-5 Days</option>
+                                    <option value="3">5-7 Days</option>
+                                    <option value="4">7+ Days</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-primary btn-block" type="submit" style="height: 47px; margin-top: -2px;">Submit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid about-home py-2">
+    <div class="container ">
+        <div class="row">
+            <div class="col-lg-6" style="min-height: 500px;">
+                <div class="position-relative h-100 main-about-image">
+                    <% if (aboutUsPage && aboutUsPage.coverImage) { %>
+                        <img class="position-absolute w-100 h-100" src="<%= aboutUsPage.coverImage %>" style="object-fit: cover;" alt="<%= aboutUsPage.title %> Main Image">
+                    <% } else { %>
+                        <img class="position-absolute w-100 h-100" src="/img/Madagascar.jpg" style="object-fit: cover;" alt="Default About Us Image">
+                    <% } %>
+                </div>
+            </div>
+            <div class="col-lg-6 pt-5 pb-lg-5">
+                <div class="about-text bg-white p-4 p-lg-5 my-lg-5">
+                    <h6 class="text-dark h2 font-weight-bold text-uppercase" style="letter-spacing: 4px;">
+                        <%= aboutUsPage ? aboutUsPage.title : "roa" %>
+                    </h6>
+                    <% if (aboutUsPage && aboutUsPage.contentBlocks && aboutUsPage.contentBlocks.length > 0) { %>
+                        <% aboutUsPage.contentBlocks.forEach(function(block) { %>
+                            <% if (block.type === 'text') { %>
+                                <% if (block.title) { %>
+                                    <h3><%= block.title %></h3>
+                                <% } %>
+                                <%- block.content || '' %>
+                            <% } %>
+                        <% }); %>
+                    <% } else { %>
+                        <p>Roads of Adventure Safaris is one of the most trusted and leading Africa safari tour operators...</p>
+                        <p>We craft exceptional primate tour packages that include gorilla trekking...</p>
+                        <p>Join us for extraordinary adventures in iconic locations such as Bwindi Impenetrable National Park...</p>
+                    <% } %>
+
+                    <div class="row-about mb-4">
+                        <% if (aboutUsPage && aboutUsPage.galleryImages && aboutUsPage.galleryImages.length > 0) { %>
+                            <% aboutUsPage.galleryImages.forEach(function(imagePath) { %>
+                                <div class="about-image">
+                                    <img src="<%= imagePath %>" alt="About Us Gallery Image">
+                                </div>
+                            <% }); %>
+                        <% } else { %>
+                            <div class="about-image">
+                                <img src="/img/Serengetis.jpg" alt="Default Gallery Image 1">
+                            </div>
+                            <div class="about-image">
+                                <img src="/img/zanjibait.jpg" alt="Default Gallery Image 2">
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Feature Start -->
+    <div class="container-fluid py-2">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 about-items mb-2">
+                    <div class="d-flex mb-lg-0">
+                        <div class="d-flex flex-shrink-0 align-items-center justify-content-center bg-primary mr-3" style="height: 125px; width: 125px;">
+                            <i class="fa fa-2x fa-handshake text-white"></i> </div>
+                        <div class="d-flex flex-column">
+                            <h5 class="font-weight-bold">Exceptional Services</h5>
+                            <p class="m-0">We guarantee a seamless and enjoyable journey with personalized itineraries and comfortable accommodations.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 about-items mb-2">
+                    <div class="d-flex mb-lg-0">
+                        <div class="d-flex flex-shrink-0 align-items-center justify-content-center bg-primary mr-3" style="height: 125px; width: 125px;">
+                            <i class="fa fa-2x fa-shield-alt text-white"></i> </div>
+                        <div class="d-flex flex-column">
+                            <h5 class="font-weight-bold">Professional Integrity</h5>
+                            <p class="m-0">Our expert team focus on your safety, satisfaction, & attending to every detail with care.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 about-items mb-2">
+                    <div class="d-flex mb-lg-0">
+                        <div class="d-flex flex-shrink-0 align-items-center justify-content-center bg-primary mr-3" style="height: 125px; width: 125px;">
+                            <i class="fa fa-2x fa-binoculars text-white"></i> </div>
+                        <div class="d-flex flex-column">
+                            <h5 class="font-weight-bold">Passion and Love for Travel</h5>
+                            <p class="m-0">Our team is dedicated to inspiring and transforming your Africa travel experience.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Feature End -->
+
+    <!-- Packages Start -->
+    <div class="package-container ">
+        <img class="p-background" src="img/p-b.jpeg" alt="">
+        <div class="container-fluid py-2">
+            <div class="container pt-0 pb-3 mt-5">
+                <div class=" text-center mb-3 pb-3 ">
+                    <h6 class="package-header font-weight-bold text-uppercase" style="letter-spacing: 5px; font-size: 28px;">Packages</h6>
+                    <p class="font-italic font-weight-bold" style="font-size: 24px;">Explore Our Perfect Tour Packages</p>
+                </div>
+                
+                <div class="owl-carousel package-carousel">
+                <% featuredTours.forEach(tour => { %>
+                    <div class="package-item bg-white mb-2">
+                    <div class="package-image">
+                        <img class="img-fluid" src="<%= tour.coverImage %>" alt="<%= tour.title %>">
+                    </div>
+                    <div class="p-4">
+                        <div class="d-flex justify-content-between mb-3">
+                        <small class="m-0">
+                            <span class="font-weight-bold">Duration:</span>
+                            <i class="ri-time-line text-primary"></i> <%= tour.days %> days
+                        </small>
+                        </div>
+                        <a class="h5 text-decoration-none font-weight-bold" href="/tours/<%= tour.slug %>">
+                        <%= tour.title %>
+                        </a>
+                        <p><%- tour.overview %></p>
+                    </div>
+                    <div class="border-top d-flex justify-content-between align-items-center">
+                        <div class="rating">
+                        <span class="stars">
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star-half-alt"></i>
+                        </span>
+                        </div>
+                        <a href="/tours/<%= tour.slug %>" class="btn font-weight-bold text-white book-btn">Book Now</a>
+                    </div>
+                    </div>
+                <% }) %>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Packages End -->
+
+    <!-- Destination Start -->
+<div class="container-fluid py-2 mb-4">
+  <div class="container pt-5 pb-3">
+    <div class="text-center mb-3 pb-3">
+      <h6 class="package-header font-weight-bold text-uppercase" style="letter-spacing: 5px; font-size: 28px;">Destination</h6>
+      <p class="font-italic font-weight-bold" style="font-size: 24px;">Explore Our Top Destinations</p>
+    </div>
+    <div class="owl-carousel destination-carousel">
+      <% countries.forEach(function(country) { %>
+        <div class="destination-item position-relative overflow-hidden mb-2">
+          <div class="destination-image">
+            <img class="img-fluid" src="<%= country.coverImage %>" alt="<%= country.name %>">
+          </div>
+          <a class="destination-overlay text-white text-decoration-none" href="/destinations/<%= country.slug %>">
+            <h5 class="text-white"><%= country.name %></h5>
+          </a>
+        </div>
+      <% }); %>
+    </div>
+  </div>
+</div>
+<!-- Destination End -->
+
+
+
+
+
+
+
+<div class="package-container ">
+    <img class="p-background" src="/img/Victoria-falls.jpeg" alt="">
+    <div class="container-fluid py-1">
+        <div class="container pt-5 pb-3">
+            <div class="text-center mb-3 pb-3">
+                <h6 class="package-header font-weight-bold text-uppercase" style="letter-spacing: 5px; font-size: 28px;">Our Travel Update</h6>
+                <p class="font-italic font-weight-bold" style="font-size: 24px;">Latest From Our Blog</p>
+            </div>
+            <div class="row pb-3">
+                <% if (blogs && blogs.length > 0) { %>
+                    <% blogs.forEach(function(blog) { %>
+                        <div class="col-lg-3 col-md-6 mb-4 pb-2">
+                            <div class="blog-item">
+                                <div class="position-relative">
+                                    <% if (blog.coverImage) { %>
+                                        <img class="img-fluid w-100" src="<%= blog.coverImage %>" alt="<%= blog.title %> Cover Image">
+                                    <% } else { %>
+                                        <img class="img-fluid w-100" src="/img/blog-placeholder.jpg" alt="Default Blog Image">
+                                    <% } %>
+                                </div>
+                                <div class="bg-white p-4">
+                                    <div class="d-flex mb-2">
+                                        <h4><a class="font-weight-bold text-decoration-none" href="/blogs/<%= blog.slug %>"><%= blog.title %></a></h4>
+                                    </div>
+                                    <p class="h5 m-0 text-decoration-none"><%= blog.shortDescription %></p>
+                                    <a href="/blogs/<%= blog.slug %>" class="btn btn-primary mt-3">Read more <i class='bx bx-link-external'></i></a>
+                                </div>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <p class="text-center w-100">No recent blog posts available.</p>
+                <% } %>
+            </div>
+
+            <% if (totalPages > 1) { %>
+            <div class="col-12">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+                            <a class="page-link" href="/?page=<%= currentPage - 1 %>" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                                <span class="sr-only">Previous</span>
+                            </a>
+                        </li>
+                        <% for(let i = 1; i <= totalPages; i++) { %>
+                            <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                                <a class="page-link" href="/?page=<%= i %>"><%= i %></a>
+                            </li>
+                        <% } %>
+                        <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+                            <a class="page-link" href="/?page=<%= currentPage + 1 %>" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                                <span class="sr-only">Next</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+
+<!-- Partner Logos Carousel -->
+    <div class="package-container  my-2 our-partners mt-5">
+        <h6 class="package-header font-weight-bold text-center text-uppercase mt-3" style="letter-spacing: 5px; font-size: 28px;">Our Partners</h6>
+                
+        <div class="partner-carousel">
+            <div><a href="https://partner1.com" target="_blank"><img src="img/SafariBooking.webp" alt="Partner 1"></a></div>
+            <div><a href="https://partner2.com" target="_blank"><img src="img/utb.webp" alt="Partner 2"></a></div>
+            <div><a href="https://partner3.com" target="_blank"><img src="img/TripAdvisor.webp" alt="Partner 3"></a></div>
+            <div><a href="https://partner4.com" target="_blank"><img src="img/autologo.webp" alt="Partner 4"></a></div>
+            <div><a href="https://partner5.com" target="_blank"><img src="img/UWA.webp" alt="Partner 5"></a></div>
+        </div>
+    </div>
