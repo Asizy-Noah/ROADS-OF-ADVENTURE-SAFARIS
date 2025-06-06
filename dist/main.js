@@ -919,9 +919,12 @@ const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 let SessionAuthGuard = class SessionAuthGuard {
     canActivate(context) {
         var _a;
-        const request = context.switchToHttp().getRequest();
+        const ctx = context.switchToHttp();
+        const request = ctx.getRequest();
+        const response = ctx.getResponse();
         const sessionUser = (_a = request.session) === null || _a === void 0 ? void 0 : _a.user;
         if (!sessionUser) {
+            response.redirect('/auth/login');
             return false;
         }
         request.user = sessionUser;

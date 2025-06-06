@@ -1,30 +1,26 @@
 // src/auth/guards/session-auth.guard.ts
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Request, Response } from 'express'; // Import Request and Response types
 
 @Injectable()
 export class SessionAuthGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
-    const request = context.switchToHttp().getRequest();
-
-    // Log the entire session object for initial debugging
-    
+    const ctx = context.switchToHttp();
+    const request = ctx.getRequest<Request>();
+    const response = ctx.getResponse<Response>(); // Get the Response object
 
     const sessionUser = request.session?.user;
 
-    
     if (!sessionUser) {
-      
-      // You might want to implement a redirect here if not authenticated,
-      // for example, request.res.redirect('/auth/login');
-      // However, ensure this guard is "passthrough" or you handle response outside Nest's lifecycle.
-      // For now, just returning false is fine for debugging.
-      return false; 
+      // If no session user, redirect to the login page
+      // It's crucial to use response.redirect() here as it's a browser redirect.
+      response.redirect('/auth/login');
+      return false; // Prevent further execution of the route handler
     }
 
-    // Attach user to request object so RolesGuard and other middlewares can access it
+    // Attach user to request object for subsequent guards/middlewares (like RolesGuard)
     request.user = sessionUser;
-    
 
-    return true; // Or add condition: && sessionUser.status === 'active' for stricter routes
+    return true;
   }
 }
