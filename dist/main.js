@@ -2736,17 +2736,17 @@ let CategoriesController = class CategoriesController {
             const user = req.user;
             const existingCategory = await this.categoriesService.findOne(id);
             if (user.role === user_schema_1.UserRole.AGENT && existingCategory.createdBy.toString() !== user._id.toString()) {
-                req.flash('error', 'You are not authorized to delete this category.');
-                return res.json({ success: false, message: 'Unauthorized' });
+                req.flash('error_msg', 'You are not authorized to delete this category.');
+                return res.status(403).json({ success: false, message: 'Unauthorized' });
             }
             await this.categoriesService.remove(id);
-            req.flash('success', 'Category deleted successfully!');
-            return res.json({ success: true, message: 'Category deleted successfully' });
+            req.flash('success_msg', 'Category deleted successfully!');
+            return res.redirect('/categories/dashboard');
         }
         catch (error) {
             console.error('Error deleting category:', error);
-            req.flash('error', error.message || 'Failed to delete category.');
-            return res.json({ success: false, message: error.message || 'Failed to delete category' });
+            req.flash('error_msg', error.message || 'Failed to delete category.');
+            return res.status(500).json({ success: false, message: error.message || 'Failed to delete category' });
         }
     }
 };
@@ -2825,7 +2825,7 @@ __decorate([
     (0, common_1.Delete)('dashboard/delete/:id'),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Req)()),
-    __param(2, (0, common_1.Res)({ passthrough: true })),
+    __param(2, (0, common_1.Res)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Object, typeof (_m = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _m : Object]),
     __metadata("design:returntype", Promise)

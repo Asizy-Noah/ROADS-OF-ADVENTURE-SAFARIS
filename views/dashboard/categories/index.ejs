@@ -59,9 +59,12 @@
                         <a href="/categories/dashboard/edit/<%= category._id %>" class="action-btn edit-btn">
                             <i class="fas fa-edit"></i>
                         </a>
-                        <button class="action-btn delete-btn" data-id="<%= category._id %>">
+                        <form action="/categories/dashboard/delete/<%= category._id %>?_method=DELETE" method="POST">
+                            <button class="action-btn delete-btn">
                             <i class="fas fa-trash"></i>
-                        </button>
+                            </button>
+                        </form>
+                        
                     </div>
                 </div>
             <% }) %>
@@ -162,7 +165,7 @@
                             headers: {
                                 'Content-Type': 'application/json',
                                 // Include CSRF token if you're using one
-                                // 'X-CSRF-TOKEN': 'your-csrf-token-here'
+                                // 'X-CSRF-TOKEN': 'your-csrf-token-here' 
                             }
                         });
 

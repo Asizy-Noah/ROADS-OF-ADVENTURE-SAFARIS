@@ -262,24 +262,37 @@ async updateCategory(
 }
 
   @Delete('dashboard/delete/:id')
-  async deleteCategory(@Param('id') id: string, @Req() req, @Res({ passthrough: true }) res: Response) {
+  async deleteCategory(@Param('id') id: string, @Req() req, @Res() res: Response) { // Remove { passthrough: true } from @Res()
     try {
       const user = req.user as any;
       const existingCategory = await this.categoriesService.findOne(id);
 
       // Authorization check
       if (user.role === UserRole.AGENT && existingCategory.createdBy.toString() !== user._id.toString()) {
-        req.flash('error', 'You are not authorized to delete this category.');
-        return res.json({ success: false, message: 'Unauthorized' });
+        req.flash('error_msg', 'You are not authorized to delete this category.'); // Use consistent flash key
+        // For a DELETE request that expects a redirect, return a JSON status and let frontend handle it,
+        // OR change the route to a POST if it's a form submission, for direct server-side redirect.
+        // For now, let's assume this is called via fetch/axios from frontend.
+        return res.status(403).json({ success: false, message: 'Unauthorized' });
       }
 
       await this.categoriesService.remove(id);
-      req.flash('success', 'Category deleted successfully!');
-      return res.json({ success: true, message: 'Category deleted successfully' });
+      req.flash('success_msg', 'Category deleted successfully!'); // Use consistent flash key
+
+      // --- CHANGE IS HERE ---
+      // For a successful DELETE operation, redirect back to the categories list.
+      // If this DELETE is called via AJAX (fetch/axios) from the frontend,
+      // the frontend JavaScript will need to handle this redirect.
+      // If it's a direct form submission, you'd typically use a POST route for delete.
+      return res.redirect('/categories/dashboard'); // Redirect to the categories list page
+      // --- END CHANGE ---
+
     } catch (error) {
       console.error('Error deleting category:', error);
-      req.flash('error', error.message || 'Failed to delete category.');
-      return res.json({ success: false, message: error.message || 'Failed to delete category' });
+      req.flash('error_msg', error.message || 'Failed to delete category.'); // Use consistent flash key
+      // If an error occurs, you might still want to redirect but ensure the flash message is seen.
+      // Or return an error JSON if this is an AJAX call.
+      return res.status(500).json({ success: false, message: error.message || 'Failed to delete category' });
     }
   }
 }
