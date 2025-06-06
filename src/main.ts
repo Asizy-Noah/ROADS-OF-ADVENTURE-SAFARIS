@@ -96,7 +96,8 @@ async function bootstrap() {
   // app.use(LoggerMiddleware);
 
   const port = configService.get<number>("PORT") || 3000;
-  await app.listen(port);
+  // Listen on the specified port and 0.0.0.0 to be externally accessible
+  await app.listen(port, '0.0.0.0');
   console.log(`Application is running on: http://localhost:${port}`);
 }
 bootstrap();
