@@ -2,7 +2,7 @@
     <div class="sidebar-header">
         <div class="logo-container">
             <a href="/dashboard">
-                <img src="/img/logo.png" alt="Roads of Adventure Safaris" class="logo">
+                <img src="/img/zz-logo.png" alt="Roads of Adventure Safaris" class="logo">
             </a>
         </div>
         <button class="sidebar-toggle" id="sidebarToggle">
@@ -19,12 +19,12 @@
                 </a>
             </li>
             
-            <li class="nav-item <%= title.includes('Bookings') ? 'active' : '' %>">
+            <!-- <li class="nav-item <%= title.includes('Bookings') ? 'active' : '' %>">
                 <a href="/bookings/dashboard" class="nav-link">
                     <i class="fas fa-calendar-check"></i>
                     <span>Bookings</span>
                 </a>
-            </li>
+            </li> -->
 
             <% if (user.role === 'admin') { %>
             <li class="nav-item <%= title.includes('Countries') ? 'active' : '' %>">
@@ -58,12 +58,12 @@
             </li>
 
             <% if (user.role === 'admin') { %>
-            <li class="nav-item <%= title.includes('Reviews') ? 'active' : '' %>">
+            <!-- <li class="nav-item <%= title.includes('Reviews') ? 'active' : '' %>">
                 <a href="/reviews/dashboard" class="nav-link">
                     <i class="fas fa-star"></i>
                     <span>Reviews</span>
                 </a>
-            </li>
+            </li> -->
 
             <li class="nav-item <%= title.includes('Pages') ? 'active' : '' %>">
                 <a href="/pages/dashboard" class="nav-link">
@@ -72,12 +72,12 @@
                 </a>
             </li>
 
-            <li class="nav-item <%= title.includes('Subscribers') ? 'active' : '' %>">
+            <!-- <li class="nav-item <%= title.includes('Subscribers') ? 'active' : '' %>">
                 <a href="/subscribers/dashboard" class="nav-link">
                     <i class="fas fa-envelope"></i>
                     <span>Subscribers</span>
                 </a>
-            </li>
+            </li> -->
 
             
             <% } %>
@@ -86,13 +86,6 @@
                 <a href="/users/dashboard/agents" class="nav-link">
                     <i class="fas fa-users"></i>
                     <span>Agents</span>
-                </a>
-            </li>
-
-            <li class="nav-item <%= title.includes('Profile') ? 'active' : '' %>">
-                <a href="/users/dashboard/profile" class="nav-link">
-                    <i class="fas fa-user-circle"></i>
-                    <span>My Profile</span>
                 </a>
             </li>
 
