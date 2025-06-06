@@ -7506,7 +7506,6 @@ __decorate([
 __decorate([
     (0, common_1.Get)("dashboard/agents/edit/:id"),
     (0, common_1.UseGuards)(session_auth_guard_1.SessionAuthGuard, roles_guard_1.RolesGuard, user_ownership_guard_1.UserOwnershipGuard),
-    (0, roles_decorator_1.Roles)(user_schema_1.UserRole.ADMIN),
     (0, common_1.Render)("dashboard/agents/edit"),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Req)()),
@@ -7517,7 +7516,6 @@ __decorate([
 __decorate([
     (0, common_1.Patch)("dashboard/agents/update/:id"),
     (0, common_1.UseGuards)(session_auth_guard_1.SessionAuthGuard, roles_guard_1.RolesGuard, user_ownership_guard_1.UserOwnershipGuard),
-    (0, roles_decorator_1.Roles)(user_schema_1.UserRole.ADMIN),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __param(2, (0, common_1.Req)()),

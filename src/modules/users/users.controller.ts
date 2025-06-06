@@ -36,7 +36,6 @@ export class UsersController {
   // --- Admin: Render Edit Agent Page (for any agent) ---
   @Get("dashboard/agents/edit/:id") // New route for admin to edit specific agent
   @UseGuards(SessionAuthGuard, RolesGuard, UserOwnershipGuard)
-  @Roles(UserRole.ADMIN)
   @Render("dashboard/agents/edit") // Path to your new edit-agent.ejs
   async getEditAgentPage(@Param('id') id: string, @Req() req) {
     try {
@@ -64,7 +63,6 @@ export class UsersController {
  // --- Admin: Update Agent Details ---
  @Patch("dashboard/agents/update/:id")
   @UseGuards(SessionAuthGuard, RolesGuard, UserOwnershipGuard)
-  @Roles(UserRole.ADMIN)
   async adminUpdateAgent(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto, // This DTO no longer contains password
