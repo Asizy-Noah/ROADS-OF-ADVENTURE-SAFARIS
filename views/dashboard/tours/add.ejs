@@ -7,6 +7,11 @@
             </div>
 
             <div class="form-group">
+                <label for="tourSummary">Tour Summary (For tour card)</label>
+                <textarea id="tourSummary" name="summary" class="form-control" rows="6" placeholder="Write each highlight on a new line"><%= typeof oldInput !== 'undefined' ? oldInput.summary : '' %></textarea>
+            </div>
+
+            <div class="form-group">
                 <label for="tourOverview">Tour Overview</label>
                 <div id="tourOverviewEditor" class="editor-container"><%- typeof oldInput !== 'undefined' ? oldInput.overview : '' %></div>
                 <input type="hidden" name="overview" id="tourOverview" value="<%= typeof oldInput !== 'undefined' ? oldInput.overview : '' %>">
@@ -101,7 +106,7 @@
                             <div class="form-row">
                                 <div class="form-group col-md-2">
                                     <label>Day</label>
-                                    <input type="number" name="itineraries[<%= index %>][day]" class="form-control" min="1" value="<%= itinerary.day %>" required>
+                                    <input type="text" name="itineraries[<%= index %>][day]" class="form-control" min="1" value="<%= itinerary.day %>" required>
                                 </div>
 
                                 <div class="form-group col-md-10">
@@ -147,7 +152,7 @@
                         <div class="form-row">
                             <div class="form-group col-md-2">
                                 <label>Day</label>
-                                <input type="number" name="itineraries[0][day]" class="form-control" min="1" value="1" required>
+                                <input type="text" name="itineraries[0][day]" class="form-control" min="1" value="1" required>
                             </div>
 
                             <div class="form-group col-md-10">

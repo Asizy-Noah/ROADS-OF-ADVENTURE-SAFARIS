@@ -1097,7 +1097,7 @@ a {
 
 .highlight-list li:before {
   content: '\f058';
-  font-family: "Helvetica", sans-serif;
+  font-family: 'Font Awesome 5 Free';
   font-weight: 900;
   position: absolute;
   left: 0;
@@ -1222,7 +1222,7 @@ a {
 
 .cost-includes li:before {
   content: '\f00c';
-  font-family: "Helvetica", sans-serif;
+  font-family: 'Font Awesome 5 Free';
   font-weight: 900;
   position: absolute;
   left: 0;
@@ -1232,7 +1232,7 @@ a {
 
 .cost-excludes li:before {
   content: '\f00d';
-  font-family: "Helvetica", sans-serif;
+  font-family: 'Font Awesome 5 Free';
   font-weight: 900;
   position: absolute;
   left: 0;

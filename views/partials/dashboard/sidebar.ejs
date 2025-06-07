@@ -19,12 +19,12 @@
                 </a>
             </li>
             
-            <!-- <li class="nav-item <%= title.includes('Bookings') ? 'active' : '' %>">
+            <li class="nav-item <%= title.includes('Bookings') ? 'active' : '' %>">
                 <a href="/bookings/dashboard" class="nav-link">
                     <i class="fas fa-calendar-check"></i>
                     <span>Bookings</span>
                 </a>
-            </li> -->
+            </li>
 
             <% if (user.role === 'admin') { %>
             <li class="nav-item <%= title.includes('Countries') ? 'active' : '' %>">
@@ -72,12 +72,12 @@
                 </a>
             </li>
 
-            <!-- <li class="nav-item <%= title.includes('Subscribers') ? 'active' : '' %>">
+            <li class="nav-item <%= title.includes('Subscribers') ? 'active' : '' %>">
                 <a href="/subscribers/dashboard" class="nav-link">
                     <i class="fas fa-envelope"></i>
                     <span>Subscribers</span>
                 </a>
-            </li> -->
+            </li>
 
             
             <% } %>

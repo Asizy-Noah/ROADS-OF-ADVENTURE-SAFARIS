@@ -1,348 +1,93 @@
-<%- include('../../partials/dashboard/header') %>
-
-<div class="container-fluid">
-  <div class="row">
-    <%- include('../../partials/dashboard/sidebar') %>
-
-    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2">Newsletter Subscribers</h1>
-        <div class="btn-toolbar mb-2 mb-md-0">
-          <div class="btn-group me-2">
-            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#exportModal">
-              <i class="bi bi-download"></i> Export
-            </button>
-            <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#addSubscriberModal">
-              <i class="bi bi-plus-lg"></i> Add Subscriber
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <%- include('../../partials/flash-messages') %>
-
-      <div class="row mb-3">
-        <div class="col-md-6">
-          <form action="/dashboard/subscribers" method="GET" class="d-flex">
-            <input type="text" name="search" class="form-control me-2" placeholder="Search by email..." value="<%= search || '' %>">
-            <button type="submit" class="btn btn-outline-primary">Search</button>
-          </form>
-        </div>
-        <div class="col-md-6">
-          <div class="d-flex justify-content-end">
-            <div class="dropdown me-2">
-              <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                Filter by Status
-              </button>
-              <ul class="dropdown-menu" aria-labelledby="filterDropdown">
-                <li><a class="dropdown-item <%= !status ? 'active' : '' %>" href="/dashboard/subscribers">All</a></li>
-                <li><a class="dropdown-item <%= status === 'active' ? 'active' : '' %>" href="/dashboard/subscribers?status=active">Active</a></li>
-                <li><a class="dropdown-item <%= status === 'unsubscribed' ? 'active' : '' %>" href="/dashboard/subscribers?status=unsubscribed">Unsubscribed</a></li>
-              </ul>
+<div class="dashboard-content">
+    <div class="content-header">
+        <h2 class="content-title">Manage Subscribers</h2>
+        <div class="content-actions">
+            <div class="records-info">
+                <span class="records-count"><%= subscribers.length %></span>
+                <span class="records-label">Records</span>
             </div>
-            <div class="dropdown">
-              <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                Sort by
-              </button>
-              <ul class="dropdown-menu" aria-labelledby="sortDropdown">
-                <li><a class="dropdown-item <%= sort === 'newest' ? 'active' : '' %>" href="/dashboard/subscribers?sort=newest<%= status ? '&status=' + status : '' %><%= search ? '&search=' + search : '' %>">Newest First</a></li>
-                <li><a class="dropdown-item <%= sort === 'oldest' ? 'active' : '' %>" href="/dashboard/subscribers?sort=oldest<%= status ? '&status=' + status : '' %><%= search ? '&search=' + search : '' %>">Oldest First</a></li>
-                <li><a class="dropdown-item <%= sort === 'email_asc' ? 'active' : '' %>" href="/dashboard/subscribers?sort=email_asc<%= status ? '&status=' + status : '' %><%= search ? '&search=' + search : '' %>">Email (A-Z)</a></li>
-                <li><a class="dropdown-item <%= sort === 'email_desc' ? 'active' : '' %>" href="/dashboard/subscribers?sort=email_desc<%= status ? '&status=' + status : '' %><%= search ? '&search=' + search : '' %>">Email (Z-A)</a></li>
-              </ul>
+            <div class="search-container">
+                <form action="/subscribers/dashboard" method="GET">
+                    <input type="text" class="search-input" placeholder="Search by name or email" name="search" value="<%= query.search || '' %>">
+                    <button type="submit" class="btn btn-sm btn-primary">Search</button>
+                </form>
             </div>
-          </div>
+            <div class="pagination-info">
+                <input type="number" class="page-input" value="5" min="1">
+                <span class="page-label">/Page</span>
+            </div>
         </div>
-      </div>
+    </div>
 
-      <div class="table-responsive">
-        <table class="table table-striped table-hover">
-          <thead>
-            <tr>
-              <th><input type="checkbox" id="selectAll" class="form-check-input"></th>
-              <th>Email</th>
-              <th>Name</th>
-              <th>Status</th>
-              <th>Subscribed On</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% if (subscribers.length > 0) { %>
-              <% subscribers.forEach(subscriber => { %>
+    <%- include('../../partials/flash_messages') %>
+
+    <div class="table-container">
+        <table class="data-table subscribers-table">
+            <thead>
                 <tr>
-                  <td><input type="checkbox" class="form-check-input subscriber-checkbox" value="<%= subscriber._id %>"></td>
-                  <td><%= subscriber.email %></td>
-                  <td><%= subscriber.name || 'N/A' %></td>
-                  <td>
-                    <span class="badge bg-<%= subscriber.status === 'active' ? 'success' : 'secondary' %>">
-                      <%= subscriber.status.charAt(0).toUpperCase() + subscriber.status.slice(1) %>
-                    </span>
-                  </td>
-                  <td><%= new Date(subscriber.createdAt).toLocaleDateString() %></td>
-                  <td>
-                    <div class="btn-group">
-                      <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editSubscriberModal<%= subscriber._id %>">
-                        <i class="bi bi-pencil"></i>
-                      </button>
-                      <form action="/dashboard/subscribers/<%= subscriber._id %>" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this subscriber?');">
-                        <input type="hidden" name="_method" value="DELETE">
-                        <button type="submit" class="btn btn-sm btn-outline-danger">
-                          <i class="bi bi-trash"></i>
-                        </button>
-                      </form>
-                    </div>
-                  </td>
+                    <th class="checkbox-column">
+                        <input type="checkbox" id="selectAll">
+                    </th>
+                    <th class="sortable">Name</th>
+                    <th class="sortable">Email</th>
+                    <th class="sortable">Phone</th>
+                    <th class="sortable">Status</th>
+                    <th class="sortable">Subscribed On</th>
+                    <th class="actions-column">Actions</th>
                 </tr>
-
-                &lt;!-- Edit Subscriber Modal -->
-                <div class="modal fade" id="editSubscriberModal<%= subscriber._id %>" tabindex="-1" aria-labelledby="editSubscriberModalLabel<%= subscriber._id %>" aria-hidden="true">
-                  <div class="modal-dialog">
-                    <div class="modal-content">
-                      <div class="modal-header">
-                        <h5 class="modal-title" id="editSubscriberModalLabel<%= subscriber._id %>">Edit Subscriber</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                      </div>
-                      <form action="/dashboard/subscribers/<%= subscriber._id %>" method="POST">
-                        <input type="hidden" name="_method" value="PUT">
-                        <div class="modal-body">
-                          <div class="mb-3">
-                            <label for="email<%= subscriber._id %>" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="email<%= subscriber._id %>" name="email" value="<%= subscriber.email %>" required>
-                          </div>
-                          <div class="mb-3">
-                            <label for="name<%= subscriber._id %>" class="form-label">Name</label>
-                            <input type="text" class="form-control" id="name<%= subscriber._id %>" name="name" value="<%= subscriber.name || '' %>">
-                          </div>
-                          <div class="mb-3">
-                            <label for="status<%= subscriber._id %>" class="form-label">Status</label>
-                            <select class="form-select" id="status<%= subscriber._id %>" name="status">
-                              <option value="active" <%= subscriber.status === 'active' ? 'selected' : '' %>>Active</option>
-                              <option value="unsubscribed" <%= subscriber.status === 'unsubscribed' ? 'selected' : '' %>>Unsubscribed</option>
-                            </select>
-                          </div>
-                        </div>
-                        <div class="modal-footer">
-                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                          <button type="submit" class="btn btn-primary">Save Changes</button>
-                        </div>
-                      </form>
-                    </div>
-                  </div>
-                </div>
-              <% }); %>
-            <% } else { %>
-              <tr>
-                <td colspan="6" class="text-center">No subscribers found</td>
-              </tr>
-            <% } %>
-          </tbody>
+            </thead>
+            <tbody>
+                <% if (subscribers && subscribers.length > 0) { %>
+                    <% subscribers.forEach(function(subscriber) { %>
+                        <tr>
+                            <td class="checkbox-column">
+                                <input type="checkbox" class="row-checkbox" value="<%= subscriber._id %>">
+                            </td>
+                            <td><%= subscriber.name || 'N/A' %></td>
+                            <td><%= subscriber.email %></td>
+                            <td><%= subscriber.phoneNumber || 'N/A' %></td>
+                            <td>
+                                <span class="status-badge status-<%= subscriber.isActive ? 'active' : 'inactive' %>">
+                                    <%= subscriber.isActive ? 'Active' : 'Inactive' %>
+                                </span>
+                            </td>
+                            <td><%= new Date(subscriber.createdAt).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) %></td>
+                            <td class="actions-column">
+                                <a href="/subscribers/dashboard/edit/<%= subscriber._id %>" class="btn btn-sm btn-info" title="Edit Subscriber">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                                <form action="/subscribers/dashboard/toggle/<%= subscriber._id %>" method="POST" style="display:inline;">
+                                    <button type="submit" class="btn btn-sm <%= subscriber.isActive ? 'btn-warning' : 'btn-success' %>" title="<%= subscriber.isActive ? 'Deactivate' : 'Activate' %> Subscriber">
+                                        <i class="fas <%= subscriber.isActive ? 'fa-ban' : 'fa-check-circle' %>"></i> <%= subscriber.isActive ? 'Deactivate' : 'Activate' %>
+                                    </button>
+                                </form>
+                                <form action="/subscribers/dashboard/delete/<%= subscriber._id %>" method="POST" style="display:inline;">
+                                    <button type="submit" class="btn btn-sm btn-danger" title="Delete Subscriber">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    <% }); %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="7" class="text-center">No subscribers found.</td>
+                    </tr>
+                <% } %>
+            </tbody>
         </table>
-      </div>
+    </div>
 
-      &lt;!-- Bulk Actions -->
-      <div class="row mb-3">
-        <div class="col-md-6">
-          <div class="btn-group" id="bulkActionButtons" style="display: none;">
-            <button type="button" class="btn btn-outline-primary" id="bulkExportBtn">Export Selected</button>
-            <button type="button" class="btn btn-outline-success" id="bulkActivateBtn">Activate Selected</button>
-            <button type="button" class="btn btn-outline-warning" id="bulkUnsubscribeBtn">Unsubscribe Selected</button>
-            <button type="button" class="btn btn-outline-danger" id="bulkDeleteBtn">Delete Selected</button>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <p class="text-end" id="selectedCount">0 subscribers selected</p>
-        </div>
-      </div>
-
-      &lt;!-- Pagination -->
-      <% if (totalPages > 1) { %>
-        <nav aria-label="Page navigation">
-          <ul class="pagination justify-content-center">
-            <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
-              <a class="page-link" href="/dashboard/subscribers?page=<%= currentPage - 1 %><%= status ? '&status=' + status : '' %><%= search ? '&search=' + search : '' %><%= sort ? '&sort=' + sort : '' %>" aria-label="Previous">
-                <span aria-hidden="true">&laquo;</span>
-              </a>
-            </li>
-            <% for(let i = 1; i &lt;= totalPages; i++) { %>
-              <li class="page-item <%= currentPage === i ? 'active' : '' %>">
-                <a class="page-link" href="/dashboard/subscribers?page=<%= i %><%= status ? '&status=' + status : '' %><%= search ? '&search=' + search : '' %><%= sort ? '&sort=' + sort : '' %>"><%= i %></a>
-              </li>
-            <% } %>
-            <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
-              <a class="page-link" href="/dashboard/subscribers?page=<%= currentPage + 1 %><%= status ? '&status=' + status : '' %><%= search ? '&search=' + search : '' %><%= sort ? '&sort=' + sort : '' %>" aria-label="Next">
-                <span aria-hidden="true">&raquo;</span>
-              </a>
-            </li>
-          </ul>
-        </nav>
-      <% } %>
-
-      &lt;!-- Add Subscriber Modal -->
-      <div class="modal fade" id="addSubscriberModal" tabindex="-1" aria-labelledby="addSubscriberModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="addSubscriberModalLabel">Add New Subscriber</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form action="/dashboard/subscribers" method="POST">
-              <div class="modal-body">
-                <div class="mb-3">
-                  <label for="email" class="form-label">Email</label>
-                  <input type="email" class="form-control" id="email" name="email" required>
-                </div>
-                <div class="mb-3">
-                  <label for="name" class="form-label">Name</label>
-                  <input type="text" class="form-control" id="name" name="name">
-                </div>
-                <div class="mb-3">
-                  <label for="status" class="form-label">Status</label>
-                  <select class="form-select" id="status" name="status">
-                    <option value="active" selected>Active</option>
-                    <option value="unsubscribed">Unsubscribed</option>
-                  </select>
-                </div>
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="submit" class="btn btn-primary">Add Subscriber</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-
-      &lt;!-- Export Modal -->
-      <div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="exportModalLabel">Export Subscribers</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form action="/dashboard/subscribers/export" method="GET">
-              <div class="modal-body">
-                <div class="mb-3">
-                  <label for="exportFormat" class="form-label">Export Format</label>
-                  <select class="form-select" id="exportFormat" name="format">
-                    <option value="csv" selected>CSV</option>
-                    <option value="excel">Excel</option>
-                  </select>
-                </div>
-                <div class="mb-3">
-                  <label for="exportStatus" class="form-label">Subscriber Status</label>
-                  <select class="form-select" id="exportStatus" name="status">
-                    <option value="all" selected>All Subscribers</option>
-                    <option value="active">Active Only</option>
-                    <option value="unsubscribed">Unsubscribed Only</option>
-                  </select>
-                </div>
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="submit" class="btn btn-primary">Export</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-    </main>
-  </div>
+    <div class="pagination">
+        <button class="pagination-btn" disabled>
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <button class="pagination-btn active">1</button>
+        <button class="pagination-btn">2</button>
+        <button class="pagination-btn">3</button>
+        <span class="pagination-ellipsis">...</span>
+        <button class="pagination-btn">X</button> <button class="pagination-btn">
+            <i class="fas fa-chevron-right"></i>
+        </button>
+    </div>
 </div>
-
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    // Handle select all checkbox
-    const selectAllCheckbox = document.getElementById('selectAll');
-    const subscriberCheckboxes = document.querySelectorAll('.subscriber-checkbox');
-    const bulkActionButtons = document.getElementById('bulkActionButtons');
-    const selectedCountElement = document.getElementById('selectedCount');
-    
-    selectAllCheckbox.addEventListener('change', function() {
-      subscriberCheckboxes.forEach(checkbox => {
-        checkbox.checked = selectAllCheckbox.checked;
-      });
-      updateBulkActionVisibility();
-    });
-    
-    subscriberCheckboxes.forEach(checkbox => {
-      checkbox.addEventListener('change', function() {
-        updateBulkActionVisibility();
-        
-        // Update "select all" checkbox state
-        if (!this.checked) {
-          selectAllCheckbox.checked = false;
-        } else {
-          const allChecked = Array.from(subscriberCheckboxes).every(cb => cb.checked);
-          selectAllCheckbox.checked = allChecked;
-        }
-      });
-    });
-    
-    function updateBulkActionVisibility() {
-      const selectedCount = document.querySelectorAll('.subscriber-checkbox:checked').length;
-      selectedCountElement.textContent = selectedCount + ' subscribers selected';
-      
-      if (selectedCount > 0) {
-        bulkActionButtons.style.display = 'flex';
-      } else {
-        bulkActionButtons.style.display = 'none';
-      }
-    }
-    
-    // Handle bulk actions
-    document.getElementById('bulkExportBtn').addEventListener('click', function() {
-      const selectedIds = getSelectedIds();
-      window.location.href = '/dashboard/subscribers/export?ids=' + selectedIds.join(',');
-    });
-    
-    document.getElementById('bulkActivateBtn').addEventListener('click', function() {
-      if (confirm('Are you sure you want to activate the selected subscribers?')) {
-        submitBulkAction('activate');
-      }
-    });
-    
-    document.getElementById('bulkUnsubscribeBtn').addEventListener('click', function() {
-      if (confirm('Are you sure you want to unsubscribe the selected subscribers?')) {
-        submitBulkAction('unsubscribe');
-      }
-    });
-    
-    document.getElementById('bulkDeleteBtn').addEventListener('click', function() {
-      if (confirm('Are you sure you want to delete the selected subscribers? This action cannot be undone.')) {
-        submitBulkAction('delete');
-      }
-    });
-    
-    function getSelectedIds() {
-      return Array.from(document.querySelectorAll('.subscriber-checkbox:checked')).map(cb => cb.value);
-    }
-    
-    function submitBulkAction(action) {
-      const selectedIds = getSelectedIds();
-      
-      // Create a form and submit it
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = '/dashboard/subscribers/bulk-action';
-      
-      const actionInput = document.createElement('input');
-      actionInput.type = 'hidden';
-      actionInput.name = 'action';
-      actionInput.value = action;
-      form.appendChild(actionInput);
-      
-      const idsInput = document.createElement('input');
-      idsInput.type = 'hidden';
-      idsInput.name = 'ids';
-      idsInput.value = selectedIds.join(',');
-      form.appendChild(idsInput);
-      
-      document.body.appendChild(form);
-      form.submit();
-    }
-  });
-</script>
-
-<%- include('../../partials/dashboard/footer') %>

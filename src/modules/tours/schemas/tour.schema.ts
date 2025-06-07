@@ -69,7 +69,7 @@ export class Tour extends Document {
 
   @Prop([
     {
-      day: { type: Number, required: true },
+      day: { type: String, required: true },
       title: { type: String, required: true },
       description: { type: String, required: true },
       accommodation: { type: String },
@@ -79,7 +79,7 @@ export class Tour extends Document {
     },
   ])
   itineraries: {
-    day: number;
+    day: String;
     title: string;
     description: string;
     accommodation: string;

@@ -26,11 +26,13 @@ import { Roles } from "../auth/decorators/roles.decorator"
 import { UserRole } from "../users/schemas/user.schema"
 import { getMulterConfig } from "../../config/multer.config";
 import { ToursService } from "../tours/tours.service"
+import { CategoriesService } from '../categories/categories.service';
 
 @Controller("countries")
 export class CountriesController {
   constructor(
     private readonly countriesService: CountriesService,
+    private readonly categoriesService: CategoriesService,
     private readonly toursService: ToursService,
   ) {}
 
@@ -46,24 +48,37 @@ export class CountriesController {
     }
   }
 
-  @Get(":slug")
-  @Render("public/countries/show")
-  async getCountry(@Param("slug") slug: string) {
-    const country = await this.countriesService.findBySlug(slug);
-    const tours = await this.toursService.findByCountry(country._id);
+   @Get(":slug")
+  @Render("public/countries/show") // This will render your country.ejs
+  async getCountry(@Param("slug") slug: string, @Req() req: any, @Res({ passthrough: true }) res: Response) { // Add @Req and @Res
+    try {
+      const country = await this.countriesService.findBySlug(slug);
 
-    return {
-      title: `${country.name} Safaris - Roads of Adventure Safaris`,
-      country,
-      tours,
-      layout: "layouts/public",
-      seo: {
-        title: country.seoTitle || `${country.name} Safaris - Roads of Adventure Safaris`,
-        description: country.seoDescription || country.overview,
-        keywords: country.seoKeywords,
-        canonicalUrl: country.seoCanonicalUrl,
-        ogImage: country.seoOgImage || country.coverImage,
-      },
+      // Fetch all categories linked to this country
+      const categories = await this.categoriesService.findByCountry(country._id.toString()); // Pass country ID
+
+      // Fetch all tours linked to this country
+      const tours = await this.toursService.findByCountry(country._id.toString()); // Assuming findByCountry in ToursService takes country ID
+
+      return {
+        title: `${country.name}`,
+        country,    // Pass the country object to the EJS template
+        categories, // Pass the categories to the EJS template
+        tours,      // Pass the tours to the EJS template
+        layout: "layouts/public",
+        messages: req.flash(), // To display any potential flash messages
+        seo: {
+          title: country.seoTitle || `${country.name}`,
+          description: country.seoDescription || country.overview,
+          keywords: country.seoKeywords,
+          canonicalUrl: country.seoCanonicalUrl,
+          ogImage: country.seoOgImage || country.coverImage,
+        },
+      }
+    } catch (error) {
+      console.error(`Error loading country page for slug ${slug}:`, error);
+      req.flash('error_msg', error.message || 'Country not found or an error occurred.');
+      return res.redirect('/'); // Redirect to homepage or a 404 page
     }
   }
 

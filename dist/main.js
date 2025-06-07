@@ -206,7 +206,13 @@ const pages_module_1 = __webpack_require__(/*! ./modules/pages/pages.module */ "
 const bookings_module_1 = __webpack_require__(/*! ./modules/bookings/bookings.module */ "./src/modules/bookings/bookings.module.ts");
 const mail_module_1 = __webpack_require__(/*! ./modules/mail/mail.module */ "./src/modules/mail/mail.module.ts");
 const dashboard_module_1 = __webpack_require__(/*! ./modules/dashboard/dashboard.module */ "./src/modules/dashboard/dashboard.module.ts");
+const header_data_middleware_1 = __webpack_require__(/*! ./common/middleware/header-data.middleware */ "./src/common/middleware/header-data.middleware.ts");
 let AppModule = class AppModule {
+    configure(consumer) {
+        consumer
+            .apply(header_data_middleware_1.HeaderDataMiddleware)
+            .forRoutes({ path: '*', method: common_1.RequestMethod.GET });
+    }
 };
 AppModule = __decorate([
     (0, common_1.Module)({
@@ -274,6 +280,48 @@ AppService = __decorate([
     (0, common_1.Injectable)()
 ], AppService);
 exports.AppService = AppService;
+
+
+/***/ }),
+
+/***/ "./src/common/middleware/header-data.middleware.ts":
+/*!*********************************************************!*\
+  !*** ./src/common/middleware/header-data.middleware.ts ***!
+  \*********************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.HeaderDataMiddleware = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const countries_service_1 = __webpack_require__(/*! ../../modules/countries/countries.service */ "./src/modules/countries/countries.service.ts");
+let HeaderDataMiddleware = class HeaderDataMiddleware {
+    constructor(countriesService) {
+        this.countriesService = countriesService;
+    }
+    async use(req, res, next) {
+        const staticCountries = await this.countriesService.findStaticHeaderCountries();
+        const otherCountries = await this.countriesService.findOtherHeaderCountries();
+        res.locals.headerStaticCountries = staticCountries;
+        res.locals.headerOtherCountries = otherCountries;
+        next();
+    }
+};
+HeaderDataMiddleware = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [typeof (_a = typeof countries_service_1.CountriesService !== "undefined" && countries_service_1.CountriesService) === "function" ? _a : Object])
+], HeaderDataMiddleware);
+exports.HeaderDataMiddleware = HeaderDataMiddleware;
 
 
 /***/ }),
@@ -2005,19 +2053,40 @@ const booking_schema_1 = __webpack_require__(/*! ./schemas/booking.schema */ "./
 const tours_service_1 = __webpack_require__(/*! ../tours/tours.service */ "./src/modules/tours/tours.service.ts");
 const users_service_1 = __webpack_require__(/*! ../users/users.service */ "./src/modules/users/users.service.ts");
 const session_auth_guard_1 = __webpack_require__(/*! ../auth/guards/session-auth.guard */ "./src/modules/auth/guards/session-auth.guard.ts");
+const mongoose_1 = __webpack_require__(/*! mongoose */ "mongoose");
 let BookingsController = class BookingsController {
     constructor(bookingsService, toursService, usersService) {
         this.bookingsService = bookingsService;
         this.toursService = toursService;
         this.usersService = usersService;
     }
-    async createBooking(createBookingDto, res) {
+    async createBooking(createBookingDto, res, req) {
+        let redirectUrl = "/";
         try {
+            if (createBookingDto.tour && mongoose_1.Types.ObjectId.isValid(createBookingDto.tour.toString())) {
+                try {
+                    const tour = await this.toursService.findOne(createBookingDto.tour.toString());
+                    if (tour && tour.slug) {
+                        redirectUrl = `/tours/${tour.slug}`;
+                    }
+                }
+                catch (slugError) {
+                    console.warn("Could not find tour slug for redirection:", slugError.message);
+                }
+            }
+            if (!createBookingDto.tour || !mongoose_1.Types.ObjectId.isValid(createBookingDto.tour.toString())) {
+                console.log("Tour ID validation failed or tour is missing.");
+                req.flash("error_msg", "Invalid tour selected for booking.");
+                return res.redirect(redirectUrl);
+            }
             await this.bookingsService.create(createBookingDto);
-            return res.redirect("/booking-success");
+            req.flash("success_msg", "Your booking inquiry has been received! We'll be in touch soon.");
+            return res.redirect(redirectUrl);
         }
         catch (error) {
-            return res.redirect("/booking-error");
+            console.error("Error creating booking in controller:", error);
+            req.flash("error_msg", "Failed to submit your booking. Please try again or contact us directly.");
+            return res.redirect(redirectUrl);
         }
     }
     async getBookings(query, req) {
@@ -2116,8 +2185,9 @@ __decorate([
     (0, common_1.Post)(),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Res)()),
+    __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, typeof (_d = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _d : Object]),
+    __metadata("design:paramtypes", [Object, typeof (_d = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _d : Object, Object]),
     __metadata("design:returntype", Promise)
 ], BookingsController.prototype, "createBooking", null);
 __decorate([
@@ -2488,6 +2558,91 @@ exports.BookingSchema.index({
     specialRequirements: "text",
     adminNotes: "text",
 });
+
+
+/***/ }),
+
+/***/ "./src/modules/categories/categories-public.controller.ts":
+/*!****************************************************************!*\
+  !*** ./src/modules/categories/categories-public.controller.ts ***!
+  \****************************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var _a, _b, _c;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.CategoriesPublicController = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const express_1 = __webpack_require__(/*! express */ "express");
+const categories_service_1 = __webpack_require__(/*! ./categories.service */ "./src/modules/categories/categories.service.ts");
+const tours_service_1 = __webpack_require__(/*! ../tours/tours.service */ "./src/modules/tours/tours.service.ts");
+let CategoriesPublicController = class CategoriesPublicController {
+    constructor(categoriesService, toursService) {
+        this.categoriesService = categoriesService;
+        this.toursService = toursService;
+    }
+    async getCategory(slug, req, res) {
+        try {
+            const category = await this.categoriesService.findBySlug(slug);
+            if (!category) {
+                throw new common_1.HttpException('Category not found', common_1.HttpStatus.NOT_FOUND);
+            }
+            let tours = [];
+            if (category.country) {
+                tours = await this.toursService.findByCategory(category._id.toString(), category.country._id.toString());
+            }
+            else {
+                tours = await this.toursService.findByCategory(category._id.toString());
+            }
+            return {
+                title: `${category.name} Safaris - Roads of Adventure Safaris`,
+                category,
+                tours,
+                layout: "layouts/public",
+                messages: req.flash(),
+                seo: {
+                    title: category.seoTitle || `${category.name} Safaris - Roads of Adventure Safaris`,
+                    description: category.seoDescription || category.description,
+                    keywords: category.seoKeywords,
+                    canonicalUrl: `YOUR_BASE_URL/categories/${category.slug}`,
+                    ogImage: category.image,
+                },
+            };
+        }
+        catch (error) {
+            console.error(`Error loading category page for slug ${slug}:`, error);
+            req.flash('error_msg', error.message || 'Category not found or an error occurred.');
+            return res.redirect('/');
+        }
+    }
+};
+__decorate([
+    (0, common_1.Get)(":slug"),
+    (0, common_1.Render)("public/categories/show"),
+    __param(0, (0, common_1.Param)("slug")),
+    __param(1, (0, common_1.Req)()),
+    __param(2, (0, common_1.Res)({ passthrough: true })),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, typeof (_c = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _c : Object]),
+    __metadata("design:returntype", Promise)
+], CategoriesPublicController.prototype, "getCategory", null);
+CategoriesPublicController = __decorate([
+    (0, common_1.Controller)('categories'),
+    __metadata("design:paramtypes", [typeof (_a = typeof categories_service_1.CategoriesService !== "undefined" && categories_service_1.CategoriesService) === "function" ? _a : Object, typeof (_b = typeof tours_service_1.ToursService !== "undefined" && tours_service_1.ToursService) === "function" ? _b : Object])
+], CategoriesPublicController);
+exports.CategoriesPublicController = CategoriesPublicController;
 
 
 /***/ }),
@@ -2863,6 +3018,8 @@ const categories_controller_1 = __webpack_require__(/*! ./categories.controller 
 const category_schema_1 = __webpack_require__(/*! ./schemas/category.schema */ "./src/modules/categories/schemas/category.schema.ts");
 const countries_module_1 = __webpack_require__(/*! ../countries/countries.module */ "./src/modules/countries/countries.module.ts");
 const categories_api_controller_1 = __webpack_require__(/*! ./categories.api.controller */ "./src/modules/categories/categories.api.controller.ts");
+const tours_module_1 = __webpack_require__(/*! ../tours/tours.module */ "./src/modules/tours/tours.module.ts");
+const categories_public_controller_1 = __webpack_require__(/*! ./categories-public.controller */ "./src/modules/categories/categories-public.controller.ts");
 let CategoriesModule = class CategoriesModule {
 };
 CategoriesModule = __decorate([
@@ -2870,8 +3027,9 @@ CategoriesModule = __decorate([
         imports: [
             mongoose_1.MongooseModule.forFeature([{ name: category_schema_1.Category.name, schema: category_schema_1.CategorySchema }]),
             (0, common_1.forwardRef)(() => countries_module_1.CountriesModule),
+            (0, common_1.forwardRef)(() => tours_module_1.ToursModule),
         ],
-        controllers: [categories_controller_1.CategoriesController, categories_api_controller_1.CategoriesApiController],
+        controllers: [categories_controller_1.CategoriesController, categories_api_controller_1.CategoriesApiController, categories_public_controller_1.CategoriesPublicController],
         providers: [categories_service_1.CategoriesService],
         exports: [categories_service_1.CategoriesService],
     })
@@ -2970,11 +3128,10 @@ let CategoriesService = class CategoriesService {
         return category;
     }
     async findBySlug(slug) {
-        const category = await this.categoryModel.findOne({ slug }).populate("createdBy", "name email").exec();
-        if (!category) {
-            throw new common_1.NotFoundException(`Category with slug ${slug} not found.`);
-        }
-        return category;
+        return this.categoryModel
+            .findOne({ slug })
+            .populate('country', 'name slug code')
+            .exec();
     }
     async update(id, updateCategoryDto, userId) {
         if (updateCategoryDto.name && !updateCategoryDto.slug) {
@@ -3003,6 +3160,20 @@ let CategoriesService = class CategoriesService {
             throw new common_1.NotFoundException(`Category with ID ${id} not found.`);
         }
         return deletedCategory;
+    }
+    async findByCountry(countryId) {
+        try {
+            const categories = await this.categoryModel
+                .find({ country: countryId })
+                .populate('country', 'name slug')
+                .select('name slug image')
+                .sort({ name: 1 })
+                .exec();
+            return categories;
+        }
+        catch (error) {
+            throw new common_1.NotFoundException(`Could not retrieve categories for country ID: ${countryId}`);
+        }
     }
 };
 CategoriesService = __decorate([
@@ -3221,7 +3392,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c, _d, _e;
+var _a, _b, _c, _d, _e, _f, _g;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.CountriesController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
@@ -3234,9 +3405,11 @@ const roles_decorator_1 = __webpack_require__(/*! ../auth/decorators/roles.decor
 const user_schema_1 = __webpack_require__(/*! ../users/schemas/user.schema */ "./src/modules/users/schemas/user.schema.ts");
 const multer_config_1 = __webpack_require__(/*! ../../config/multer.config */ "./src/config/multer.config.ts");
 const tours_service_1 = __webpack_require__(/*! ../tours/tours.service */ "./src/modules/tours/tours.service.ts");
+const categories_service_1 = __webpack_require__(/*! ../categories/categories.service */ "./src/modules/categories/categories.service.ts");
 let CountriesController = class CountriesController {
-    constructor(countriesService, toursService) {
+    constructor(countriesService, categoriesService, toursService) {
         this.countriesService = countriesService;
+        this.categoriesService = categoriesService;
         this.toursService = toursService;
     }
     async getAllCountries() {
@@ -3247,22 +3420,32 @@ let CountriesController = class CountriesController {
             layout: "layouts/public",
         };
     }
-    async getCountry(slug) {
-        const country = await this.countriesService.findBySlug(slug);
-        const tours = await this.toursService.findByCountry(country._id);
-        return {
-            title: `${country.name} Safaris - Roads of Adventure Safaris`,
-            country,
-            tours,
-            layout: "layouts/public",
-            seo: {
-                title: country.seoTitle || `${country.name} Safaris - Roads of Adventure Safaris`,
-                description: country.seoDescription || country.overview,
-                keywords: country.seoKeywords,
-                canonicalUrl: country.seoCanonicalUrl,
-                ogImage: country.seoOgImage || country.coverImage,
-            },
-        };
+    async getCountry(slug, req, res) {
+        try {
+            const country = await this.countriesService.findBySlug(slug);
+            const categories = await this.categoriesService.findByCountry(country._id.toString());
+            const tours = await this.toursService.findByCountry(country._id.toString());
+            return {
+                title: `${country.name}`,
+                country,
+                categories,
+                tours,
+                layout: "layouts/public",
+                messages: req.flash(),
+                seo: {
+                    title: country.seoTitle || `${country.name}`,
+                    description: country.seoDescription || country.overview,
+                    keywords: country.seoKeywords,
+                    canonicalUrl: country.seoCanonicalUrl,
+                    ogImage: country.seoOgImage || country.coverImage,
+                },
+            };
+        }
+        catch (error) {
+            console.error(`Error loading country page for slug ${slug}:`, error);
+            req.flash('error_msg', error.message || 'Country not found or an error occurred.');
+            return res.redirect('/');
+        }
     }
     async getCountries(query, req) {
         const page = parseInt(query.page || '1');
@@ -3463,8 +3646,10 @@ __decorate([
     (0, common_1.Get)(":slug"),
     (0, common_1.Render)("public/countries/show"),
     __param(0, (0, common_1.Param)("slug")),
+    __param(1, (0, common_1.Req)()),
+    __param(2, (0, common_1.Res)({ passthrough: true })),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object, typeof (_d = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _d : Object]),
     __metadata("design:returntype", Promise)
 ], CountriesController.prototype, "getCountry", null);
 __decorate([
@@ -3501,7 +3686,7 @@ __decorate([
     __param(2, (0, common_1.Req)()),
     __param(3, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object, Object, typeof (_c = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _c : Object]),
+    __metadata("design:paramtypes", [Object, Object, Object, typeof (_e = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _e : Object]),
     __metadata("design:returntype", Promise)
 ], CountriesController.prototype, "addCountry", null);
 __decorate([
@@ -3529,7 +3714,7 @@ __decorate([
     __param(3, (0, common_1.Req)()),
     __param(4, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object, Object, Object, typeof (_d = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _d : Object]),
+    __metadata("design:paramtypes", [String, Object, Object, Object, typeof (_f = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _f : Object]),
     __metadata("design:returntype", Promise)
 ], CountriesController.prototype, "updateCountry", null);
 __decorate([
@@ -3540,12 +3725,12 @@ __decorate([
     __param(1, (0, common_1.Req)()),
     __param(2, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object, typeof (_e = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _e : Object]),
+    __metadata("design:paramtypes", [String, Object, typeof (_g = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _g : Object]),
     __metadata("design:returntype", Promise)
 ], CountriesController.prototype, "deleteCountry", null);
 CountriesController = __decorate([
     (0, common_1.Controller)("countries"),
-    __metadata("design:paramtypes", [typeof (_a = typeof countries_service_1.CountriesService !== "undefined" && countries_service_1.CountriesService) === "function" ? _a : Object, typeof (_b = typeof tours_service_1.ToursService !== "undefined" && tours_service_1.ToursService) === "function" ? _b : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof countries_service_1.CountriesService !== "undefined" && countries_service_1.CountriesService) === "function" ? _a : Object, typeof (_b = typeof categories_service_1.CategoriesService !== "undefined" && categories_service_1.CategoriesService) === "function" ? _b : Object, typeof (_c = typeof tours_service_1.ToursService !== "undefined" && tours_service_1.ToursService) === "function" ? _c : Object])
 ], CountriesController);
 exports.CountriesController = CountriesController;
 
@@ -3573,11 +3758,16 @@ const countries_service_1 = __webpack_require__(/*! ./countries.service */ "./sr
 const countries_controller_1 = __webpack_require__(/*! ./countries.controller */ "./src/modules/countries/countries.controller.ts");
 const country_schema_1 = __webpack_require__(/*! ./schemas/country.schema */ "./src/modules/countries/schemas/country.schema.ts");
 const tours_module_1 = __webpack_require__(/*! ../tours/tours.module */ "./src/modules/tours/tours.module.ts");
+const categories_module_1 = __webpack_require__(/*! ../categories/categories.module */ "./src/modules/categories/categories.module.ts");
 let CountriesModule = class CountriesModule {
 };
 CountriesModule = __decorate([
     (0, common_1.Module)({
-        imports: [mongoose_1.MongooseModule.forFeature([{ name: country_schema_1.Country.name, schema: country_schema_1.CountrySchema }]), tours_module_1.ToursModule],
+        imports: [
+            mongoose_1.MongooseModule.forFeature([{ name: country_schema_1.Country.name, schema: country_schema_1.CountrySchema }]),
+            tours_module_1.ToursModule,
+            (0, common_1.forwardRef)(() => categories_module_1.CategoriesModule),
+        ],
         controllers: [countries_controller_1.CountriesController],
         providers: [countries_service_1.CountriesService],
         exports: [countries_service_1.CountriesService],
@@ -3707,6 +3897,26 @@ let CountriesService = class CountriesService {
             throw new common_1.NotFoundException(`Country with ID ${id} not found.`);
         }
         return deletedCountry;
+    }
+    async findStaticHeaderCountries() {
+        const staticCountryNames = ["Uganda", "Kenya", "Rwanda", "Tanzania"];
+        const countries = await this.countryModel.find({
+            name: { $in: staticCountryNames }
+        })
+            .sort({ name: 1 })
+            .select('name code slug')
+            .exec();
+        return countries;
+    }
+    async findOtherHeaderCountries() {
+        const staticCountryNames = ["Uganda", "Kenya", "Rwanda", "Tanzania"];
+        const countries = await this.countryModel.find({
+            name: { $nin: staticCountryNames }
+        })
+            .sort({ name: 1 })
+            .select('name code slug')
+            .exec();
+        return countries;
     }
 };
 CountriesService = __decorate([
@@ -4249,17 +4459,58 @@ let MailService = class MailService {
         }
     }
     async sendSubscriptionConfirmation(subscriber) {
-        await this.transporter.sendMail({
-            from: `"Roads of Adventure Safaris" <${this.configService.get("MAIL_FROM")}>`,
+        console.log(`MailService: Preparing subscription confirmation for: ${subscriber.email}`);
+        if (!subscriber.email) {
+            console.error("MailService: Subscriber email is undefined or empty for confirmation email!");
+            throw new Error("No recipient email defined for subscription confirmation.");
+        }
+        const mailOptions = {
+            from: `"Roads of Adventure" <${this.configService.get('EMAIL_USER')}>`,
             to: subscriber.email,
-            subject: "Welcome to Roads of Adventure Safaris Newsletter",
+            subject: `Welcome to the Roads of Adventure Newsletter!`,
             html: `
-        <h1>Thank You for Subscribing!</h1>
-        <p>Dear ${subscriber.name || "Subscriber"},</p>
-        <p>Thank you for subscribing to our newsletter. You will now receive updates about our latest safari tours, travel tips, and special offers.</p>
-        <p>If you no longer wish to receive these emails, please <a href="${this.configService.get("WEBSITE_URL")}/unsubscribe?email=${subscriber.email}">unsubscribe</a>.</p>
+        <h2>Hello<%= subscriber.name ? ' ' + subscriber.name : '' %>,</h2>
+        <p>Thank you for subscribing to our newsletter! You'll now receive our latest news, tour updates, and exclusive offers.</p>
+        <p>Get ready to explore the world with Roads of Adventure!</p>
+        <p>Best regards,<br>The Roads of Adventure Team</p>
+        <p>If you wish to unsubscribe at any time, please click here: <a href="${this.configService.get('BASE_URL')}/unsubscribe?email=${subscriber.email}">Unsubscribe</a></p>
       `,
-        });
+        };
+        try {
+            await this.transporter.sendMail(mailOptions);
+            console.log(`MailService: Successfully sent subscription confirmation to ${subscriber.email}`);
+        }
+        catch (error) {
+            console.error(`MailService: Failed to send subscription confirmation to ${subscriber.email}:`, error);
+            throw error;
+        }
+    }
+    async sendNewSubscriberNotification(subscriber) {
+        const adminEmail = this.configService.get("ADMIN_EMAIL") || "asiomizunoah@gmail.com";
+        const mailOptions = {
+            from: `"Roads of Adventure" <${this.configService.get('EMAIL_USER')}>`,
+            to: adminEmail,
+            subject: `New Newsletter Subscriber: ${subscriber.email}`,
+            html: `
+        <h2>New Newsletter Subscriber!</h2>
+        <p>A new email address has subscribed to your newsletter:</p>
+        <ul>
+          <li><strong>Email:</strong> ${subscriber.email}</li>
+          <li><strong>Name:</strong> ${subscriber.name || 'N/A'}</li>
+          <li><strong>Phone:</strong> ${subscriber.phoneNumber || 'N/A'}</li>
+          <li><strong>Subscribed On:</strong> ${new Date(subscriber.createdAt).toLocaleString()}</li>
+        </ul>
+        <p>View all subscribers in your dashboard: <a href="${this.configService.get('BASE_URL')}/subscribers/dashboard">View Subscribers</a></p>
+      `,
+        };
+        try {
+            await this.transporter.sendMail(mailOptions);
+            console.log(`MailService: Successfully sent new subscriber notification to admin (${this.adminEmail})`);
+        }
+        catch (error) {
+            console.error(`MailService: Failed to send new subscriber notification to admin (${this.adminEmail}):`, error);
+            throw error;
+        }
     }
     async sendBookingNotification(booking) {
         const adminEmail = this.configService.get("ADMIN_EMAIL") || "asiomizunoah@gmail.com";
@@ -5669,13 +5920,18 @@ let SubscribersController = class SubscribersController {
     constructor(subscribersService) {
         this.subscribersService = subscribersService;
     }
-    async createSubscriber(createSubscriberDto, res) {
+    async createSubscriber(createSubscriberDto, res, req) {
+        console.log("SubscribersController: Received subscription request for email:", createSubscriberDto.email);
         try {
             await this.subscribersService.create(createSubscriberDto);
-            return res.redirect("/?subscribed=success");
+            req.flash("success_msg", "You've successfully subscribed to our newsletter!");
+            console.log("SubscribersController: Subscriber created/reactivated, redirecting with success.");
+            return res.redirect("/");
         }
         catch (error) {
-            return res.redirect("/?subscribed=error");
+            console.error("SubscribersController: Error creating subscriber:", error.message);
+            req.flash("error_msg", error.message || "Failed to subscribe. Please try again.");
+            return res.redirect("/");
         }
     }
     async getSubscribers(query, req) {
@@ -5735,8 +5991,9 @@ __decorate([
     (0, common_1.Post)(),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Res)()),
+    __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, typeof (_b = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _b : Object]),
+    __metadata("design:paramtypes", [Object, typeof (_b = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _b : Object, Object]),
     __metadata("design:returntype", Promise)
 ], SubscribersController.prototype, "createSubscriber", null);
 __decorate([
@@ -5873,21 +6130,32 @@ let SubscribersService = class SubscribersService {
         this.mailService = mailService;
     }
     async create(createSubscriberDto) {
+        console.log("SubscribersService: Attempting to create/reactivate subscriber:", createSubscriberDto.email);
         const existingSubscriber = await this.subscriberModel.findOne({ email: createSubscriberDto.email });
         if (existingSubscriber) {
             if (existingSubscriber.isActive) {
+                console.log("SubscribersService: Email already subscribed and active.");
                 throw new common_1.ConflictException("Email is already subscribed to our newsletter");
             }
             else {
+                console.log("SubscribersService: Reactivating inactive subscriber.");
                 existingSubscriber.isActive = true;
+                if (createSubscriberDto.name)
+                    existingSubscriber.name = createSubscriberDto.name;
+                if (createSubscriberDto.phoneNumber)
+                    existingSubscriber.phoneNumber = createSubscriberDto.phoneNumber;
                 const reactivatedSubscriber = await existingSubscriber.save();
                 await this.mailService.sendSubscriptionConfirmation(reactivatedSubscriber);
+                console.log("SubscribersService: Reactivated subscriber and sent confirmation email.");
                 return reactivatedSubscriber;
             }
         }
+        console.log("SubscribersService: Creating new subscriber.");
         const newSubscriber = new this.subscriberModel(createSubscriberDto);
         const savedSubscriber = await newSubscriber.save();
         await this.mailService.sendSubscriptionConfirmation(savedSubscriber);
+        await this.mailService.sendNewSubscriberNotification(savedSubscriber);
+        console.log("SubscribersService: New subscriber created and emails sent.");
         return savedSubscriber;
     }
     async findAll(query) {
@@ -5968,10 +6236,9 @@ class ItineraryItemDto {
 }
 __decorate([
     (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.IsNumber)(),
-    (0, class_validator_1.Min)(1),
-    (0, class_transformer_1.Type)(() => Number),
-    __metadata("design:type", Number)
+    (0, class_validator_1.IsString)(),
+    (0, class_transformer_1.Type)(() => String),
+    __metadata("design:type", String)
 ], ItineraryItemDto.prototype, "day", void 0);
 __decorate([
     (0, class_validator_1.IsNotEmpty)(),
@@ -6303,7 +6570,7 @@ __decorate([
 __decorate([
     (0, mongoose_1.Prop)([
         {
-            day: { type: Number, required: true },
+            day: { type: String, required: true },
             title: { type: String, required: true },
             description: { type: String, required: true },
             accommodation: { type: String },
@@ -6824,7 +7091,7 @@ ToursModule = __decorate([
         imports: [
             mongoose_1.MongooseModule.forFeature([{ name: tour_schema_1.Tour.name, schema: tour_schema_1.TourSchema }]),
             (0, common_1.forwardRef)(() => countries_module_1.CountriesModule),
-            categories_module_1.CategoriesModule,
+            (0, common_1.forwardRef)(() => categories_module_1.CategoriesModule),
         ],
         controllers: [tours_controller_1.ToursController],
         providers: [tours_service_1.ToursService],
@@ -6969,27 +7236,45 @@ let ToursService = class ToursService {
         }
         return tour;
     }
-    async findByCountry(countryId, limit) {
-        const query = this.tourModel
-            .find({ countries: countryId, status: tour_schema_1.TourStatus.PUBLISHED })
-            .sort({ createdAt: -1 })
-            .populate("countries", "name slug")
-            .populate("categories", "name slug");
-        if (limit) {
-            query.limit(limit);
+    async findByCountry(countryId) {
+        try {
+            const objectId = new mongoose_2.Types.ObjectId(countryId);
+            const tours = await this.tourModel
+                .find({ countries: objectId })
+                .populate('countries', 'name slug code')
+                .populate('categories', 'name slug')
+                .select('title slug overview summary coverImage days price discountPrice')
+                .sort({ title: 1 })
+                .exec();
+            return tours;
         }
-        return query.exec();
+        catch (error) {
+            throw new common_1.NotFoundException(`Could not retrieve tours for country ID: ${countryId}`);
+        }
     }
-    async findByCategory(categoryId, limit) {
-        const query = this.tourModel
-            .find({ categories: categoryId, status: tour_schema_1.TourStatus.PUBLISHED })
-            .sort({ createdAt: -1 })
-            .populate("countries", "name slug")
-            .populate("categories", "name slug");
-        if (limit) {
-            query.limit(limit);
+    async findByCategory(categoryId, countryId, limit) {
+        try {
+            const queryConditions = {
+                categories: new mongoose_2.Types.ObjectId(categoryId),
+                status: tour_schema_1.TourStatus.PUBLISHED,
+            };
+            if (countryId) {
+                queryConditions.countries = new mongoose_2.Types.ObjectId(countryId);
+            }
+            const query = this.tourModel
+                .find(queryConditions)
+                .sort({ createdAt: -1 })
+                .populate("countries", "name slug code")
+                .populate("categories", "name slug")
+                .select('title slug overview summary coverImage days price discountPrice');
+            if (limit) {
+                query.limit(limit);
+            }
+            return query.exec();
         }
-        return query.exec();
+        catch (error) {
+            throw new common_1.NotFoundException(`Could not retrieve tours for category ID: ${categoryId}`);
+        }
     }
     async update(id, updateTourDto, userId) {
         let slugToUpdate;

@@ -178,33 +178,70 @@ export class ToursService {
     return tour;
   }
 
-  async findByCountry(countryId: string, limit?: number): Promise<Tour[]> {
-    const query = this.tourModel
-      .find({ countries: countryId, status: TourStatus.PUBLISHED })
-      .sort({ createdAt: -1 })
-      .populate("countries", "name slug")
-      .populate("categories", "name slug");
+  /**
+   * Finds all tours associated with a given country ID.
+   * @param countryId The ID of the country to filter tours by.
+   * @returns A promise that resolves to an array of Tour documents.
+   */
+  async findByCountry(countryId: string): Promise<Tour[]> {
+    try {
+      // Convert string ID to ObjectId for the query
+      const objectId = new Types.ObjectId(countryId);
 
-    if (limit) {
-      query.limit(limit);
+      const tours = await this.tourModel
+        .find({ countries: objectId }) // Query tours where the 'countries' array contains the countryId
+        .populate('countries', 'name slug code') // Populate relevant country fields
+        .populate('categories', 'name slug')   // Populate relevant category fields
+        .select('title slug overview summary coverImage days price discountPrice') // Select fields needed for the country page tour list
+        .sort({ title: 1 }) // Optional: Sort tours alphabetically by title
+        .exec();
+
+      return tours;
+    } catch (error) {
+      
+      throw new NotFoundException(`Could not retrieve tours for country ID: ${countryId}`);
     }
-
-    return query.exec();
   }
 
-  async findByCategory(categoryId: string, limit?: number): Promise<Tour[]> {
-    const query = this.tourModel
-      .find({ categories: categoryId, status: TourStatus.PUBLISHED })
-      .sort({ createdAt: -1 })
-      .populate("countries", "name slug")
-      .populate("categories", "name slug");
+  /**
+   * Finds all tours associated with a given category ID and optionally a country ID.
+   * @param categoryId The ID of the category to filter tours by.
+   * @param countryId Optional: The ID of the country to further filter tours by.
+   * @param limit Optional limit for the number of tours.
+   * @returns A promise that resolves to an array of Tour documents.
+   */
+  async findByCategory(
+    categoryId: string,
+    countryId?: string, // <--- ADD OPTIONAL countryId PARAMETER
+    limit?: number
+  ): Promise<Tour[]> {
+    try {
+      const queryConditions: any = {
+        categories: new Types.ObjectId(categoryId),
+        status: TourStatus.PUBLISHED,
+      };
 
-    if (limit) {
-      query.limit(limit);
+      if (countryId) {
+        queryConditions.countries = new Types.ObjectId(countryId); // <--- ADD COUNTRY FILTER IF PROVIDED
+      }
+
+      const query = this.tourModel
+        .find(queryConditions) // Use the dynamic queryConditions
+        .sort({ createdAt: -1 })
+        .populate("countries", "name slug code")
+        .populate("categories", "name slug")
+        .select('title slug overview summary coverImage days price discountPrice');
+
+      if (limit) {
+        query.limit(limit);
+      }
+
+      return query.exec();
+    } catch (error) {
+      throw new NotFoundException(`Could not retrieve tours for category ID: ${categoryId}`);
     }
-
-    return query.exec();
   }
+
 
   async update(id: string, updateTourDto: UpdateTourDto, userId: string): Promise<Tour> {
     let slugToUpdate: string; // This variable will hold the slug to be used for the update.

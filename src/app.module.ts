@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common"
+import { Module, NestModule, MiddlewareConsumer, RequestMethod } from "@nestjs/common"
 import { ConfigModule, ConfigService } from "@nestjs/config"
 import { MongooseModule } from "@nestjs/mongoose"
 import { ServeStaticModule } from "@nestjs/serve-static"
@@ -17,6 +17,7 @@ import { PagesModule } from "./modules/pages/pages.module"
 import { BookingsModule } from "./modules/bookings/bookings.module"
 import { MailModule } from "./modules/mail/mail.module"
 import { DashboardModule } from "./modules/dashboard/dashboard.module"
+import { HeaderDataMiddleware } from './common/middleware/header-data.middleware'; // Import the new middleware
 
 @Module({
   imports: [
@@ -52,4 +53,16 @@ import { DashboardModule } from "./modules/dashboard/dashboard.module"
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(HeaderDataMiddleware)
+      .forRoutes(
+        { path: '*', method: RequestMethod.GET }, // Apply to all GET requests
+        // You might refine this to only public-facing routes if dashboard routes don't need it
+        // e.g., { path: '/countries/*', method: RequestMethod.GET },
+        // { path: '/', method: RequestMethod.GET },
+        // { path: '/tours/*', method: RequestMethod.GET }, etc.
+      );
+  }
+}

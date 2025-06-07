@@ -16,10 +16,9 @@ import { TourStatus } from "../schemas/tour.schema"; // Assuming this path is co
 // DTO for a single Itinerary item
 export class ItineraryItemDto {
   @IsNotEmpty()
-  @IsNumber()
-  @Min(1)
-  @Type(() => Number) // Ensure 'day' is transformed to a number
-  day: number;
+  @IsString()
+  @Type(() => String) // Ensure 'day' is transformed to a String
+  day: string;
 
   @IsNotEmpty()
   @IsString()

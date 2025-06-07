@@ -10,6 +10,7 @@ import { BookingStatus } from "./schemas/booking.schema"
 import { ToursService } from "../tours/tours.service"
 import { UsersService } from "../users/users.service"
 import { SessionAuthGuard } from "../auth/guards/session-auth.guard";
+import { Types } from 'mongoose'; 
 
 @Controller("bookings")
 export class BookingsController {
@@ -20,13 +21,41 @@ export class BookingsController {
   ) {}
 
   @Post()
-  async createBooking(@Body() createBookingDto: CreateBookingDto, @Res() res: Response) {
-    try {
-      await this.bookingsService.create(createBookingDto)
+  async createBooking(@Body() createBookingDto: CreateBookingDto, @Res() res: Response, @Req() req: any) {
 
-      return res.redirect("/booking-success")
+    let redirectUrl = "/"; // Default fallback to homepage
+
+    try {
+      // Get the tour slug for redirection before validation, if tour ID is present
+      // This is crucial if we want to redirect back to the specific tour page
+      if (createBookingDto.tour && Types.ObjectId.isValid(createBookingDto.tour.toString())) {
+        try {
+          const tour = await this.toursService.findOne(createBookingDto.tour.toString());
+          if (tour && tour.slug) {
+            redirectUrl = `/tours/${tour.slug}`;
+          }
+        } catch (slugError) {
+          console.warn("Could not find tour slug for redirection:", slugError.message);
+          // Fallback to '/' if tour not found for slug
+        }
+      }
+
+      if (!createBookingDto.tour || !Types.ObjectId.isValid(createBookingDto.tour.toString())) {
+        console.log("Tour ID validation failed or tour is missing.");
+        req.flash("error_msg", "Invalid tour selected for booking.");
+        return res.redirect(redirectUrl); // Use specific URL or fallback
+      }
+      
+      await this.bookingsService.create(createBookingDto);
+
+      req.flash("success_msg", "Your booking inquiry has been received! We'll be in touch soon.");
+      
+      return res.redirect(redirectUrl); // Use specific URL or fallback
     } catch (error) {
-      return res.redirect("/booking-error")
+      console.error("Error creating booking in controller:", error);
+      req.flash("error_msg", "Failed to submit your booking. Please try again or contact us directly.");
+      
+      return res.redirect(redirectUrl); // Use specific URL or fallback
     }
   }
 

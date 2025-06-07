@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose"
-import { Document } from "mongoose"
+import { Document, Types } from "mongoose" // Import Types
 
 @Schema({ timestamps: true })
 export class Subscriber extends Document {
@@ -14,6 +14,11 @@ export class Subscriber extends Document {
 
   @Prop({ default: true })
   isActive: boolean
+
+  // Explicitly define createdAt and updatedAt for TypeScript
+  // Mongoose adds these automatically with { timestamps: true }
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export const SubscriberSchema = SchemaFactory.createForClass(Subscriber)

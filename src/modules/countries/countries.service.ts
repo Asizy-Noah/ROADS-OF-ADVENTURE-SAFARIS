@@ -151,4 +151,37 @@ export class CountriesService {
 
     return deletedCountry;
   }
+
+  // --- NEW METHODS FOR HEADER COUNTRIES ---
+
+  /**
+   * Fetches the four static countries (Uganda, Kenya, Rwanda, Tanzania) by name.
+   * Ensures they are always retrieved if they exist.
+   * @returns An array of Country documents for the static list.
+   */
+  async findStaticHeaderCountries(): Promise<Country[]> {
+    const staticCountryNames = ["Uganda", "Kenya", "Rwanda", "Tanzania"];
+    const countries = await this.countryModel.find({
+      name: { $in: staticCountryNames }
+    })
+    .sort({ name: 1 }) // Optional: Sort by name for consistent order
+    .select('name code slug') // Only fetch necessary fields for the header
+    .exec();
+    return countries;
+  }
+
+  /**
+   * Fetches all other countries excluding the four static ones.
+   * @returns An array of Country documents for the dropdown list.
+   */
+  async findOtherHeaderCountries(): Promise<Country[]> {
+    const staticCountryNames = ["Uganda", "Kenya", "Rwanda", "Tanzania"];
+    const countries = await this.countryModel.find({
+      name: { $nin: staticCountryNames } // $nin means "not in"
+    })
+    .sort({ name: 1 }) // Optional: Sort by name alphabetically
+    .select('name code slug') // Only fetch necessary fields for the header
+    .exec();
+    return countries;
+  }
 }

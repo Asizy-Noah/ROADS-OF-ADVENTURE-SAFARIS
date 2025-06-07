@@ -46,7 +46,7 @@ export class CreateBookingDto {
 
   @IsOptional()
   @IsEnum(BookingStatus)
-  status?: BookingStatus
+  status?: BookingStatus 
 
   @IsOptional()
   @IsString()

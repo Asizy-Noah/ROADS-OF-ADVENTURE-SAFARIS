@@ -22,29 +22,47 @@ export class SubscribersService {
   }
 
   async create(createSubscriberDto: CreateSubscriberDto): Promise<Subscriber> {
+    console.log("SubscribersService: Attempting to create/reactivate subscriber:", createSubscriberDto.email);
+
     // Check if subscriber with same email already exists
-    const existingSubscriber = await this.subscriberModel.findOne({ email: createSubscriberDto.email })
+    const existingSubscriber = await this.subscriberModel.findOne({ email: createSubscriberDto.email });
 
     if (existingSubscriber) {
       if (existingSubscriber.isActive) {
-        throw new ConflictException("Email is already subscribed to our newsletter")
+        console.log("SubscribersService: Email already subscribed and active.");
+        throw new ConflictException("Email is already subscribed to our newsletter");
       } else {
         // If subscriber exists but is inactive, reactivate them
-        existingSubscriber.isActive = true
-        const reactivatedSubscriber = await existingSubscriber.save()
-        await this.mailService.sendSubscriptionConfirmation(reactivatedSubscriber)
-        return reactivatedSubscriber
+        console.log("SubscribersService: Reactivating inactive subscriber.");
+        existingSubscriber.isActive = true;
+        // Update other fields if provided in dto (optional, depending on your logic)
+        if (createSubscriberDto.name) existingSubscriber.name = createSubscriberDto.name;
+        if (createSubscriberDto.phoneNumber) existingSubscriber.phoneNumber = createSubscriberDto.phoneNumber;
+
+        const reactivatedSubscriber = await existingSubscriber.save();
+        
+        // Send confirmation email to reactivated subscriber
+        await this.mailService.sendSubscriptionConfirmation(reactivatedSubscriber);
+        // No need to send admin notification again for reactivation, as they were already subscribed.
+        console.log("SubscribersService: Reactivated subscriber and sent confirmation email.");
+        return reactivatedSubscriber;
       }
     }
 
-    const newSubscriber = new this.subscriberModel(createSubscriberDto)
-    const savedSubscriber = await newSubscriber.save()
+    // If no existing subscriber, create a new one
+    console.log("SubscribersService: Creating new subscriber.");
+    const newSubscriber = new this.subscriberModel(createSubscriberDto);
+    const savedSubscriber = await newSubscriber.save();
 
-    // Send confirmation email
-    await this.mailService.sendSubscriptionConfirmation(savedSubscriber)
+    // Send confirmation email to new subscriber
+    await this.mailService.sendSubscriptionConfirmation(savedSubscriber);
+    // Send notification email to admin
+    await this.mailService.sendNewSubscriberNotification(savedSubscriber);
+    console.log("SubscribersService: New subscriber created and emails sent.");
 
-    return savedSubscriber
+    return savedSubscriber;
   }
+
 
   async findAll(query?: any): Promise<Subscriber[]> {
     const filter: any = {}

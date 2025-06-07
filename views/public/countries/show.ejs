@@ -1,0 +1,99 @@
+<!-- Hero Section Start -->
+    <section class="country-hero-section">
+        <img src="<%= country.coverImage || '/img/default-country.jpg' %>" alt="<%= country.name %>" class="hero-image">
+        <div class="hero-overlay">
+            <div class="carousel-caption d-flex flex-column align-items-center justify-content-center">
+                <div class="p-3" style="max-width: 900px;">
+                    <h4 class="display-4 text-white mb-md-4">Best <%= country.name %> Safaris and Tours  </h4>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Hero Section End -->
+
+<section class="container py-5 ">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 text-center">
+        <h3 class="text-center text-primary mb-4">Explore Safari Categories in <%= country.name %></h3>
+        </div>
+    </div>
+</section>
+<section class="container py-2">
+    <% if (typeof categories !== 'undefined' && categories.length > 0) { %>
+        <div class="categories-carousel owl-carousel owl-theme">
+            <% categories.forEach(category => { %>
+                <a href="/categories/<%= category.slug %>" class="category-link item">
+                    <div class="category-card">
+                        <img src="<%= category.image || '/img/default-category.jpg' %>" alt="<%= category.name %>" class="img-fluid category-img w-100">
+                        <div class="p-4">
+                            <h4 class="text-primary"><%= category.name %></h4>
+                        </div>
+                    </div>
+                </a>
+            <% }); %>
+        </div>
+    <% } else { %>
+        <p class="text-center">No safari categories found for <%= country.name %> yet.</p>
+    <% } %>
+</section>
+
+<section class="container description-section py-5">
+    <div class="row">
+        <div class="col-lg-8 mb-5 mb-lg-0">
+            <h2 class="text-primary mb-4"><%= country.name %> - <%= country.summary || 'The Pearl of Africa' %></h2>
+            
+            <%- country.description %>
+            
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="inquiry-form sticky-form">
+                <button class="btn-book-now btn-block py-3">Book Now</button>
+                    
+            </div>
+        </div>
+    </div>
+</section>
+<section id="packages" class="container py-3">
+    <div class="text-center mb-5">
+        <h6 class="text-primary font-weight-bold text-uppercase" style="letter-spacing: 5px; font-size: 28px;">Packages</h6>
+        <p class="font-italic font-weight-bold" style="font-size: 24px;">Our <%= country.name %> Safari Packages</p>
+    </div>
+    
+    <div class="row">
+        <% if (typeof tours !== 'undefined' && tours.length > 0) { %>
+            <% tours.forEach(tour => { %>
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="package-item bg-white mb-2">
+                        <div class="package-image">
+                            <img class="img-fluid" src="<%= tour.coverImage || '/img/default-tour.jpg' %>" alt="<%= tour.title %>">
+                        </div>
+                        <div class="p-4">
+                            <div class="d-flex justify-content-between mb-3">
+                                <small class="m-0"> <span class="font-weight-bold">Duration:</span> <i class="ri-time-line text-primary"></i> <%= tour.days %> days & <%= tour.days -1 %> Nights</small>
+                            </div>
+                            <a class="h5 text-decoration-none font-weight-bold" href="/tours/<%= tour.slug %>"><%= tour.title %></a>
+                            <p><%= tour.summary %></p>
+                        </div>
+                        <div class="border-top d-flex justify-content-between align-items-center">
+                            <div class="rating">
+                                <span class="stars">
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star-half-alt"></i>
+                                </span>
+                            </div>
+                            <a href="/tours/<%= tour.slug %>" class="btn font-weight-bold text-white book-btn">Book Now</a>
+                        </div>
+                    </div>
+                </div>
+            <% }); %>
+        <% } else { %>
+            <div class="col-12 text-center">
+                <p>No tours found for <%= country.name %> yet. Check back soon!</p>
+            </div>
+        <% } %>
+    </div>
+</section>

@@ -1,0 +1,207 @@
+<section class="hero-section">
+    <img src="<%= tour.coverImage %>" alt="<%= tour.title %>" class="hero-image">
+    <div class="hero-overlay">
+        <h4 class="hero-title"><%= tour.title %></h4>
+    </div>
+</section>
+
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8">
+            <section class="intro-section mb-5">
+                <%- tour.overview %>
+            </section>
+
+            <section class="highlights-section">
+                <h2 class="section-title">Tour Highlights</h2>
+                <ul class="highlight-list">
+                    <% (tour.highlights || '').split('\n').map(line => line.trim()).filter(line => line).forEach(function(item) { %>
+                        <li><%= item %></li>
+                    <% }); %>
+                </ul>
+            </section>
+
+            <section class="itinerary-section">
+                <h2 class="section-title">Detailed Itinerary Day By Day</h2>
+                <% if (tour.itineraries && tour.itineraries.length > 0) { %>
+                    <% tour.itineraries.forEach(function(itinerary) { %>
+                        <div class="itinerary-item">
+                            <div class="itinerary-header" onclick="toggleItinerary(this)">
+                                <h3>Day <%= itinerary.day %>: <%= itinerary.title %></h3>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="itinerary-content">
+                                <div class="itinerary-details">
+                                    <%- itinerary.description %>
+                                </div>
+                                <div class="itinerary-meta">
+                                    <div class="itinerary-meta-item">
+                                        <h4>Accommodation</h4>
+                                        <p><%= itinerary.accommodation %></p>
+                                    </div>
+                                    <div class="itinerary-meta-item">
+                                        <h4>Meal Plan</h4>
+                                        <p><%= itinerary.meals %></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <p>No detailed itinerary available for this tour.</p>
+                <% } %>
+            </section>
+
+            <section class="cost-section">
+                <div class="cost-container">
+                    <div class="cost-box">
+                        <h3>Cost Includes</h3>
+                        <ul class="cost-list cost-includes">
+                            <% (tour.priceIncludes || '').split('\n').map(line => line.trim()).filter(line => line).forEach(function(item) { %>
+                                <li><%= item %></li>
+                            <% }); %>
+                        </ul>
+
+                    </div>
+                    
+                    <div class="cost-box">
+                        <h3>Cost Excludes</h3>
+                        <ul class="cost-list cost-excludes">
+                            <% (tour.priceExcludes || '').split('\n').map(line => line.trim()).filter(line => line).forEach(function(item) { %>
+                                <li><%= item %></li>
+                            <% }); %>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div class="col-lg-4">
+                <div class="booking-form sticky-form">
+                    <h3>Book Now</h3>
+                    <form id="bookingForm" action="/bookings" method="POST">
+                        <input type="hidden" name="tour" value="<%= tour._id %>">
+
+                        <div class="form-group">
+                            <label for="name">Full Name*</label>
+                            <input type="text" class="form-control" id="name" name="fullName" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="email">Email Address*</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="phone">Phone Number*</label>
+                            <input type="tel" class="form-control" id="phone" name="phoneNumber" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="country">Country of Residence*</label>
+                            <input type="text" class="form-control" id="country" name="country" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="travelers">Number of Travelers*</label>
+                            <select class="form-control" id="travelers" name="numberOfAdults" required>
+                                <option value="">Select Number</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6+</option> <% /* Note: '6+' won't convert to a number directly, consider '6' and adjust logic if more detail needed for 6+ */ %>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="message">Additional Information</label>
+                            <textarea class="form-control" id="message" name="specialRequirements" rows="5" placeholder="Tell us about your activities, interests, accommodation types (budget, mid-range, luxury) and any other information"></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary btn-block">Submit Inquiry</button>
+                    </form>
+                </div>
+            </div>
+    </div>
+
+    <section class="related-section">
+        <h2 class="section-title">You May Also Like</h2>
+        <div class="row">
+            <% if (relatedTours && relatedTours.length > 0) { %>
+                <% relatedTours.forEach(function(relatedTour) { %>
+                    <div class="col-lg-4 col-md-6">
+                        <div class="package-card">
+                            <img src="<%= relatedTour.coverImage %>" alt="<%= relatedTour.title %>" class="img-fluid package-img w-100">
+                            <div class="package-content">
+                                <div class="package-meta">
+                                    <span><i class="far fa-clock"></i> <%= relatedTour.days %> Days</span>
+                                    <span><i class="fas fa-map-marker-alt"></i> <%= relatedTour.countries?.[0]?.name || 'N/A' %></span>
+                                </div>
+                                <h4 class="package-title"><%= relatedTour.title %></h4>
+                                <p><%= relatedTour.summary || (relatedTour.overview || '').substring(0, 100) + '...' %></p>
+                                <a href="/tours/<%= relatedTour.slug %>" class="btn btn-primary mt-3">View Details</a>
+                            </div>
+                        </div>
+                    </div>
+                <% }); %>
+            <% } else { %>
+                <div class="col-12">
+                    <p>No related tours found at this time.</p>
+                </div>
+            <% } %>
+        </div>
+    </section>
+</div>
+
+<script>
+function toggleItinerary(element) {
+    const content = element.nextElementSibling;
+    const icon = element.querySelector('i');
+    document.querySelectorAll('.itinerary-content').forEach(item => {
+        if (item !== content && item.classList.contains('active')) {
+            item.classList.remove('active');
+            item.style.display = 'none';
+            item.previousElementSibling.querySelector('i').classList.remove('fa-chevron-up');
+            item.previousElementSibling.querySelector('i').classList.add('fa-chevron-down');
+        }
+    });
+    if (content.classList.contains('active')) {
+        content.classList.remove('active');
+        content.style.display = 'none';
+        icon.classList.remove('fa-chevron-up');
+        icon.classList.add('fa-chevron-down');
+    } else {
+        content.classList.add('active');
+        content.style.display = 'block';
+        icon.classList.remove('fa-chevron-down');
+        icon.classList.add('fa-chevron-up');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('.booking-form');
+    const mainContent = document.querySelector('.col-lg-8');
+    if (window.innerWidth >= 992) {
+        const formHeight = form.offsetHeight;
+        const contentHeight = mainContent.offsetHeight;
+        if (formHeight < contentHeight) {
+            window.addEventListener('scroll', function() {
+                const formTop = form.getBoundingClientRect().top;
+                const contentBottom = mainContent.getBoundingClientRect().bottom;
+                if (formTop <= 20 && contentBottom > 0) {
+                    form.style.position = 'sticky';
+                    form.style.top = '20px';
+                } else if (contentBottom <= 0) {
+                    form.style.position = 'relative';
+                    form.style.top = `${contentHeight - formHeight}px`;
+                } else {
+                    form.style.position = 'sticky';
+                    form.style.top = '20px';
+                }
+            });
+        }
+    }
+});
+</script>

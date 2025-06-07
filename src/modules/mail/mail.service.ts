@@ -6,9 +6,11 @@ import { Blog } from "../blogs/schemas/blog.schema"
 import { Subscriber } from "../subscribers/schemas/subscriber.schema"
 import { Booking } from "../bookings/schemas/booking.schema"
 
+
 @Injectable()
 export class MailService {
   private transporter
+  private adminEmail: string;
 
   constructor(private configService: ConfigService) {
     this.transporter = nodemailer.createTransport({
@@ -127,19 +129,65 @@ export class MailService {
     }
   }
 
-  async sendSubscriptionConfirmation(subscriber: Subscriber): Promise<void> {
-    await this.transporter.sendMail({
-      from: `"Roads of Adventure Safaris" <${this.configService.get<string>("MAIL_FROM")}>`,
+  // --- NEW SUBSCRIPTION EMAIL METHODS ---
+
+  async sendSubscriptionConfirmation(subscriber: Subscriber) {
+    console.log(`MailService: Preparing subscription confirmation for: ${subscriber.email}`); // Debug: Check subscriber email
+    if (!subscriber.email) {
+        console.error("MailService: Subscriber email is undefined or empty for confirmation email!");
+        throw new Error("No recipient email defined for subscription confirmation.");
+    }
+
+    const mailOptions = {
+      from: `"Roads of Adventure" <${this.configService.get<string>('EMAIL_USER')}>`,
       to: subscriber.email,
-      subject: "Welcome to Roads of Adventure Safaris Newsletter",
+      subject: `Welcome to the Roads of Adventure Newsletter!`,
       html: `
-        <h1>Thank You for Subscribing!</h1>
-        <p>Dear ${subscriber.name || "Subscriber"},</p>
-        <p>Thank you for subscribing to our newsletter. You will now receive updates about our latest safari tours, travel tips, and special offers.</p>
-        <p>If you no longer wish to receive these emails, please <a href="${this.configService.get<string>("WEBSITE_URL")}/unsubscribe?email=${subscriber.email}">unsubscribe</a>.</p>
+        <h2>Hello<%= subscriber.name ? ' ' + subscriber.name : '' %>,</h2>
+        <p>Thank you for subscribing to our newsletter! You'll now receive our latest news, tour updates, and exclusive offers.</p>
+        <p>Get ready to explore the world with Roads of Adventure!</p>
+        <p>Best regards,<br>The Roads of Adventure Team</p>
+        <p>If you wish to unsubscribe at any time, please click here: <a href="${this.configService.get<string>('BASE_URL')}/unsubscribe?email=${subscriber.email}">Unsubscribe</a></p>
       `,
-    })
+    };
+    try {
+        await this.transporter.sendMail(mailOptions);
+        console.log(`MailService: Successfully sent subscription confirmation to ${subscriber.email}`);
+    } catch (error) {
+        console.error(`MailService: Failed to send subscription confirmation to ${subscriber.email}:`, error);
+        throw error; // Re-throw to propagate the error
+    }
   }
+
+  async sendNewSubscriberNotification(subscriber: Subscriber) {
+    const adminEmail = this.configService.get<string>("ADMIN_EMAIL") || "asiomizunoah@gmail.com"
+
+    const mailOptions = {
+      from: `"Roads of Adventure" <${this.configService.get<string>('EMAIL_USER')}>`,
+      to: adminEmail,
+      subject: `New Newsletter Subscriber: ${subscriber.email}`,
+      html: `
+        <h2>New Newsletter Subscriber!</h2>
+        <p>A new email address has subscribed to your newsletter:</p>
+        <ul>
+          <li><strong>Email:</strong> ${subscriber.email}</li>
+          <li><strong>Name:</strong> ${subscriber.name || 'N/A'}</li>
+          <li><strong>Phone:</strong> ${subscriber.phoneNumber || 'N/A'}</li>
+          <li><strong>Subscribed On:</strong> ${new Date(subscriber.createdAt).toLocaleString()}</li>
+        </ul>
+        <p>View all subscribers in your dashboard: <a href="${this.configService.get<string>('BASE_URL')}/subscribers/dashboard">View Subscribers</a></p>
+      `,
+    };
+    try {
+        await this.transporter.sendMail(mailOptions);
+        console.log(`MailService: Successfully sent new subscriber notification to admin (${this.adminEmail})`);
+    } catch (error) {
+        console.error(`MailService: Failed to send new subscriber notification to admin (${this.adminEmail}):`, error);
+        throw error; // Re-throw to propagate the error
+    }
+  }
+
+  
 
   async sendBookingNotification(booking: Booking): Promise<void> {
     const adminEmail = this.configService.get<string>("ADMIN_EMAIL") || "asiomizunoah@gmail.com"

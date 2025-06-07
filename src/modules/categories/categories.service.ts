@@ -96,14 +96,11 @@ export class CategoriesService {
     return category;
   }
 
-  async findBySlug(slug: string): Promise<Category> {
-    const category = await this.categoryModel.findOne({ slug }).populate("createdBy", "name email").exec();
-
-    if (!category) {
-      throw new NotFoundException(`Category with slug ${slug} not found.`);
-    }
-
-    return category;
+  async findBySlug(slug: string): Promise<Category | null> {
+    return this.categoryModel
+      .findOne({ slug })
+      .populate('country', 'name slug code') // <--- ADD THIS POPULATE LINE
+      .exec();
   }
 
   async update(id: string, updateCategoryDto: UpdateCategoryDto, userId: string): Promise<Category> {
@@ -142,4 +139,26 @@ export class CategoriesService {
 
     return deletedCategory;
   }
+
+  /**
+   * Finds all categories associated with a given country ID.
+   * @param countryId The ID of the country to filter categories by.
+   * @returns A promise that resolves to an array of Category documents.
+   */
+  async findByCountry(countryId: string): Promise<Category[]> {
+    try {
+      const categories = await this.categoryModel
+        .find({ country: countryId })
+        .populate('country', 'name slug') // Populate country details if needed, just name and slug for header
+        .select('name slug image') // Only select necessary fields for the carousel
+        .sort({ name: 1 }) // Order categories alphabetically
+        .exec();
+      return categories;
+    } catch (error) {
+      
+      // Depending on your error handling strategy, you might rethrow or return an empty array
+      throw new NotFoundException(`Could not retrieve categories for country ID: ${countryId}`);
+    }
+  }
+  
 }
