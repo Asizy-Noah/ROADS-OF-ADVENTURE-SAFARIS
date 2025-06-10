@@ -74,7 +74,7 @@ export class CountriesService {
     const [countries, total] = await Promise.all([
       this.countryModel
         .find(filter)
-        .sort({ createdAt: -1 }) // Sort by creation date, newest first
+        .sort({ createdAt: 1 }) // Sort by creation date, newest first
         .skip(skip)
         .limit(parsedLimit)
         .populate("createdBy", "name email")
@@ -164,8 +164,8 @@ export class CountriesService {
     const countries = await this.countryModel.find({
       name: { $in: staticCountryNames }
     })
-    .sort({ name: 1 }) // Optional: Sort by name for consistent order
-    .select('name code slug') // Only fetch necessary fields for the header
+    .select('name code slug')
+    .sort({ createdAt: 1 }) // Only fetch necessary fields for the header
     .exec();
     return countries;
   }
@@ -179,8 +179,8 @@ export class CountriesService {
     const countries = await this.countryModel.find({
       name: { $nin: staticCountryNames } // $nin means "not in"
     })
-    .sort({ name: 1 }) // Optional: Sort by name alphabetically
-    .select('name code slug') // Only fetch necessary fields for the header
+    .select('name code slug')
+    .sort({ createdAt: 1 }) // Only fetch necessary fields for the header
     .exec();
     return countries;
   }

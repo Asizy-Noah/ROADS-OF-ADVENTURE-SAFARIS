@@ -193,7 +193,7 @@ export class ToursService {
         .populate('countries', 'name slug code') // Populate relevant country fields
         .populate('categories', 'name slug')   // Populate relevant category fields
         .select('title slug overview summary coverImage days price discountPrice') // Select fields needed for the country page tour list
-        .sort({ title: 1 }) // Optional: Sort tours alphabetically by title
+        .sort({ days: -1 }) // Optional: Sort tours alphabetically by title
         .exec();
 
       return tours;
@@ -227,7 +227,7 @@ export class ToursService {
 
       const query = this.tourModel
         .find(queryConditions) // Use the dynamic queryConditions
-        .sort({ createdAt: -1 })
+        .sort({ days: -1 })
         .populate("countries", "name slug code")
         .populate("categories", "name slug")
         .select('title slug overview summary coverImage days price discountPrice');

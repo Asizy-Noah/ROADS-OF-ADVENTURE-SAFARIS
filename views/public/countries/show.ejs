@@ -1,6 +1,6 @@
 <!-- Hero Section Start -->
     <section class="country-hero-section">
-        <img src="<%= country.coverImage || '/img/default-country.jpg' %>" alt="<%= country.name %>" class="hero-image">
+        <img src="<%= country.coverImage %>" alt="<%= country.name %>" class="hero-image">
         <div class="hero-overlay">
             <div class="carousel-caption d-flex flex-column align-items-center justify-content-center">
                 <div class="p-3" style="max-width: 900px;">
@@ -62,38 +62,49 @@
     
     <div class="row">
         <% if (typeof tours !== 'undefined' && tours.length > 0) { %>
-            <% tours.forEach(tour => { %>
-                <div class="col-lg-3 col-md-6 mb-4">
-                    <div class="package-item bg-white mb-2">
-                        <div class="package-image">
-                            <img class="img-fluid" src="<%= tour.coverImage || '/img/default-tour.jpg' %>" alt="<%= tour.title %>">
-                        </div>
-                        <div class="p-4">
-                            <div class="d-flex justify-content-between mb-3">
-                                <small class="m-0"> <span class="font-weight-bold">Duration:</span> <i class="ri-time-line text-primary"></i> <%= tour.days %> days & <%= tour.days -1 %> Nights</small>
-                            </div>
-                            <a class="h5 text-decoration-none font-weight-bold" href="/tours/<%= tour.slug %>"><%= tour.title %></a>
-                            <p><%= tour.summary %></p>
-                        </div>
-                        <div class="border-top d-flex justify-content-between align-items-center">
-                            <div class="rating">
-                                <span class="stars">
-                                    <i class="fa fa-star"></i>
-                                    <i class="fa fa-star"></i>
-                                    <i class="fa fa-star"></i>
-                                    <i class="fa fa-star"></i>
-                                    <i class="fa fa-star-half-alt"></i>
-                                </span>
-                            </div>
-                            <a href="/tours/<%= tour.slug %>" class="btn font-weight-bold text-white book-btn">Book Now</a>
-                        </div>
-                    </div>
+        <% tours.forEach(function(tour) { 
+            var overviewText = tour.overview || '';
+            var maxLength = 70;
+            if (overviewText.length > maxLength) {
+                overviewText = overviewText.substring(0, maxLength) + '...';
+            }
+        %>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="package-item bg-white mb-2">
+                <div class="package-image">
+                    <img class="img-fluid" src="<%= tour.coverImage || '/img/default-tour.jpg' %>" alt="<%= tour.title %>">
                 </div>
-            <% }); %>
-        <% } else { %>
-            <div class="col-12 text-center">
-                <p>No tours found for <%= country.name %> yet. Check back soon!</p>
+                <div class="p-4">
+                    <div class="d-flex justify-content-between mb-3">
+                        <small class="m-0">
+                            <span class="font-weight-bold">Duration:</span>
+                            <i class="ri-time-line text-primary"></i>
+                            <%= tour.days %> days & <%= tour.days - 1 %> Nights
+                        </small>
+                    </div>
+                    <a class="h5 text-decoration-none font-weight-bold" href="/tours/<%= tour.slug %>"><%= tour.title %></a>
+                    <p><%- overviewText %></p>
+                </div>
+                <div class="border-top d-flex justify-content-between align-items-center">
+                    <div class="rating">
+                        <span class="stars">
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star-half-alt"></i>
+                        </span>
+                    </div>
+                    <a href="/tours/<%= tour.slug %>" class="btn font-weight-bold text-white book-btn">Book Now</a>
+                </div>
             </div>
+        </div>
+        <% }); %>
+        <% } else { %>
+        <div class="col-12 text-center">
+            <p>No tours found for <%= country.name %> yet. Check back soon!</p>
+        </div>
         <% } %>
     </div>
+
 </section>

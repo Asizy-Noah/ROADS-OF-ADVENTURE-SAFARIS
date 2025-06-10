@@ -3116,7 +3116,7 @@ let CategoriesService = class CategoriesService {
         const [categories, total] = await Promise.all([
             this.categoryModel
                 .find(filter)
-                .sort({ createdAt: -1 })
+                .sort({ createdAt: 1 })
                 .skip(skip)
                 .limit(parsedLimit)
                 .populate("createdBy", "name email")
@@ -3142,6 +3142,7 @@ let CategoriesService = class CategoriesService {
     async findBySlug(slug) {
         return this.categoryModel
             .findOne({ slug })
+            .sort({ time: 1 })
             .populate('country', 'name slug code')
             .exec();
     }
@@ -3856,7 +3857,7 @@ let CountriesService = class CountriesService {
         const [countries, total] = await Promise.all([
             this.countryModel
                 .find(filter)
-                .sort({ createdAt: -1 })
+                .sort({ createdAt: 1 })
                 .skip(skip)
                 .limit(parsedLimit)
                 .populate("createdBy", "name email")
@@ -3919,8 +3920,8 @@ let CountriesService = class CountriesService {
         const countries = await this.countryModel.find({
             name: { $in: staticCountryNames }
         })
-            .sort({ name: 1 })
             .select('name code slug')
+            .sort({ createdAt: 1 })
             .exec();
         return countries;
     }
@@ -3929,8 +3930,8 @@ let CountriesService = class CountriesService {
         const countries = await this.countryModel.find({
             name: { $nin: staticCountryNames }
         })
-            .sort({ name: 1 })
             .select('name code slug')
+            .sort({ createdAt: 1 })
             .exec();
         return countries;
     }
@@ -7260,7 +7261,7 @@ let ToursService = class ToursService {
                 .populate('countries', 'name slug code')
                 .populate('categories', 'name slug')
                 .select('title slug overview summary coverImage days price discountPrice')
-                .sort({ title: 1 })
+                .sort({ days: -1 })
                 .exec();
             return tours;
         }
@@ -7279,7 +7280,7 @@ let ToursService = class ToursService {
             }
             const query = this.tourModel
                 .find(queryConditions)
-                .sort({ createdAt: -1 })
+                .sort({ days: -1 })
                 .populate("countries", "name slug code")
                 .populate("categories", "name slug")
                 .select('title slug overview summary coverImage days price discountPrice');

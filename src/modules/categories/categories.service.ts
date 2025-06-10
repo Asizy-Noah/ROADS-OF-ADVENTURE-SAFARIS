@@ -67,7 +67,7 @@ export class CategoriesService {
     const [categories, total] = await Promise.all([
       this.categoryModel
         .find(filter)
-        .sort({ createdAt: -1 })
+        .sort({ createdAt: 1 })
         .skip(skip)
         .limit(parsedLimit)
         .populate("createdBy", "name email")
@@ -99,6 +99,7 @@ export class CategoriesService {
   async findBySlug(slug: string): Promise<Category | null> {
     return this.categoryModel
       .findOne({ slug })
+      .sort({ time: 1 })
       .populate('country', 'name slug code') // <--- ADD THIS POPULATE LINE
       .exec();
   }
