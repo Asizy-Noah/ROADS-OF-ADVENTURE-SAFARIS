@@ -253,7 +253,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="form-row">
                 <div class="form-group col-md-2">
                     <label>Day</label>
-                    <input type="number" name="itineraries[${newIndex}][day]" class="form-control" min="1" value="${newIndex + 1}" required>
+                    <input type="text" name="itineraries[${newIndex}][day]" class="form-control"  value="${newIndex + 1}" required>
                 </div>
 
                 <div class="form-group col-md-10">
@@ -271,7 +271,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="form-row">
                 <div class="form-group col-md-6">
                     <label>Meal Plan</label>
-                    <select name="itineraries[${newIndex}][mealPlan]" class="form-control" required>
+                    <select name="itineraries[${newIndex}][meals]" class="form-control" required>
                         <option value="">Select Meal Plan</option>
                         <option value="Lunch & Dinner">Lunch & Dinner</option>
                         <option value="Breakfast, Lunch & Dinner">Breakfast, Lunch & Dinner</option>

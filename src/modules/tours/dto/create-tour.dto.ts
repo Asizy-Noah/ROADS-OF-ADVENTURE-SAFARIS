@@ -35,7 +35,7 @@ export class ItineraryItemDto {
   @IsString()
   @IsNotEmpty()
   @IsEnum(['Lunch & Dinner', 'Breakfast, Lunch & Dinner', 'Breakfast & Lunch', 'Breakfast Only', '']) // Add '' for "Select Meal Plan" option if it's sent empty
-  mealPlan: string; // Renamed from 'meals' to 'mealPlan' to match HTML
+  meals: string; // Renamed from 'meals' to 'mealPlan' to match HTML
 
   @IsOptional()
   @IsArray()

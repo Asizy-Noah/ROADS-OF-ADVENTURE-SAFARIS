@@ -1728,26 +1728,26 @@ textarea.form-control {
 }
 
 /* --- NEW STYLES FOR IMAGE PREVIEW SQUARE --- */
-.file-preview {
-    display: flex; /* Use flexbox for centering */
-    align-items: center; /* Center vertically */
-    justify-content: center; /* Center horizontally */
-    width: 120px; /* Desired square width */
-    height: 120px; /* Desired square height */
-    overflow: hidden; /* Hide parts of the image that spill outside */
+/* .file-preview {
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    width: 120px; 
+    height: 120px; 
+    overflow: hidden; 
     border: 1px solid #ddd;
-    border-radius: 8px; /* Slightly rounded corners */
-    margin: 10px auto 0 auto; /* Center the preview and add top margin */
-    background-color: #e9ecef; /* Light background if no image */
+    border-radius: 8px; 
+    margin: 10px auto 0 auto; 
+    background-color: #e9ecef; 
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .file-preview img {
-    width: 100%;  /* Fill the square width */
-    height: 100%; /* Fill the square height */
-    object-fit: cover; /* This is key: crops the image to fill the container without distorting */
-    display: block; /* Remove extra space below image */
-}
+    width: 100%;  
+    height: 100%; 
+    object-fit: cover; 
+    display: block; 
+} */
 
 /* Pages Add form*/
 .content-block {

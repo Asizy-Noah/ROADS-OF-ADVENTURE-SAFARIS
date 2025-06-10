@@ -1,7 +1,7 @@
 // src/modules/categories/categories.service.ts
 import { Injectable, NotFoundException, ConflictException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import { Model } from "mongoose";
+import { Model, Types } from "mongoose";
 import { Category } from "./schemas/category.schema";
 import type { CreateCategoryDto } from "./dto/create-category.dto";
 import type { UpdateCategoryDto } from "./dto/update-category.dto";
@@ -145,17 +145,20 @@ export class CategoriesService {
    * @param countryId The ID of the country to filter categories by.
    * @returns A promise that resolves to an array of Category documents.
    */
-  async findByCountry(countryId: string): Promise<Category[]> {
+  async findByCountry(countryId: string): Promise<Category[]> { 
     try {
+      console.log(`[CategoriesService] Searching categories for country ID: ${countryId}`);
       const categories = await this.categoryModel
         .find({ country: countryId })
+        .find({ country: new Types.ObjectId(countryId) })
         .populate('country', 'name slug') // Populate country details if needed, just name and slug for header
         .select('name slug image') // Only select necessary fields for the carousel
         .sort({ name: 1 }) // Order categories alphabetically
         .exec();
+        console.log(`[CategoriesService] Found ${categories.length} categories for country ID ${countryId}:`, categories.map(c => c.name));
       return categories;
     } catch (error) {
-      
+      console.error(`[CategoriesService] Error retrieving categories for country ID ${countryId}:`, error);
       // Depending on your error handling strategy, you might rethrow or return an empty array
       throw new NotFoundException(`Could not retrieve categories for country ID: ${countryId}`);
     }

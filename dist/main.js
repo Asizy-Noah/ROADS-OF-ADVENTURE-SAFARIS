@@ -2798,6 +2798,10 @@ let CategoriesController = class CategoriesController {
             body,
         };
     }
+    async getCategoriesByCountry(countryId) {
+        const categories = await this.categoriesService.findByCountry(countryId);
+        return { data: categories };
+    }
     async addCategory(createCategoryDto, file, req, res) {
         if (!req.user || !req.user.id) {
             req.flash('error_msg', 'You must be logged in to add a category.');
@@ -2925,6 +2929,14 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], CategoriesController.prototype, "getAddCategoryPage", null);
+__decorate([
+    (0, common_1.Get)('by-country/:countryId'),
+    (0, common_1.UseGuards)(session_auth_guard_1.SessionAuthGuard),
+    __param(0, (0, common_1.Param)('countryId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], CategoriesController.prototype, "getCategoriesByCountry", null);
 __decorate([
     (0, common_1.Post)('dashboard/add'),
     (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('image', {
@@ -3163,15 +3175,19 @@ let CategoriesService = class CategoriesService {
     }
     async findByCountry(countryId) {
         try {
+            console.log(`[CategoriesService] Searching categories for country ID: ${countryId}`);
             const categories = await this.categoryModel
                 .find({ country: countryId })
+                .find({ country: new mongoose_2.Types.ObjectId(countryId) })
                 .populate('country', 'name slug')
                 .select('name slug image')
                 .sort({ name: 1 })
                 .exec();
+            console.log(`[CategoriesService] Found ${categories.length} categories for country ID ${countryId}:`, categories.map(c => c.name));
             return categories;
         }
         catch (error) {
+            console.error(`[CategoriesService] Error retrieving categories for country ID ${countryId}:`, error);
             throw new common_1.NotFoundException(`Could not retrieve categories for country ID: ${countryId}`);
         }
     }
@@ -6260,7 +6276,7 @@ __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.IsEnum)(['Lunch & Dinner', 'Breakfast, Lunch & Dinner', 'Breakfast & Lunch', 'Breakfast Only', '']),
     __metadata("design:type", String)
-], ItineraryItemDto.prototype, "mealPlan", void 0);
+], ItineraryItemDto.prototype, "meals", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsArray)(),
