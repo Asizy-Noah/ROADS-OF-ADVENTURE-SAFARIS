@@ -1,18 +1,11 @@
 // src/modules/categories/categories.api.controller.ts
-import { Controller, Get, Param, Query } from "@nestjs/common";
+import { Controller, Get, Param, Query, UseGuards, } from "@nestjs/common";
 import { CategoriesService } from "./categories.service";
+import { SessionAuthGuard } from "../auth/guards/session-auth.guard";
 
 @Controller("api/categories") // Base route for the API endpoints
 export class CategoriesApiController {
   constructor(private readonly categoriesService: CategoriesService) {}
-
-  @Get("country/:countryId")
-  async getCategoriesByCountry(@Param("countryId") countryId: string) {
-    // Pass countryId inside an object as expected by findAll
-    // The service now accepts `countryId` in its query options
-    const categoriesResult = await this.categoriesService.findAll({ countryId: countryId, limit: '1000' }); // Pass a large limit to get all
-    return categoriesResult.data; // Return just the array of categories (now named 'data')
-  }
 
   @Get()
   async getAllCategoriesApi(
@@ -24,5 +17,12 @@ export class CategoriesApiController {
     const categoriesResult = await this.categoriesService.findAll({ page, limit, search, countryId });
     // You might want to return the full pagination object here for API consumers
     return categoriesResult;
+  }
+
+  @Get('by-country/:countryId') // Define the route for fetching by country
+  @UseGuards(SessionAuthGuard) // Protect this endpoint if necessary
+  async getCategoriesByCountry(@Param('countryId') countryId: string) {
+    const categories = await this.categoriesService.findByCountry(countryId);
+    return { data: categories }; // Return categories in a 'data' property for consistency
   }
 }

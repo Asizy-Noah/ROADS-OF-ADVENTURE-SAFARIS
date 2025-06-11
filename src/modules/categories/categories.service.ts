@@ -146,23 +146,28 @@ export class CategoriesService {
    * @param countryId The ID of the country to filter categories by.
    * @returns A promise that resolves to an array of Category documents.
    */
-  async findByCountry(countryId: string): Promise<Category[]> { 
+  async findByCountry(countryId: string): Promise<Category[]> {
+    // --- IMPORTANT: Validate countryId is a valid ObjectId format first ---
+    if (!Types.ObjectId.isValid(countryId)) {
+      console.log(`[CategoriesService] Invalid country ID format received: ${countryId}`);
+      throw new NotFoundException(`Invalid country ID format: ${countryId}`);
+    }
+
     try {
       console.log(`[CategoriesService] Searching categories for country ID: ${countryId}`);
       const categories = await this.categoryModel
-        .find({ country: countryId })
+        // <<< CRITICAL CORRECTION: Use only one .find() with new Types.ObjectId()
         .find({ country: new Types.ObjectId(countryId) })
-        .populate('country', 'name slug') // Populate country details if needed, just name and slug for header
-        .select('name slug image') // Only select necessary fields for the carousel
+        .populate('country', 'name slug') // Populate country details if needed
+        .select('name slug image') // Only select necessary fields (name and slug for dropdown)
         .sort({ name: 1 }) // Order categories alphabetically
         .exec();
-        console.log(`[CategoriesService] Found ${categories.length} categories for country ID ${countryId}:`, categories.map(c => c.name));
+
+      console.log(`[CategoriesService] Found ${categories.length} categories for country ID ${countryId}:`, categories.map(c => c.name));
       return categories;
     } catch (error) {
       console.error(`[CategoriesService] Error retrieving categories for country ID ${countryId}:`, error);
-      // Depending on your error handling strategy, you might rethrow or return an empty array
       throw new NotFoundException(`Could not retrieve categories for country ID: ${countryId}`);
     }
   }
-  
 }

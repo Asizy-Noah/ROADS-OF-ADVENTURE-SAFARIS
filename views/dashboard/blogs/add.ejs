@@ -18,31 +18,8 @@
             </div>
 
             <div class="form-group">
-                <label for="blogCategories">Categories</label>
-                <select id="blogCategories" name="topic" class="form-control" required>
-                    <option value="">Select Categories</option>
-                    <option value="Wildlife Safaris" <%= (typeof oldInput !== 'undefined' && oldInput.categories && oldInput.categories.includes('Wildlife Safaris')) ? 'selected' : '' %>>Wildlife Safaris</option>
-                    <option value="Mountain Gorilla Trekking" <%= (typeof oldInput !== 'undefined' && oldInput.categories && oldInput.categories.includes('Mountain Gorilla Trekking')) ? 'selected' : '' %>>Mountain Gorilla Trekking</option>
-                    <option value="Cultural Tours" <%= (typeof oldInput !== 'undefined' && oldInput.categories && oldInput.categories.includes('Cultural Tours')) ? 'selected' : '' %>>Cultural Tours</option>
-                    <option value="Bird Watching" <%= (typeof oldInput !== 'undefined' && oldInput.categories && oldInput.categories.includes('Bird Watching')) ? 'selected' : '' %>>Bird Watching</option>
-                    <option value="Adventure Sports" <%= (typeof oldInput !== 'undefined' && oldInput.categories && oldInput.categories.includes('Adventure Sports')) ? 'selected' : '' %>>Adventure Sports</option>
-                    <option value="Beach Holidays" <%= (typeof oldInput !== 'undefined' && oldInput.categories && oldInput.categories.includes('Beach Holidays')) ? 'selected' : '' %>>Beach Holidays</option>
-                    <option value="City Breaks" <%= (typeof oldInput !== 'undefined' && oldInput.categories && oldInput.categories.includes('City Breaks')) ? 'selected' : '' %>>City Breaks</option>
-                    <option value="Eco-Tourism" <%= (typeof oldInput !== 'undefined' && oldInput.categories && oldInput.categories.includes('Eco-Tourism')) ? 'selected' : '' %>>Eco-Tourism</option>
-                    <option value="Photography Safaris" <%= (typeof oldInput !== 'undefined' && oldInput.categories && oldInput.categories.includes('Photography Safaris')) ? 'selected' : '' %>>Photography Safaris</option>
-                    <option value="Luxury Travel" <%= (typeof oldInput !== 'undefined' && oldInput.categories && oldInput.categories.includes('Luxury Travel')) ? 'selected' : '' %>>Luxury Travel</option>
-                    <option value="Budget Travel" <%= (typeof oldInput !== 'undefined' && oldInput.categories && oldInput.categories.includes('Budget Travel')) ? 'selected' : '' %>>Budget Travel</option>
-                    <option value="Travel Tips" <%= (typeof oldInput !== 'undefined' && oldInput.categories && oldInput.categories.includes('Travel Tips')) ? 'selected' : '' %>>Travel Tips</option>
-                    <option value="Conservation" <%= (typeof oldInput !== 'undefined' && oldInput.categories && oldInput.categories.includes('Conservation')) ? 'selected' : '' %>>Conservation</option>
-                    <option value="Local Cuisine" <%= (typeof oldInput !== 'undefined' && oldInput.categories && oldInput.categories.includes('Local Cuisine')) ? 'selected' : '' %>>Local Cuisine</option>
-                    <option value="Historical Sites" <%= (typeof oldInput !== 'undefined' && oldInput.categories && oldInput.categories.includes('Historical Sites')) ? 'selected' : '' %>>Historical Sites</option>
-                </select>
-                <small class="form-text text-muted">Hold Ctrl/Cmd to select multiple categories.</small>
-            </div>
-
-            <div class="form-group">
                 <label for="blogContent">Content</label>
-                <div id="blogContentEditor" class="editor-container blog-editor" style="height: 400px; border: 1px solid #ced4da; border-radius: 0.25rem;">
+                <div id="blogContentEditor" class="editor-container blog-editor" style="height: 100px; border: 1px solid #ced4da; border-radius: 0.25rem;">
                     <%= typeof oldInput !== 'undefined' ? oldInput.content || '' : '' %>
                 </div>
                 <input type="hidden" name="content" id="blogContent"
@@ -50,18 +27,18 @@
             </div>
 
             <div class="form-group">
-                <label for="featuredImage">Featured Image</label>
-                <div class="file-upload-container">
-                    <input type="file" id="featuredImage" name="coverImage" class="file-input" accept="image/*">
-                    <div class="file-upload-box">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                        <span>Drag & drop image or click to browse</span>
+                <div class="form-group">
+                <label for="coverImage">Upload Featured Image</label>
+                <div class="file-upload-container row">
+                    <div class="col-md-6">
+                        <input type="file" id="coverImage" name="coverImage" class="file-input" accept="image/*">
+                        <div class="file-upload-box">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <span>Drag & drop image or click to browse</span>
+                        </div>
                     </div>
-                    <div class="file-preview" id="imagePreview">
-                        <% if (typeof oldInput !== 'undefined' && oldInput.coverImage) { %>
-                            <img src="/uploads/<%= oldInput.coverImage %>" alt="Current Featured Image" style="max-width: 100%; height: auto; display: block; margin-top: 10px;">
-                        <% } %>
-                    </div>
+                    <div class="col-md-6"><div class="file-preview" id="imagePreview"></div></div>
+                </div>
                 </div>
             </div>
         </div>
@@ -71,37 +48,23 @@
             <div class="form-group">
                 <label for="seoTitle">Meta Title</label>
                 <input type="text" id="seoTitle" name="seoTitle" class="form-control"
-                       value="<%= typeof oldInput !== 'undefined' ? oldInput.seoTitle || '' : '' %>">
-                <small class="form-text text-muted">Recommended length: 50-60 characters (for browser tabs and search results).</small>
+                       value="<%= typeof oldInput !== 'undefined' ? oldInput.seoTitle || '' : '' %>" placeholder="Recommended length: 50-60 characters">
             </div>
             <div class="form-group">
                 <label for="seoDescription">Meta Description</label>
-                <textarea id="seoDescription" name="seoDescription" class="form-control" rows="3"><%= typeof oldInput !== 'undefined' ? oldInput.seoDescription || '' : '' %></textarea>
-                <small class="form-text text-muted">Recommended length: 150-160 characters (for search result snippets).</small>
+                <textarea id="seoDescription" name="seoDescription" class="form-control" rows="3"><%= typeof oldInput !== 'undefined' ? oldInput.seoDescription || '' : '' %>Recommended length: 150-160 characters</textarea>
             </div>
             <div class="form-group">
                 <label for="seoKeywords">Meta Keywords</label>
                 <input type="text" id="seoKeywords" name="seoKeywords" class="form-control"
-                       value="<%= typeof oldInput !== 'undefined' ? oldInput.seoKeywords || '' : '' %>">
-                <small class="form-text text-muted">Separate keywords with commas (e.g., "Uganda safaris, gorilla trekking Uganda").</small>
-            </div>
-            <div class="form-group">
-                <label for="seoCanonicalUrl">Canonical URL</label>
-                <input type="url" id="seoCanonicalUrl" name="seoCanonicalUrl" class="form-control"
-                       value="<%= typeof oldInput !== 'undefined' ? oldInput.seoCanonicalUrl || '' : '' %>">
-                <small class="form-text text-muted">The preferred URL for this content to prevent duplicate content issues.</small>
-            </div>
-            <div class="form-group">
-                <label for="seoOgImage">Open Graph Image URL</label>
-                <input type="url" id="seoOgImage" name="seoOgImage" class="form-control"
-                       value="<%= typeof oldInput !== 'undefined' ? oldInput.seoOgImage || '' : '' %>">
-                <small class="form-text text-muted">Image for social media sharing (e.g., Facebook, Twitter). Full URL required.</small>
+                       value="<%= typeof oldInput !== 'undefined' ? oldInput.seoKeywords || '' : '' %>" placeholder="Separate keywords with commas">
+                
             </div>
         </div>
 
         <div class="form-actions">
             <button type="button" class="btn btn-secondary" onclick="window.location.href='/blogs/dashboard'">Cancel</button>
-            <button type="submit" class="btn btn-primary">Publish Update</button>
+            <button type="submit" class="btn btn-primary">Add Blog</button>
         </div>
     </form>
 </div>
@@ -153,46 +116,6 @@
                 return false;
             }
         });
-
-        // --- Featured Image Preview ---
-        var featuredImageInput = document.getElementById('featuredImage');
-        var imagePreviewContainer = document.getElementById('imagePreview');
-        var fileUploadBox = document.querySelector('.file-upload-box'); // The "Drag & drop" box
-
-        featuredImageInput.addEventListener('change', function(event) {
-            imagePreviewContainer.innerHTML = ''; // Clear previous preview
-            fileUploadBox.style.display = 'none'; // Hide the drag & drop box
-
-            var file = event.target.files[0];
-
-            if (file) {
-                if (file.type.startsWith('image/')) {
-                    var reader = new FileReader();
-                    reader.onload = function(e) {
-                        var img = document.createElement('img');
-                        img.src = e.target.result;
-                        img.style.maxWidth = '100%';
-                        img.style.height = 'auto';
-                        img.style.display = 'block';
-                        img.style.marginTop = '10px';
-                        imagePreviewContainer.appendChild(img);
-                    };
-                    reader.readAsDataURL(file);
-                } else {
-                    // Not an image file, perhaps show an error or reset
-                    alert('Please select an image file for the featured image.');
-                    featuredImageInput.value = ''; // Clear the input
-                    fileUploadBox.style.display = 'flex'; // Show drag & drop box again
-                }
-            } else {
-                // No file selected, show the drag & drop box if no existing image
-                var existingImage = imagePreviewContainer.querySelector('img');
-                if (!existingImage) { // Only show if no previous image is there (for edit forms)
-                    fileUploadBox.style.display = 'flex';
-                }
-            }
-        });
-
         // Optional: Handle clearing input if user wants to remove selected image
         // You might need a clear button or similar logic depending on UX
     });

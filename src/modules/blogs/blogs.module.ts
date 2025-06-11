@@ -7,6 +7,7 @@ import { MailModule } from "../mail/mail.module"
 import { SubscribersModule } from "../subscribers/subscribers.module"
 import { CountriesModule } from "../countries/countries.module" // <--- ADD THIS IMPORT
 import { CategoriesModule } from "../categories/categories.module" // <--- ADD THIS IMPORT
+import { ToursModule } from '../tours/tours.module';
 
 @Module({
   imports: [
@@ -14,7 +15,8 @@ import { CategoriesModule } from "../categories/categories.module" // <--- ADD T
     MailModule,
     SubscribersModule,
     CountriesModule, // <--- ADD CountriesModule here
-    CategoriesModule, // <--- ADD CategoriesModule here
+    CategoriesModule,
+    ToursModule, // <--- ADD CategoriesModule here
   ],
   controllers: [BlogsController],
   providers: [BlogsService],

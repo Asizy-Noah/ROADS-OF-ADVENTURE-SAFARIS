@@ -35,14 +35,15 @@ export class AppController {
     // Fetch About Us page
     const aboutUsPage = await this.pagesService.findOneByType(PageType.ABOUT); 
     
+  
+    // Fetch actual featured tours using findFeatured method
+    const featuredTours = await this.toursService.findFeatured();
+    console.log('AppController: Result from toursService.findFeatured():', featuredTours);
     
-
-    // Fetch featured tours (packages) - assuming findFeatured still returns a simple array
-    const { tours: featuredTours } = await this.toursService.findAll({ status: TourStatus.PUBLISHED }); // Assuming this method exists and returns all tours
   
     // Fetch all countries for destinations
     const result = await this.countriesService.findAll();
-const countries = Array.isArray(result) ? result : result.data ?? [];
+    const countries = Array.isArray(result) ? result : result.data ?? [];
 
     
     // Fetch approved reviews (if used on the homepage)

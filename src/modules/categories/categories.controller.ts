@@ -109,12 +109,7 @@ export class CategoriesController {
     };
   }
 
-  @Get('by-country/:countryId')
-  @UseGuards(SessionAuthGuard) // Protect this endpoint if needed
-  async getCategoriesByCountry(@Param('countryId') countryId: string) {
-    const categories = await this.categoriesService.findByCountry(countryId);
-    return { data: categories }; // Return categories in a 'data' property for consistency
-  }
+
 
 @Post('dashboard/add')
 @UseInterceptors(

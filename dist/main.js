@@ -36,7 +36,6 @@ const pages_service_1 = __webpack_require__(/*! ./modules/pages/pages.service */
 const subscribers_service_1 = __webpack_require__(/*! ./modules/subscribers/subscribers.service */ "./src/modules/subscribers/subscribers.service.ts");
 const blog_schema_1 = __webpack_require__(/*! ./modules/blogs/schemas/blog.schema */ "./src/modules/blogs/schemas/blog.schema.ts");
 const page_schema_1 = __webpack_require__(/*! ./modules/pages/schemas/page.schema */ "./src/modules/pages/schemas/page.schema.ts");
-const tour_schema_1 = __webpack_require__(/*! ./modules/tours/schemas/tour.schema */ "./src/modules/tours/schemas/tour.schema.ts");
 let AppController = class AppController {
     constructor(appService, toursService, countriesService, categoriesService, blogsService, reviewsService, pagesService, subscribersService) {
         this.appService = appService;
@@ -53,7 +52,8 @@ let AppController = class AppController {
         const page = parseInt(pageQuery, 10);
         const limit = 4;
         const aboutUsPage = await this.pagesService.findOneByType(page_schema_1.PageType.ABOUT);
-        const { tours: featuredTours } = await this.toursService.findAll({ status: tour_schema_1.TourStatus.PUBLISHED });
+        const featuredTours = await this.toursService.findFeatured();
+        console.log('AppController: Result from toursService.findFeatured():', featuredTours);
         const result = await this.countriesService.findAll();
         const countries = Array.isArray(result) ? result : (_a = result.data) !== null && _a !== void 0 ? _a : [];
         const reviews = await this.reviewsService.findApproved();
@@ -1085,7 +1085,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p;
+var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.BlogsController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
@@ -1097,14 +1097,16 @@ const user_schema_1 = __webpack_require__(/*! ../users/schemas/user.schema */ ".
 const blog_schema_1 = __webpack_require__(/*! ./schemas/blog.schema */ "./src/modules/blogs/schemas/blog.schema.ts");
 const multer_config_1 = __webpack_require__(/*! ../../config/multer.config */ "./src/config/multer.config.ts");
 const countries_service_1 = __webpack_require__(/*! ../countries/countries.service */ "./src/modules/countries/countries.service.ts");
+const tours_service_1 = __webpack_require__(/*! ../tours/tours.service */ "./src/modules/tours/tours.service.ts");
 const categories_service_1 = __webpack_require__(/*! ../categories/categories.service */ "./src/modules/categories/categories.service.ts");
 const roles_guard_1 = __webpack_require__(/*! ../auth/guards/roles.guard */ "./src/modules/auth/guards/roles.guard.ts");
 const roles_decorator_1 = __webpack_require__(/*! ../auth/decorators/roles.decorator */ "./src/modules/auth/decorators/roles.decorator.ts");
 let BlogsController = class BlogsController {
-    constructor(blogsService, countriesService, categoriesService) {
+    constructor(blogsService, countriesService, categoriesService, toursService) {
         this.blogsService = blogsService;
         this.countriesService = countriesService;
         this.categoriesService = categoriesService;
+        this.toursService = toursService;
     }
     async getPublicAllBlogs(query) {
         const filterOptions = { status: blog_schema_1.BlogStatus.VISIBLE };
@@ -1454,16 +1456,14 @@ let BlogsController = class BlogsController {
         }
     }
     async getPublicSingleBlog(slug, req, res) {
-        var _a;
         try {
             const blog = await this.blogsService.findBySlug(slug);
             if (!blog) {
                 throw new common_1.NotFoundException(`Blog with slug '${slug}' not found or not visible.`);
             }
+            const popularTours = await this.toursService.findPopular(4);
+            console.log(`BlogsController: Found ${popularTours.length} popular tours for blog page.`);
             const relatedBlogsResult = await this.blogsService.findAll({
-                $or: [
-                    ...(blog.categories && blog.categories.length > 0 ? [{ categories: (_a = blog.categories[0]) === null || _a === void 0 ? void 0 : _a._id }] : []),
-                ],
                 status: blog_schema_1.BlogStatus.VISIBLE,
                 limit: 4,
             });
@@ -1471,6 +1471,7 @@ let BlogsController = class BlogsController {
             return {
                 title: `${blog.title} - Roads of Adventure Safaris`,
                 blog,
+                popularTours,
                 relatedBlogs: filteredRelatedBlogs.slice(0, 3),
                 layout: "layouts/public",
                 seo: {
@@ -1532,7 +1533,7 @@ __decorate([
     __param(2, (0, common_1.Req)()),
     __param(3, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, typeof (_e = typeof Express !== "undefined" && (_d = Express.Multer) !== void 0 && _d.File) === "function" ? _e : Object, Object, typeof (_f = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _f : Object]),
+    __metadata("design:paramtypes", [Object, typeof (_f = typeof Express !== "undefined" && (_e = Express.Multer) !== void 0 && _e.File) === "function" ? _f : Object, Object, typeof (_g = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _g : Object]),
     __metadata("design:returntype", Promise)
 ], BlogsController.prototype, "addBlog", null);
 __decorate([
@@ -1544,7 +1545,7 @@ __decorate([
     __param(1, (0, common_1.Req)()),
     __param(2, (0, common_1.Res)({ passthrough: true })),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object, typeof (_g = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _g : Object]),
+    __metadata("design:paramtypes", [String, Object, typeof (_h = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _h : Object]),
     __metadata("design:returntype", Promise)
 ], BlogsController.prototype, "getEditBlogPage", null);
 __decorate([
@@ -1558,7 +1559,7 @@ __decorate([
     __param(3, (0, common_1.Req)()),
     __param(4, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object, typeof (_j = typeof Express !== "undefined" && (_h = Express.Multer) !== void 0 && _h.File) === "function" ? _j : Object, Object, typeof (_k = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _k : Object]),
+    __metadata("design:paramtypes", [String, Object, typeof (_k = typeof Express !== "undefined" && (_j = Express.Multer) !== void 0 && _j.File) === "function" ? _k : Object, Object, typeof (_l = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _l : Object]),
     __metadata("design:returntype", Promise)
 ], BlogsController.prototype, "updateBlog", null);
 __decorate([
@@ -1569,7 +1570,7 @@ __decorate([
     __param(1, (0, common_1.Req)()),
     __param(2, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object, typeof (_l = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _l : Object]),
+    __metadata("design:paramtypes", [String, Object, typeof (_m = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _m : Object]),
     __metadata("design:returntype", Promise)
 ], BlogsController.prototype, "deleteBlog", null);
 __decorate([
@@ -1581,7 +1582,7 @@ __decorate([
     __param(2, (0, common_1.Req)()),
     __param(3, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, typeof (_m = typeof blog_schema_1.BlogStatus !== "undefined" && blog_schema_1.BlogStatus) === "function" ? _m : Object, Object, typeof (_o = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _o : Object]),
+    __metadata("design:paramtypes", [String, typeof (_o = typeof blog_schema_1.BlogStatus !== "undefined" && blog_schema_1.BlogStatus) === "function" ? _o : Object, Object, typeof (_p = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _p : Object]),
     __metadata("design:returntype", Promise)
 ], BlogsController.prototype, "updateBlogStatus", null);
 __decorate([
@@ -1591,12 +1592,12 @@ __decorate([
     __param(1, (0, common_1.Req)()),
     __param(2, (0, common_1.Res)({ passthrough: true })),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object, typeof (_p = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _p : Object]),
+    __metadata("design:paramtypes", [String, Object, typeof (_q = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _q : Object]),
     __metadata("design:returntype", Promise)
 ], BlogsController.prototype, "getPublicSingleBlog", null);
 BlogsController = __decorate([
     (0, common_1.Controller)("blogs"),
-    __metadata("design:paramtypes", [typeof (_a = typeof blogs_service_1.BlogsService !== "undefined" && blogs_service_1.BlogsService) === "function" ? _a : Object, typeof (_b = typeof countries_service_1.CountriesService !== "undefined" && countries_service_1.CountriesService) === "function" ? _b : Object, typeof (_c = typeof categories_service_1.CategoriesService !== "undefined" && categories_service_1.CategoriesService) === "function" ? _c : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof blogs_service_1.BlogsService !== "undefined" && blogs_service_1.BlogsService) === "function" ? _a : Object, typeof (_b = typeof countries_service_1.CountriesService !== "undefined" && countries_service_1.CountriesService) === "function" ? _b : Object, typeof (_c = typeof categories_service_1.CategoriesService !== "undefined" && categories_service_1.CategoriesService) === "function" ? _c : Object, typeof (_d = typeof tours_service_1.ToursService !== "undefined" && tours_service_1.ToursService) === "function" ? _d : Object])
 ], BlogsController);
 exports.BlogsController = BlogsController;
 
@@ -1627,6 +1628,7 @@ const mail_module_1 = __webpack_require__(/*! ../mail/mail.module */ "./src/modu
 const subscribers_module_1 = __webpack_require__(/*! ../subscribers/subscribers.module */ "./src/modules/subscribers/subscribers.module.ts");
 const countries_module_1 = __webpack_require__(/*! ../countries/countries.module */ "./src/modules/countries/countries.module.ts");
 const categories_module_1 = __webpack_require__(/*! ../categories/categories.module */ "./src/modules/categories/categories.module.ts");
+const tours_module_1 = __webpack_require__(/*! ../tours/tours.module */ "./src/modules/tours/tours.module.ts");
 let BlogsModule = class BlogsModule {
 };
 BlogsModule = __decorate([
@@ -1637,6 +1639,7 @@ BlogsModule = __decorate([
             subscribers_module_1.SubscribersModule,
             countries_module_1.CountriesModule,
             categories_module_1.CategoriesModule,
+            tours_module_1.ToursModule,
         ],
         controllers: [blogs_controller_1.BlogsController],
         providers: [blogs_service_1.BlogsService],
@@ -1957,10 +1960,6 @@ __decorate([
     (0, mongoose_1.Prop)({ required: true }),
     __metadata("design:type", String)
 ], Blog.prototype, "content", void 0);
-__decorate([
-    (0, mongoose_1.Prop)({ required: true }),
-    __metadata("design:type", String)
-], Blog.prototype, "topic", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ required: true }),
     __metadata("design:type", String)
@@ -2671,26 +2670,20 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.CategoriesApiController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const categories_service_1 = __webpack_require__(/*! ./categories.service */ "./src/modules/categories/categories.service.ts");
+const session_auth_guard_1 = __webpack_require__(/*! ../auth/guards/session-auth.guard */ "./src/modules/auth/guards/session-auth.guard.ts");
 let CategoriesApiController = class CategoriesApiController {
     constructor(categoriesService) {
         this.categoriesService = categoriesService;
-    }
-    async getCategoriesByCountry(countryId) {
-        const categoriesResult = await this.categoriesService.findAll({ countryId: countryId, limit: '1000' });
-        return categoriesResult.data;
     }
     async getAllCategoriesApi(page = "1", limit = "10", search, countryId = "all") {
         const categoriesResult = await this.categoriesService.findAll({ page, limit, search, countryId });
         return categoriesResult;
     }
+    async getCategoriesByCountry(countryId) {
+        const categories = await this.categoriesService.findByCountry(countryId);
+        return { data: categories };
+    }
 };
-__decorate([
-    (0, common_1.Get)("country/:countryId"),
-    __param(0, (0, common_1.Param)("countryId")),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", Promise)
-], CategoriesApiController.prototype, "getCategoriesByCountry", null);
 __decorate([
     (0, common_1.Get)(),
     __param(0, (0, common_1.Query)("page")),
@@ -2701,6 +2694,14 @@ __decorate([
     __metadata("design:paramtypes", [String, String, String, String]),
     __metadata("design:returntype", Promise)
 ], CategoriesApiController.prototype, "getAllCategoriesApi", null);
+__decorate([
+    (0, common_1.Get)('by-country/:countryId'),
+    (0, common_1.UseGuards)(session_auth_guard_1.SessionAuthGuard),
+    __param(0, (0, common_1.Param)('countryId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], CategoriesApiController.prototype, "getCategoriesByCountry", null);
 CategoriesApiController = __decorate([
     (0, common_1.Controller)("api/categories"),
     __metadata("design:paramtypes", [typeof (_a = typeof categories_service_1.CategoriesService !== "undefined" && categories_service_1.CategoriesService) === "function" ? _a : Object])
@@ -2797,10 +2798,6 @@ let CategoriesController = class CategoriesController {
             messages: req.flash(),
             body,
         };
-    }
-    async getCategoriesByCountry(countryId) {
-        const categories = await this.categoriesService.findByCountry(countryId);
-        return { data: categories };
     }
     async addCategory(createCategoryDto, file, req, res) {
         if (!req.user || !req.user.id) {
@@ -2929,14 +2926,6 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], CategoriesController.prototype, "getAddCategoryPage", null);
-__decorate([
-    (0, common_1.Get)('by-country/:countryId'),
-    (0, common_1.UseGuards)(session_auth_guard_1.SessionAuthGuard),
-    __param(0, (0, common_1.Param)('countryId')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", Promise)
-], CategoriesController.prototype, "getCategoriesByCountry", null);
 __decorate([
     (0, common_1.Post)('dashboard/add'),
     (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('image', {
@@ -3175,10 +3164,13 @@ let CategoriesService = class CategoriesService {
         return deletedCategory;
     }
     async findByCountry(countryId) {
+        if (!mongoose_2.Types.ObjectId.isValid(countryId)) {
+            console.log(`[CategoriesService] Invalid country ID format received: ${countryId}`);
+            throw new common_1.NotFoundException(`Invalid country ID format: ${countryId}`);
+        }
         try {
             console.log(`[CategoriesService] Searching categories for country ID: ${countryId}`);
             const categories = await this.categoryModel
-                .find({ country: countryId })
                 .find({ country: new mongoose_2.Types.ObjectId(countryId) })
                 .populate('country', 'name slug')
                 .select('name slug image')
@@ -6634,6 +6626,10 @@ __decorate([
     (0, mongoose_1.Prop)({ type: mongoose.Schema.Types.ObjectId, ref: "User" }),
     __metadata("design:type", Object)
 ], Tour.prototype, "updatedBy", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: Number, default: 0 }),
+    __metadata("design:type", Number)
+], Tour.prototype, "views", void 0);
 Tour = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], Tour);
@@ -7219,15 +7215,18 @@ let ToursService = class ToursService {
         };
     }
     async findFeatured(limit) {
+        console.log('ToursService: findFeatured called. Now returning all PUBLISHED tours.');
         const query = this.tourModel
-            .find({ isFeatured: true, status: tour_schema_1.TourStatus.PUBLISHED })
-            .sort({ createdAt: -1 })
+            .find({ status: tour_schema_1.TourStatus.PUBLISHED })
+            .sort({ days: -1 })
             .populate("countries", "name slug")
             .populate("categories", "name slug");
         if (limit) {
             query.limit(limit);
         }
-        return query.exec();
+        const foundTours = await query.exec();
+        console.log(`ToursService: Found ${foundTours.length} PUBLISHED tours.`);
+        return foundTours;
     }
     async findOne(id) {
         const tour = await this.tourModel
@@ -7345,6 +7344,21 @@ let ToursService = class ToursService {
         tour.status = status;
         tour.updatedBy = new mongoose_2.Types.ObjectId(userId);
         return tour.save();
+    }
+    async findPopular(limit = 4) {
+        console.log(`ToursService: findPopular called. Fetching up to ${limit} popular tours.`);
+        const query = this.tourModel
+            .find({ status: tour_schema_1.TourStatus.PUBLISHED })
+            .sort({ views: -1, createdAt: -1 })
+            .limit(limit)
+            .populate("countries", "name slug")
+            .populate("categories", "name slug");
+        const popularTours = await query.exec();
+        console.log(`ToursService: Found ${popularTours.length} popular tours.`);
+        return popularTours;
+    }
+    async incrementViews(slug) {
+        return this.tourModel.findOneAndUpdate({ slug }, { $inc: { views: 1 } }, { new: true }).exec();
     }
 };
 ToursService = __decorate([

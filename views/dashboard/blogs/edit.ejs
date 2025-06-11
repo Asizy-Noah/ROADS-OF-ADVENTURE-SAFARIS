@@ -27,32 +27,10 @@
                 </div>
             </div>
 
-            <div class="form-group">
-                <label for="blogCategories">Categories</label>
-                <select id="blogCategories" name="topic" class="form-control" required>
-                    <option value="">Select Category</option>
-                    <option value="Wildlife Safaris" <%= blog.topic === 'Wildlife Safaris' ? 'selected' : '' %>>Wildlife Safaris</option>
-                    <option value="Mountain Gorilla Trekking" <%= blog.topic === 'Mountain Gorilla Trekking' ? 'selected' : '' %>>Mountain Gorilla Trekking</option>
-                    <option value="Cultural Tours" <%= blog.topic === 'Cultural Tours' ? 'selected' : '' %>>Cultural Tours</option>
-                    <option value="Bird Watching" <%= blog.topic === 'Bird Watching' ? 'selected' : '' %>>Bird Watching</option>
-                    <option value="Adventure Sports" <%= blog.topic === 'Adventure Sports' ? 'selected' : '' %>>Adventure Sports</option>
-                    <option value="Beach Holidays" <%= blog.topic === 'Beach Holidays' ? 'selected' : '' %>>Beach Holidays</option>
-                    <option value="City Breaks" <%= blog.topic === 'City Breaks' ? 'selected' : '' %>>City Breaks</option>
-                    <option value="Eco-Tourism" <%= blog.topic === 'Eco-Tourism' ? 'selected' : '' %>>Eco-Tourism</option>
-                    <option value="Photography Safaris" <%= blog.topic === 'Photography Safaris' ? 'selected' : '' %>>Photography Safaris</option>
-                    <option value="Luxury Travel" <%= blog.topic === 'Luxury Travel' ? 'selected' : '' %>>Luxury Travel</option>
-                    <option value="Budget Travel" <%= blog.topic === 'Budget Travel' ? 'selected' : '' %>>Budget Travel</option>
-                    <option value="Travel Tips" <%= blog.topic === 'Travel Tips' ? 'selected' : '' %>>Travel Tips</option>
-                    <option value="Conservation" <%= blog.topic === 'Conservation' ? 'selected' : '' %>>Conservation</option>
-                    <option value="Local Cuisine" <%= blog.topic === 'Local Cuisine' ? 'selected' : '' %>>Local Cuisine</option>
-                    <option value="Historical Sites" <%= blog.topic === 'Historical Sites' ? 'selected' : '' %>>Historical Sites</option>
-                </select>
-                <small class="form-text text-muted">Select the main category for this blog.</small>
-            </div>
-
+            
             <div class="form-group">
                 <label for="blogContent">Content</label>
-                <div id="blogContentEditor" class="editor-container blog-editor" style="height: 400px; border: 1px solid #ced4da; border-radius: 0.25rem;">
+                <div id="blogContentEditor" class="editor-container blog-editor" style="height: 100px; border: 1px solid #ced4da; border-radius: 0.25rem;">
                     <%= blog.content || '' %>
                 </div>
                 <input type="hidden" name="content" id="blogContent"
@@ -87,30 +65,20 @@
                 <label for="seoTitle">Meta Title</label>
                 <input type="text" id="seoTitle" name="seoTitle" class="form-control"
                        value="<%= blog.seoTitle || '' %>">
-                <small class="form-text text-muted">Recommended length: 50-60 characters (for browser tabs and search results).</small>
             </div>
             <div class="form-group">
                 <label for="seoDescription">Meta Description</label>
                 <textarea id="seoDescription" name="seoDescription" class="form-control" rows="3"><%= blog.seoDescription || '' %></textarea>
-                <small class="form-text text-muted">Recommended length: 150-160 characters (for search result snippets).</small>
             </div>
             <div class="form-group">
                 <label for="seoKeywords">Meta Keywords</label>
                 <input type="text" id="seoKeywords" name="seoKeywords" class="form-control"
                        value="<%= blog.seoKeywords || '' %>">
-                <small class="form-text text-muted">Separate keywords with commas (e.g., "Uganda safaris, gorilla trekking Uganda").</small>
-            </div>
-            <div class="form-group">
-                <label for="seoCanonicalUrl">Canonical URL</label>
-                <input type="url" id="seoCanonicalUrl" name="seoCanonicalUrl" class="form-control"
-                       value="<%= blog.seoCanonicalUrl || '' %>">
-                <small class="form-text text-muted">The preferred URL for this content to prevent duplicate content issues.</small>
             </div>
             <div class="form-group">
                 <label for="seoOgImage">Open Graph Image URL</label>
                 <input type="url" id="seoOgImage" name="seoOgImage" class="form-control"
                        value="<%= blog.seoOgImage || '' %>">
-                <small class="form-text text-muted">Image for social media sharing (e.g., Facebook, Twitter). Full URL required.</small>
             </div>
         </div>
 
@@ -261,3 +229,83 @@
         }
     });
 </script>
+
+<style>
+    .file-upload-container {
+        border: 2px dashed #007bff;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden; /* Hide default input */
+        margin-bottom: 15px;
+    }
+
+    .file-input {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    .file-upload-box {
+        color: #007bff;
+    }
+
+    .file-upload-box i {
+        font-size: 48px;
+        margin-bottom: 10px;
+    }
+
+    .file-preview {
+        margin-top: 15px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: center;
+        align-items: center;
+        min-height: 50px; /* Ensure space for preview */
+    }
+
+    .file-preview img, .current-image-preview img {
+        max-width: 150px;
+        max-height: 150px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        object-fit: cover;
+    }
+
+    .image-preview-item {
+        position: relative;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 5px;
+    }
+
+    .current-image-preview {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 15px;
+        padding: 10px;
+        border: 1px solid #e0e0e0;
+        border-radius: 5px;
+        background-color: #fcfcfc;
+    }
+
+    .current-image-preview label {
+        display: flex;
+        align-items: center;
+        font-weight: normal; /* Override bold label style */
+    }
+
+    .current-image-preview input[type="checkbox"] {
+        margin-right: 8px;
+        width: auto; /* Override 100% width */
+    }
+</style>

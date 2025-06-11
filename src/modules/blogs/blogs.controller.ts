@@ -28,6 +28,7 @@ import { UserRole } from "../users/schemas/user.schema";
 import { BlogStatus } from "./schemas/blog.schema";
 import { getMulterConfig } from '../../config/multer.config'; 
 import { CountriesService } from "../countries/countries.service";
+import { ToursService } from '../tours/tours.service';
 import { CategoriesService } from "../categories/categories.service";
 import { RolesGuard } from "../auth/guards/roles.guard"; // Adjust path based on your project structure
 import { Roles } from "../auth/decorators/roles.decorator"; // Adjust path based on your project structure
@@ -58,6 +59,7 @@ export class BlogsController {
         private readonly blogsService: BlogsService,
         private readonly countriesService: CountriesService,
         private readonly categoriesService: CategoriesService,
+        private readonly toursService: ToursService,
     ) {}
 
     // ===============================================
@@ -526,47 +528,52 @@ export class BlogsController {
     // PUBLIC-FACING SINGLE BLOG POST ROUTE (Must be last to avoid capturing dashboard routes)
     // ===============================================
     @Get(":slug") // GET /blogs/:slug (public single blog post)
-    @Render("public/blogs/show") // <--- THIS IS FOR THE PUBLIC VIEW
-    async getPublicSingleBlog(@Param("slug") slug: string, @Req() req, @Res({ passthrough: true }) res: Response) {
-        try {
-            const blog = await this.blogsService.findBySlug(slug); // findBySlug inherently looks for VISIBLE
-            if (!blog) { // findBySlug should throw if not found/visible, but good to have a backup
-                throw new NotFoundException(`Blog with slug '${slug}' not found or not visible.`);
-            }
+  @Render("public/blogs/show") // <--- THIS IS FOR THE PUBLIC VIEW
+  async getPublicSingleBlog(@Param("slug") slug: string, @Req() req, @Res({ passthrough: true }) res: Response) {
+    try {
+      const blog = await this.blogsService.findBySlug(slug);
+      if (!blog) {
+        throw new NotFoundException(`Blog with slug '${slug}' not found or not visible.`);
+      }
 
-            // Get related blogs from the same categories or countries
-            const relatedBlogsResult = await this.blogsService.findAll({
-                $or: [
-                    ...(blog.categories && blog.categories.length > 0 ? [{ categories: blog.categories[0]?._id }] : []),
-                ],
-                status: BlogStatus.VISIBLE,
-                limit: 4, // Fetch a few more to filter out current blog
-            });
+      // --- New: Fetch Popular Tour Packages ---
+      const popularTours = await this.toursService.findPopular(4); // Fetch 4 popular tours
+      console.log(`BlogsController: Found ${popularTours.length} popular tours for blog page.`);
+      // --- End New ---
 
-            const filteredRelatedBlogs = relatedBlogsResult.blogs.filter((relatedBlog) => relatedBlog._id.toString() !== blog._id.toString());
+      // Optional: Increment views for the blog post (if you have a views field for blogs)
+      // await this.blogsService.incrementViews(slug); // You'd need to create this method in BlogsService
 
-            return {
-                title: `${blog.title} - Roads of Adventure Safaris`,
-                blog,
-                relatedBlogs: filteredRelatedBlogs.slice(0, 3), // Limit to 3 related blogs
-                layout: "layouts/public",
-                seo: {
-                    title: blog.seoTitle || `${blog.title} - Roads of Adventure Safaris`,
-                    description: blog.seoDescription || blog.excerpt,
-                    keywords: blog.seoKeywords,
-                    canonicalUrl: blog.seoCanonicalUrl,
-                    ogImage: blog.seoOgImage || blog.coverImage,
-                },
-            };
-        } catch (error) {
-            if (error instanceof NotFoundException) {
-                req.flash('error_msg', error.message);
-                // Important: redirect to the public blogs index page if a public blog isn't found
-                return res.redirect('/blogs');
-            }
-            console.error('Error loading public blog post:', error);
-            req.flash('error_msg', 'An unexpected error occurred while loading the blog post.');
-            return res.redirect('/blogs');
-        }
+      // Get related blogs from the same categories or countries
+      const relatedBlogsResult = await this.blogsService.findAll({
+        status: BlogStatus.VISIBLE,
+        limit: 4, // Fetch a few more to filter out current blog
+      });
+
+      const filteredRelatedBlogs = relatedBlogsResult.blogs.filter((relatedBlog) => relatedBlog._id.toString() !== blog._id.toString());
+
+      return {
+        title: `${blog.title} - Roads of Adventure Safaris`,
+        blog,
+        popularTours, // <-- Pass popular tours to the EJS template
+        relatedBlogs: filteredRelatedBlogs.slice(0, 3),
+        layout: "layouts/public",
+        seo: {
+          title: blog.seoTitle || `${blog.title} - Roads of Adventure Safaris`,
+          description: blog.seoDescription || blog.excerpt,
+          keywords: blog.seoKeywords,
+          canonicalUrl: blog.seoCanonicalUrl,
+          ogImage: blog.seoOgImage || blog.coverImage,
+        },
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        req.flash('error_msg', error.message);
+        return res.redirect('/blogs');
+      }
+      console.error('Error loading public blog post:', error);
+      req.flash('error_msg', 'An unexpected error occurred while loading the blog post.');
+      return res.redirect('/blogs');
     }
+  }
 }

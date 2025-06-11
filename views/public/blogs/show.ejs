@@ -1,0 +1,88 @@
+<section class="category-hero-section">
+    <% if (blog.coverImage) { %>
+        <img src="<%= blog.coverImage %>" alt="<%= blog.title %>" class="hero-image">
+    <% } else { %>
+        <img src="/img/default-blog-hero.jpg" alt="Default Blog Hero" class="hero-image">
+    <% } %>
+    <div class="hero-overlay">
+        <h4 class="display-3 font-weight-bold text-white catergory-heading"><%= blog.title %></h4>
+    </div>
+</section>
+<section class="container description-section py-5">
+    <div class="row">
+        <div class="col-lg-8 mb-5 mb-lg-0">
+            <h2 class="text-primary mb-4"><%= blog.title %></h2>
+            <div class="blog-meta mb-4">
+                <span><i class="far fa-calendar-alt"></i> <%= blog.createdAt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %></span>
+                <% if (blog.category && blog.category.name) { %>
+                    <span><i class="far fa-folder"></i> <%= blog.category.name %></span>
+                <% } %>
+                <% if (blog.author && blog.author.name) { %>
+                    <span><i class="far fa-user"></i> <%= blog.author.name %></span>
+                <% } %>
+                <% if (blog.views !== undefined) { %>
+                    <span><i class="fas fa-eye"></i> <%= blog.views %> views</span>
+                <% } %>
+            </div>
+            <div class="blog-content">
+                <%- blog.content %>
+            </div>
+
+            <% if (typeof relatedBlogs !== 'undefined' && relatedBlogs.length > 0) { %>
+                <hr class="my-5">
+                <section class="related-blogs mt-4">
+                    <h3>Related Blogs</h3>
+                    <div class="row">
+                        <% relatedBlogs.forEach(relatedBlog => { %>
+                            <div class="col-md-4 mb-4">
+                                <div class="card blog-card">
+                                    <img src="<%= relatedBlog.coverImage || '/img/default-blog.jpg' %>" class="card-img-top" alt="<%= relatedBlog.title %>">
+                                    <div class="card-body">
+                                        <h5 class="card-title"><a href="/blogs/<%= relatedBlog.slug %>"><%= relatedBlog.title %></a></h5>
+                                        <p class="card-text"><%- (relatedBlog.excerpt || (relatedBlog.content || '').substring(0, 80)) + '...' %></p>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }); %>
+                    </div>
+                </section>
+            <% } %>
+
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="sticky-top" style="top: 20px;">
+                <h3 class="text-primary mb-4 mt-3">Popular Packages</h3>
+                
+                <div class="sidebar-packages">
+                    <% if (typeof popularTours !== 'undefined' && popularTours.length > 0) { %>
+                        <% popularTours.forEach(tour => { %>
+                            <div class="sidebar-package-item bg-white shadow mb-4">
+                                <div class="sidebar-package-img">
+                                    <img src="<%= tour.coverImage || '/img/default-tour.jpg' %>" alt="<%= tour.title %>">
+                                </div>
+                                <div class="package-content">
+                                    <h5 class="text-primary"><a href="/tours/<%= tour.slug %>"><%= tour.title %></a></h5>
+                                    <p class="d-none d-md-block d-lg-none">
+                                        <%
+                                            let popularTourOverview = tour.overview || '';
+                                            if (popularTourOverview.length > 100) {
+                                                popularTourOverview = popularTourOverview.substring(0, 100) + '...';
+                                            }
+                                        %>
+                                        <%- popularTourOverview %>
+                                    </p>
+                                    <a href="/tours/<%= tour.slug %>" class="d-none btn btn-sm btn-primary d-md-inline-block d-lg-none">Read More</a>
+                                </div>
+                            </div>
+                        <% }); %>
+                    <% } else { %>
+                        <div class="col-12 text-center">
+                            <p>No popular tours found yet.</p>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

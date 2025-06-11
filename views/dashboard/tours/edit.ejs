@@ -34,8 +34,9 @@
                     <textarea id="tourHighlights" name="highlights" class="form-control" rows="6" placeholder="Write each highlight on a new line"><%= typeof oldInput !== 'undefined' ? oldInput.highlights : (tour.highlights || '') %></textarea>
                 </div>
 
-                <div class="form-group">
-                    <label>Cover Image</label>
+                <div class="form-group row">
+                    <div class="col-md-6">
+                        <label>Cover Image</label>
                     <% if (tour.coverImage) { %>
                         <div class="current-image-preview">
                             <img src="<%= tour.coverImage %>" alt="Current Cover Image">
@@ -45,7 +46,9 @@
                             </label>
                         </div>
                     <% } %>
-                    <label for="coverImageUpload">Upload New Cover Image</label>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="coverImageUpload">Upload New Cover Image</label>
                     <div class="file-upload-container">
                         <input type="file" id="coverImageUpload" name="coverImage" class="file-input" accept="image/*">
                         <div class="file-upload-box">
@@ -54,13 +57,14 @@
                         </div>
                         <div class="file-preview" id="coverImagePreview"></div>
                     </div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div class="form-section">
     <div class="form-row">
-        <div class="form-group col-md-6">
+        <div class="form-group col-md-3">
             <label for="country">Country</label>
             <select id="country" name="country" class="form-control" required>
                 <option value="">Select Country</option>
@@ -73,32 +77,29 @@
             </select>
         </div>
 
-        <div class="form-group col-md-6">
+        <div class="form-group col-md-3">
             <label for="category">Category</label>
             <select id="category" name="category" class="form-control" required>
                 <option value="">Select Category</option>
-                <% categories.forEach(function(category) { %>
-                    <option value="<%= category._id %>"
-                        <%= (typeof oldInput !== 'undefined' && oldInput.category && oldInput.category.toString() === category._id.toString()) || (typeof tour !== 'undefined' && tour.categories && tour.categories.some(c => c._id.toString() === category._id.toString())) ? 'selected' : '' %>>
-                        <%= category.name %>
-                    </option>
-                <% }); %>
+                <% // Categories will be loaded dynamically by JavaScript %>
             </select>
         </div>
-    </div>
 
-    <div class="form-row">
-        <div class="form-group col-md-6">
+        <div class="form-group col-md-3">
             <label for="days">Number of Days</label>
             <input type="number" id="days" name="days" class="form-control" min="1"
                 value="<%= typeof oldInput !== 'undefined' ? oldInput.days : (tour.days || '') %>" required>
         </div>
 
-        <div class="form-group col-md-6">
+        <div class="form-group col-md-3">
             <label for="price">Price ($)</label>
             <input type="number" id="price" name="price" class="form-control" min="0" step="0.01"
                 value="<%= typeof oldInput !== 'undefined' ? oldInput.price : (tour.price || '') %>" required>
         </div>
+    </div>
+
+    <div class="form-row">
+        
     </div>
 
     <div class="column-inputs">
@@ -252,33 +253,29 @@
             <div class="form-group">
                 <label for="seoTitle">Meta Title</label>
                 <input type="text" id="seoTitle" name="seoTitle" class="form-control"
-                    value="<%= typeof oldInput !== 'undefined' ? oldInput.seoTitle : (tour.seoTitle || '') %>">
-                <small class="form-text text-muted">Recommended length: 50-60 characters (for browser tabs and search results).</small>
+                    value="<%= typeof oldInput !== 'undefined' ? oldInput.seoTitle : (tour.seoTitle || '') %>" placeholder="Recommended length: 50-60 characters">
             </div>
 
             <div class="form-group">
                 <label for="seoDescription">Meta Description</label>
-                <textarea id="seoDescription" name="seoDescription" class="form-control" rows="3"><%= typeof oldInput !== 'undefined' ? oldInput.seoDescription : (tour.seoDescription || '') %></textarea>
-                <small class="form-text text-muted">Recommended length: 150-160 characters (for search result snippets).</small>
+                <textarea id="seoDescription" name="seoDescription" class="form-control" rows="3"><%= typeof oldInput !== 'undefined' ? oldInput.seoDescription : (tour.seoDescription || '') %>Recommended length: 150-160 characters</textarea>
             </div>
 
             <div class="form-group">
                 <label for="seoKeywords">Meta Keywords</label>
                 <input type="text" id="seoKeywords" name="seoKeywords" class="form-control"
-                    value="<%= typeof oldInput !== 'undefined' ? oldInput.seoKeywords : (tour.seoKeywords || '') %>"> 
-                <small class="form-text text-muted">Separate keywords with commas (e.g., "Uganda safaris, gorilla trekking Uganda").</small>
+                    value="<%= typeof oldInput !== 'undefined' ? oldInput.seoKeywords : (tour.seoKeywords || '') %>" placeholder="Separate keywords with commas"> 
             </div>
 
             <div class="form-group">
                 <label for="seoOgImage">Open Graph Image URL</label>
                 <input type="url" id="seoOgImage" name="seoOgImage" class="form-control"
-                    value="<%= typeof oldInput !== 'undefined' ? oldInput.seoOgImage : (tour.seoOgImage || '') %>">
-                <small class="form-text text-muted">Image for social media sharing (e.g., Facebook, Twitter). Full URL required.</small>
+                    value="<%= typeof oldInput !== 'undefined' ? oldInput.seoOgImage : (tour.seoOgImage || '') %>" placeholder="Image for social media sharing (e.g., Facebook, Twitter). Full URL">
             </div>
         </div>
 
         <div class="form-actions">
-            <button type="submit" class="btn btn-primary">Update Tour</button>
+            <button type="submit" class="btn btn-primary">Update Tour Package</button>
         </div>
     </form>
 </div>
@@ -492,6 +489,106 @@
     });
 </script>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const countrySelect = document.getElementById('country');
+    const categorySelect = document.getElementById('category');
+
+    console.log('Edit Form Script: DOMContentLoaded - Script started.');
+
+    function filterCategories() {
+        const selectedCountryId = countrySelect.value;
+        console.log('Edit Form Script: filterCategories called.');
+        console.log('Edit Form Script: Current selected country ID from dropdown:', selectedCountryId);
+
+        // Clear existing categories (except the default "Select Category")
+        categorySelect.innerHTML = '<option value="">Select Category</option>';
+        console.log('Edit Form Script: Category dropdown cleared.');
+
+        if (selectedCountryId) {
+            const apiUrl = `/api/categories/by-country/${selectedCountryId}`;
+            console.log('Edit Form Script: Country ID is valid. Fetching categories from URL:', apiUrl);
+
+            fetch(apiUrl)
+                .then(response => {
+                    console.log('Edit Form Script: Fetch response received.');
+                    console.log('Edit Form Script: Response status ok:', response.ok);
+                    if (!response.ok) {
+                        console.error('Edit Form Script: Network response was not ok. Status:', response.status, 'Status Text:', response.statusText);
+                        return response.text().then(text => { throw new Error('HTTP error ' + response.status + ': ' + text); });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Edit Form Script: Data received from API:', data);
+
+                    if (data.data && Array.isArray(data.data)) {
+                        console.log(`Edit Form Script: API returned ${data.data.length} categories.`);
+                        if (data.data.length === 0) {
+                            console.warn('Edit Form Script: No categories found for this country.');
+                        }
+
+                        data.data.forEach(category => {
+                            const option = document.createElement('option');
+                            option.value = category._id;
+                            option.textContent = category.name;
+                            categorySelect.appendChild(option);
+                        });
+                        console.log('Edit Form Script: Categories populated in dropdown.');
+
+                        // Determine the category that should be selected:
+                        // 1. Prioritize oldInput (if form submission failed)
+                        // 2. Fallback to the tour's current category (for initial edit view)
+                        let oldSelectedCategory = '';
+                        <% if (typeof oldInput !== 'undefined' && oldInput.category) { %>
+                            oldSelectedCategory = '<%= oldInput.category.toString() %>';
+                        <% } else if (typeof tour !== 'undefined' && tour.category) { %>
+                            // Assuming tour.category is a single ObjectId or populated object.
+                            // If tour.category is an array, you'll need more complex logic here (e.g., tour.category[0]._id)
+                            oldSelectedCategory = '<%= tour.category.toString() %>';
+                        <% } %>
+
+                        console.log('Edit Form Script: Determined category to select:', oldSelectedCategory);
+
+                        if (oldSelectedCategory) {
+                            const optionExists = Array.from(categorySelect.options).some(option => option.value === oldSelectedCategory);
+                            console.log('Edit Form Script: Checking if determined category exists in new list:', optionExists);
+
+                            if (optionExists) {
+                                categorySelect.value = oldSelectedCategory;
+                                console.log('Edit Form Script: Category re-selected:', oldSelectedCategory);
+                            } else {
+                                categorySelect.value = "";
+                                console.log('Edit Form Script: Determined category not found for this country, resetting category dropdown.');
+                            }
+                        }
+                    } else {
+                        console.warn('Edit Form Script: API returned unexpected data format or data.data is not an array:', data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Edit Form Script: Error fetching categories:', error);
+                });
+        } else {
+            console.log('Edit Form Script: No country selected, skipping category fetch.');
+        }
+    }
+
+    // Event listener for country select change
+    countrySelect.addEventListener('change', filterCategories);
+    console.log('Edit Form Script: Event listener added to country dropdown.');
+
+    // Initial call to filter categories based on the current tour's country or oldInput's country.
+    // The country dropdown's value is already correctly set by EJS on page load.
+    if (countrySelect.value) {
+        console.log('Edit Form Script: Initial country value found, triggering filterCategories for page load.');
+        filterCategories();
+    } else {
+        console.log('Edit Form Script: No initial country selected on page load.');
+    }
+});
+</script>
+
 <style>
     /* Add/adjust these styles in your CSS file if they don't exist */
     .dashboard-content {
@@ -510,10 +607,7 @@
         border-bottom: 1px solid #eee;
     }
 
-    .form-title {
-        margin-top: 0;
-        color: #333;
-    }
+    
 
     .delete-form {
         margin-left: 20px; /* Space between title and button */
@@ -545,24 +639,6 @@
         border-radius: 8px;
         margin-bottom: 20px;
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
-    }
-
-    .section-title {
-        border-bottom: 1px solid #eee;
-        padding-bottom: 10px;
-        margin-bottom: 20px;
-        color: #555;
-    }
-
-    .form-group {
-        margin-bottom: 15px;
-    }
-
-    .form-group label {
-        display: block;
-        margin-bottom: 5px;
-        font-weight: 600;
-        color: #444;
     }
 
     .form-control, .file-input, .editor-container, .file-upload-box, select {

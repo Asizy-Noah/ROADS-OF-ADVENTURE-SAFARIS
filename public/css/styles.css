@@ -857,6 +857,8 @@ a {
 /* Categories Carousel */
 .categories-carousel {
   display: flex;
+  align-items: center;
+  justify-content: center;
   overflow-x: auto;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;

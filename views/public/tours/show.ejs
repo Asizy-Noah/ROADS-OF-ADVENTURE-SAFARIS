@@ -128,30 +128,43 @@
 
     <section class="related-section">
         <h2 class="section-title">You May Also Like</h2>
+
         <div class="row">
-            <% if (relatedTours && relatedTours.length > 0) { %>
-                <% relatedTours.forEach(function(relatedTour) { %>
-                    <div class="col-lg-4 col-md-6">
-                        <div class="package-card">
-                            <img src="<%= relatedTour.coverImage %>" alt="<%= relatedTour.title %>" class="img-fluid package-img w-100">
-                            <div class="package-content">
-                                <div class="package-meta">
-                                    <span><i class="far fa-clock"></i> <%= relatedTour.days %> Days</span>
-                                    <span><i class="fas fa-map-marker-alt"></i> <%= relatedTour.countries?.[0]?.name || 'N/A' %></span>
-                                </div>
-                                <h4 class="package-title"><%= relatedTour.title %></h4>
-                                <p><%= relatedTour.summary || (relatedTour.overview || '').substring(0, 100) + '...' %></p>
-                                <a href="/tours/<%= relatedTour.slug %>" class="btn btn-primary mt-3">View Details</a>
+        <% if (typeof relatedTours !== 'undefined' && relatedTours.length > 0) { %>
+            <% relatedTours.forEach(tour => { %>
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="package-item bg-white mb-2">
+                        <div class="package-image">
+                            <img class="img-fluid" src="<%= tour.coverImage || '/img/default-tour.jpg' %>" alt="<%= tour.title %>">
+                        </div>
+                        <div class="p-4">
+                            <div class="d-flex justify-content-between mb-3">
+                                <small class="m-0"> <span class="font-weight-bold">Duration:</span> <i class="ri-time-line text-primary"></i> <%= tour.days %> days & <%= tour.days -1 %> Nights</small>
                             </div>
+                            <a class="h5 text-decoration-none font-weight-bold" href="/tours/<%= tour.slug %>"><%= tour.title %></a>
+                            <p><%- tour.summary || (tour.overview || '').substring(0, 100) + '...' %></p>
+                        </div>
+                        <div class="border-top d-flex justify-content-between align-items-center">
+                            <div class="rating">
+                                <span class="stars">
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star-half-alt"></i>
+                                </span>
+                            </div>
+                            <a href="/tours/<%= tour.slug %>" class="btn font-weight-bold text-white book-btn">Book Now</a>
                         </div>
                     </div>
-                <% }); %>
-            <% } else { %>
-                <div class="col-12">
-                    <p>No related tours found at this time.</p>
                 </div>
-            <% } %>
-        </div>
+            <% }); %>
+        <% } else { %>
+            <div class="col-12 text-center">
+                <p>No related tours found for <%= category.name %> yet. Check back soon!</p>
+            </div>
+        <% } %>
+    </div>
     </section>
 </div>
 

@@ -115,6 +115,10 @@ export class Tour extends Document {
 
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: "User" })
   updatedBy?: Types.ObjectId | User;
+
+  // Add the views field
+  @Prop({ type: Number, default: 0 })
+  views: number; // New field for popularity tracking
 }
 
 export const TourSchema = SchemaFactory.createForClass(Tour);

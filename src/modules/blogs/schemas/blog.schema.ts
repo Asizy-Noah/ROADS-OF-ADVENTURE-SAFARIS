@@ -29,9 +29,6 @@ export class Blog extends Document {
   content: string
 
   @Prop({ required: true })
-  topic: string
-
-  @Prop({ required: true })
   coverImage: string // Remains `coverImage`
 
   @Prop([String])

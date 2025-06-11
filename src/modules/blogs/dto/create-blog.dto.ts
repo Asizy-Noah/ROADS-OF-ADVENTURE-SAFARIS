@@ -22,9 +22,6 @@ export class CreateBlogDto {
   @IsString()
   content: string
 
-  @IsNotEmpty()
-  @IsString()
-  topic: string
 
   @IsOptional()
   @IsString()
@@ -57,10 +54,6 @@ export class CreateBlogDto {
   @IsOptional()
   @IsString()
   seoKeywords?: string
-
-  @IsOptional()
-  @IsString()
-  seoCanonicalUrl?: string
 
   @IsOptional()
   @IsString()

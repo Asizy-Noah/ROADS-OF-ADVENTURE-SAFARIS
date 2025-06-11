@@ -135,9 +135,11 @@ export class ToursService {
   }
 
   async findFeatured(limit?: number): Promise<Tour[]> {
+    console.log('ToursService: findFeatured called. Now returning all PUBLISHED tours.'); // Updated log
     const query = this.tourModel
-      .find({ isFeatured: true, status: TourStatus.PUBLISHED })
-      .sort({ createdAt: -1 })
+      // Change: Removed { isFeatured: true } condition
+      .find({ status: TourStatus.PUBLISHED }) // <-- Now only filters by status: PUBLISHED
+      .sort({ days: -1 })
       .populate("countries", "name slug")
       .populate("categories", "name slug");
 
@@ -145,8 +147,12 @@ export class ToursService {
       query.limit(limit);
     }
 
-    return query.exec();
-  }
+    const foundTours = await query.exec();
+    console.log(`ToursService: Found ${foundTours.length} PUBLISHED tours.`); // Updated log
+    // console.log('ToursService: Details:', foundTours); // Uncomment for full tour details if needed
+
+    return foundTours;
+}
 
   async findOne(id: string): Promise<Tour> {
     const tour = await this.tourModel
@@ -331,5 +337,29 @@ export class ToursService {
     tour.updatedBy = new Types.ObjectId(userId);
 
     return tour.save();
+  }
+
+  // New method for popular tours
+  async findPopular(limit: number = 4): Promise<Tour[]> { // Default limit to 4 if not provided
+    console.log(`ToursService: findPopular called. Fetching up to ${limit} popular tours.`);
+    const query = this.tourModel
+      .find({ status: TourStatus.PUBLISHED }) // Only fetch published tours
+      .sort({ views: -1, createdAt: -1 }) // Sort by views (desc), then by creation date (desc)
+      .limit(limit)
+      .populate("countries", "name slug")
+      .populate("categories", "name slug");
+
+    const popularTours = await query.exec();
+    console.log(`ToursService: Found ${popularTours.length} popular tours.`);
+    return popularTours;
+  }
+
+  // You might also want a method to increment views when a tour is viewed
+  async incrementViews(slug: string): Promise<Tour> {
+    return this.tourModel.findOneAndUpdate(
+      { slug },
+      { $inc: { views: 1 } }, // Increment the views field by 1
+      { new: true } // Return the updated document
+    ).exec();
   }
 }

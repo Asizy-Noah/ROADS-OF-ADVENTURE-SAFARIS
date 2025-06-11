@@ -476,7 +476,6 @@ body {
 .section-title {
     font-size: 1.1rem;
     font-weight: 600;
-    color: var(--text-color);
 }
 
 .view-all {
@@ -908,8 +907,13 @@ body {
     padding-left: 10px;
 }
 
+.form-group label {
+    color: var(--primary-color);
+}
+
 label {
     font-weight: bold;
+    color: var(--primary-color);
 }
 
 .column-inputs {
