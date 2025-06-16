@@ -1,0 +1,51 @@
+<!-- Hero Section Start -->
+<section class="terms-hero-section">
+    <!-- Use coverImage for the hero image, or a fallback -->
+    <img src="<%= termsPage.coverImage ? termsPage.coverImage : 'img/destination-1.jpg' %>"
+         alt="<%= termsPage.title %> Hero Image" class="hero-image">
+    <div class="hero-overlay">
+        <!-- Use the page title from the database -->
+        <h1 class="display-4 text-white font-weight-bold"><%= termsPage.title %></h1>
+    </div>
+</section>
+<!-- Hero Section End -->
+    
+    <!-- Terms Content Section Start -->
+    <section class="terms-content-section">
+        <div class="container">
+            <div class="terms-container">
+                <div class="terms-header">
+                    <h2>Roads of Adventure Safaris - Terms and Conditions</h2>
+                    <!-- Render last updated date if available, otherwise keep static or remove -->
+                <p class="lead">Last updated: <%= termsPage.updatedAt ? new Date(termsPage.updatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A' %></p>
+                </div>
+                
+                <div class="terms-body">
+
+                <!-- Loop through contentBlocks to render each section dynamically -->
+                <% if (termsPage.contentBlocks && termsPage.contentBlocks.length > 0) { %>
+                    <% termsPage.contentBlocks.forEach((block, index) => { %>
+                        <div class="terms-section">
+                            <% if (block.title) { %>
+                                <h3><%= block.title %></h3>
+                            <% } %>
+                            <% if (block.content) { %>
+                                <%- block.content %>
+                            <% } %>
+                        </div>
+                    <% }); %>
+                <% } else if (!termsPage.description) { %>
+                    <!-- Fallback if no description and no content blocks -->
+                    <div class="terms-section">
+                        <p>No content available for Terms and Conditions.</p>
+                    </div>
+                <% } %>
+                
+                <div class="terms-footer">
+                    <p>By booking with Roads of Adventure Safaris, you confirm that you have read, understood, and agree to these Terms and Conditions.</p>
+                    <p>If you have any questions regarding these Terms and Conditions, please contact us at <a href="mailto:info@roadsofadventuresafaris.com">info@roadsofadventuresafaris.com</a>.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Terms Content Section End -->

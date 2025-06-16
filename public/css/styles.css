@@ -25,6 +25,7 @@
     --body-color: #f8f9fa;
     --text-color: #333;
     --body-font: "Helvetica", sans-serif;
+    --orange-buttons: #FE5D26;
  
   
   
@@ -289,7 +290,7 @@ a {
 
 .nav__link button {
   padding: 0.5rem 1.5rem;
-  background-color: rgb(153, 10, 10);
+  background-color: var(--orange-buttons);
   border: none;
   border-radius: 0.4em;
   color: var(--white-color);
@@ -649,7 +650,7 @@ a {
 
 .package-header {
   z-index: 2;
-  color: orange;
+  color: var(--orange-buttons);
 }
 
 .package-carousel .owl-prev, .package-carousel .owl-next {
@@ -702,6 +703,10 @@ a {
 
 .package-item a:hover {
   color: #59b46f;
+}
+
+.blog-hero-section {
+  
 }
 
 .blog-item h4 a {
@@ -943,7 +948,7 @@ a {
 }
 
 .btn-book-now:hover {
-  background: orange;
+  background: var(--orange-buttons);
 }
 
 .sticky-form {
@@ -1367,6 +1372,11 @@ textarea.form-control {
 }
 
 /***** Blogs *****/
+
+.category-hero-section .blog-heading {
+  margin-bottom: 3em;
+}
+
 .sidebar-package-item {
   display: flex;
   flex-flow: row nowrap;
@@ -1773,16 +1783,16 @@ textarea.form-control {
 }
 
 .btn-outline-orange {
-  color: orange;
-  border-color: orange;
+  color: var(--orange-buttons);
+  border-color: var(--orange-buttons);
   transition: all 0.3s ease-in-out;
   min-width: 40%;
 }
 
 .btn-outline-orange:hover {
   color: #fff;
-  background-color: orange;
-  border-color: orange;
+  background-color: var(--orange-buttons);
+  border-color: var(--orange-buttons);
 }
 
 /* Enquiry Form */

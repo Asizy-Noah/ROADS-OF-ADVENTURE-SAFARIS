@@ -537,8 +537,8 @@ export class BlogsController {
       }
 
       // --- New: Fetch Popular Tour Packages ---
-      const popularTours = await this.toursService.findPopular(4); // Fetch 4 popular tours
-      console.log(`BlogsController: Found ${popularTours.length} popular tours for blog page.`);
+      const popularTours = await this.toursService.findPopular(10); // Fetch 4 popular tours
+      
       // --- End New ---
 
       // Optional: Increment views for the blog post (if you have a views field for blogs)

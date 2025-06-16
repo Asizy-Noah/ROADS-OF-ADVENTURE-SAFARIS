@@ -494,25 +494,22 @@ document.addEventListener('DOMContentLoaded', function() {
     const countrySelect = document.getElementById('country');
     const categorySelect = document.getElementById('category');
 
-    console.log('Edit Form Script: DOMContentLoaded - Script started.');
+    
 
     function filterCategories() {
         const selectedCountryId = countrySelect.value;
-        console.log('Edit Form Script: filterCategories called.');
-        console.log('Edit Form Script: Current selected country ID from dropdown:', selectedCountryId);
-
+       
         // Clear existing categories (except the default "Select Category")
         categorySelect.innerHTML = '<option value="">Select Category</option>';
-        console.log('Edit Form Script: Category dropdown cleared.');
+       
 
         if (selectedCountryId) {
             const apiUrl = `/api/categories/by-country/${selectedCountryId}`;
-            console.log('Edit Form Script: Country ID is valid. Fetching categories from URL:', apiUrl);
+        
 
             fetch(apiUrl)
                 .then(response => {
-                    console.log('Edit Form Script: Fetch response received.');
-                    console.log('Edit Form Script: Response status ok:', response.ok);
+                   
                     if (!response.ok) {
                         console.error('Edit Form Script: Network response was not ok. Status:', response.status, 'Status Text:', response.statusText);
                         return response.text().then(text => { throw new Error('HTTP error ' + response.status + ': ' + text); });
@@ -520,10 +517,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     return response.json();
                 })
                 .then(data => {
-                    console.log('Edit Form Script: Data received from API:', data);
+                   
 
                     if (data.data && Array.isArray(data.data)) {
-                        console.log(`Edit Form Script: API returned ${data.data.length} categories.`);
+                      
                         if (data.data.length === 0) {
                             console.warn('Edit Form Script: No categories found for this country.');
                         }
@@ -534,32 +531,29 @@ document.addEventListener('DOMContentLoaded', function() {
                             option.textContent = category.name;
                             categorySelect.appendChild(option);
                         });
-                        console.log('Edit Form Script: Categories populated in dropdown.');
+                       
 
-                        // Determine the category that should be selected:
-                        // 1. Prioritize oldInput (if form submission failed)
-                        // 2. Fallback to the tour's current category (for initial edit view)
+                        
                         let oldSelectedCategory = '';
                         <% if (typeof oldInput !== 'undefined' && oldInput.category) { %>
                             oldSelectedCategory = '<%= oldInput.category.toString() %>';
                         <% } else if (typeof tour !== 'undefined' && tour.category) { %>
-                            // Assuming tour.category is a single ObjectId or populated object.
-                            // If tour.category is an array, you'll need more complex logic here (e.g., tour.category[0]._id)
+                            
                             oldSelectedCategory = '<%= tour.category.toString() %>';
                         <% } %>
 
-                        console.log('Edit Form Script: Determined category to select:', oldSelectedCategory);
+                        
 
                         if (oldSelectedCategory) {
                             const optionExists = Array.from(categorySelect.options).some(option => option.value === oldSelectedCategory);
-                            console.log('Edit Form Script: Checking if determined category exists in new list:', optionExists);
+                           
 
                             if (optionExists) {
                                 categorySelect.value = oldSelectedCategory;
-                                console.log('Edit Form Script: Category re-selected:', oldSelectedCategory);
+                               
                             } else {
                                 categorySelect.value = "";
-                                console.log('Edit Form Script: Determined category not found for this country, resetting category dropdown.');
+                               
                             }
                         }
                     } else {
@@ -570,21 +564,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.error('Edit Form Script: Error fetching categories:', error);
                 });
         } else {
-            console.log('Edit Form Script: No country selected, skipping category fetch.');
+            
         }
     }
 
     // Event listener for country select change
     countrySelect.addEventListener('change', filterCategories);
-    console.log('Edit Form Script: Event listener added to country dropdown.');
+   
 
     // Initial call to filter categories based on the current tour's country or oldInput's country.
     // The country dropdown's value is already correctly set by EJS on page load.
     if (countrySelect.value) {
-        console.log('Edit Form Script: Initial country value found, triggering filterCategories for page load.');
+        
         filterCategories();
     } else {
-        console.log('Edit Form Script: No initial country selected on page load.');
+       
     }
 });
 </script>

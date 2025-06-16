@@ -5,7 +5,7 @@
         <img src="/img/default-blog-hero.jpg" alt="Default Blog Hero" class="hero-image">
     <% } %>
     <div class="hero-overlay">
-        <h4 class="display-3 font-weight-bold text-white catergory-heading"><%= blog.title %></h4>
+        <h4 class="display-4 font-weight-bold text-white blog-heading"><%= blog.title %></h4>
     </div>
 </section>
 <section class="container description-section py-5">
@@ -16,9 +16,6 @@
                 <span><i class="far fa-calendar-alt"></i> <%= blog.createdAt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %></span>
                 <% if (blog.category && blog.category.name) { %>
                     <span><i class="far fa-folder"></i> <%= blog.category.name %></span>
-                <% } %>
-                <% if (blog.author && blog.author.name) { %>
-                    <span><i class="far fa-user"></i> <%= blog.author.name %></span>
                 <% } %>
                 <% if (blog.views !== undefined) { %>
                     <span><i class="fas fa-eye"></i> <%= blog.views %> views</span>
@@ -58,20 +55,9 @@
                     <% if (typeof popularTours !== 'undefined' && popularTours.length > 0) { %>
                         <% popularTours.forEach(tour => { %>
                             <div class="sidebar-package-item bg-white shadow mb-4">
-                                <div class="sidebar-package-img">
-                                    <img src="<%= tour.coverImage || '/img/default-tour.jpg' %>" alt="<%= tour.title %>">
-                                </div>
                                 <div class="package-content">
                                     <h5 class="text-primary"><a href="/tours/<%= tour.slug %>"><%= tour.title %></a></h5>
-                                    <p class="d-none d-md-block d-lg-none">
-                                        <%
-                                            let popularTourOverview = tour.overview || '';
-                                            if (popularTourOverview.length > 100) {
-                                                popularTourOverview = popularTourOverview.substring(0, 100) + '...';
-                                            }
-                                        %>
-                                        <%- popularTourOverview %>
-                                    </p>
+                        
                                     <a href="/tours/<%= tour.slug %>" class="d-none btn btn-sm btn-primary d-md-inline-block d-lg-none">Read More</a>
                                 </div>
                             </div>

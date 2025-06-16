@@ -1,4 +1,4 @@
-import { Controller, Get, Render, Param, Query, Res } from "@nestjs/common"
+import { Controller, Get, Render, Param, Query, Res, Post, Body, NotFoundException, } from "@nestjs/common"
 import { Response } from "express"
 import { AppService } from "./app.service"
 import { ToursService } from "./modules/tours/tours.service"
@@ -12,6 +12,8 @@ import { BlogFindAllOptions } from "./modules/blogs/interfaces/blog-find-all-opt
 import { BlogStatus } from "./modules/blogs/schemas/blog.schema";
 import { PageType } from "./modules/pages/schemas/page.schema";
 import { TourStatus } from "./modules/tours/schemas/tour.schema";
+import { MailService } from "./modules/mail/mail.service"
+import { CreateEnquiryDto } from "./modules/enquiry/dtos/enquiry.dto";
 
 @Controller()
 export class AppController {
@@ -24,6 +26,7 @@ export class AppController {
     private readonly reviewsService: ReviewsService,
     private readonly pagesService: PagesService,
     private readonly subscribersService: SubscribersService,
+    private readonly mailService: MailService,
   ) {}
 
   @Get()
@@ -38,7 +41,7 @@ export class AppController {
   
     // Fetch actual featured tours using findFeatured method
     const featuredTours = await this.toursService.findFeatured();
-    console.log('AppController: Result from toursService.findFeatured():', featuredTours);
+    
     
   
     // Fetch all countries for destinations
@@ -128,5 +131,113 @@ export class AppController {
     } catch (error) {
       return res.redirect("/?unsubscribed=false")
     }
+  }
+
+  // --- NEW: GET route to render the enquiry page ---
+  @Get('enquiry')
+  @Render('public/enquiry') // Assuming your EJS file is public/enquiry.ejs
+  getEnquiryPage() {
+    return {
+      title: "Enquiry - Roads of Adventure Safaris",
+      layout: "layouts/public",
+    };
+  }
+
+  // --- NEW: POST route to handle enquiry form submission ---
+  @Post('enquiry')
+  async submitEnquiry(@Body() createEnquiryDto: CreateEnquiryDto, @Res() res: Response) {
+    try {
+      
+      await this.mailService.sendEnquiryToAdmin(createEnquiryDto);
+
+      return res.redirect('/enquiry?success=true');
+    } catch (error) {
+      console.error('Error submitting enquiry:', error);
+      // Redirect with an error message
+      return res.redirect('/enquiry?success=false');
+    }
+  }
+
+  @Get('impact')
+  @Render('public/impact')
+  async getImpactPage() { // Make it async
+    // Fetch the page with type COMMUNITY
+    const impactPage = await this.pagesService.findOneByType(PageType.COMMUNITY);
+
+    // If the page is not found, you might want to throw an error or redirect
+    if (!impactPage) {
+      // You can either throw a NotFoundException which NestJS will handle
+      // or redirect to a 404 page, or render a generic "page not found" view.
+      throw new NotFoundException('Impact page not found.');
+      // Or, for a user-friendly redirect:
+      // return res.redirect('/404'); // Assuming you have a 404 page
+    }
+
+    // Pass the page data to the EJS template
+    return {
+      title: impactPage.seoTitle || `${impactPage.title} - Roads of Adventure Safaris`,
+      impactPage, // Pass the entire page object
+      layout: "layouts/public",
+      seo: {
+        title: impactPage.seoTitle || `${impactPage.title} - Roads of Adventure Safaris`,
+        description: impactPage.seoDescription || impactPage.description,
+        keywords: impactPage.seoKeywords,
+        canonicalUrl: impactPage.seoCanonicalUrl,
+        ogImage: impactPage.seoOgImage || impactPage.coverImage,
+      },
+    };
+  }
+
+  // --- NEW: GET route to render the Terms and Conditions page ---
+  @Get('terms')
+  @Render('public/terms') // Assuming your EJS file is public/terms.ejs
+  async getTermsPage() { // Make it async
+    // Fetch the page with type TERMS
+    const termsPage = await this.pagesService.findOneByType(PageType.TERMS);
+
+    // If the page is not found, you might want to throw an error or redirect
+    if (!termsPage) {
+      throw new NotFoundException('Terms and Conditions page not found.');
+    }
+
+    // Pass the page data to the EJS template
+    return {
+      title: termsPage.seoTitle || `${termsPage.title} - Roads of Adventure Safaris`,
+      termsPage, // Pass the entire page object
+      layout: "layouts/public",
+      seo: {
+        title: termsPage.seoTitle || `${termsPage.title} - Roads of Adventure Safaris`,
+        description: termsPage.seoDescription || termsPage.description,
+        keywords: termsPage.seoKeywords,
+        canonicalUrl: termsPage.seoCanonicalUrl,
+        ogImage: termsPage.seoOgImage || termsPage.coverImage,
+      },
+    };
+  }
+
+  @Get('privacy-policy')
+  @Render('public/privacy-policy') // Assuming your EJS file is public/privacy-policy.ejs
+  async getPrivacyPolicyPage() { // Make it async
+    // Fetch the page with type PRIVACY
+    const privacyPage = await this.pagesService.findOneByType(PageType.PRIVACY);
+
+    // If the page is not found, you might want to throw an error or redirect
+    if (!privacyPage) {
+      throw new NotFoundException('Privacy Policy page not found.');
+    }
+
+    // Pass the page data to the EJS template
+    return {
+      title: privacyPage.seoTitle || `${privacyPage.title} - Roads of Adventure Safaris`,
+      privacyPage, // Pass the entire page object
+      layout: "layouts/public",
+      seo: {
+        title: privacyPage.seoTitle || `${privacyPage.title} - Roads of Adventure Safaris`,
+        description: privacyPage.seoDescription || privacyPage.description,
+        keywords: privacyPage.seoKeywords,
+        canonicalUrl: privacyPage.seoCanonicalUrl,
+        ogImage: privacyPage.seoOgImage || privacyPage.coverImage,
+      },
+    };
   }
 }

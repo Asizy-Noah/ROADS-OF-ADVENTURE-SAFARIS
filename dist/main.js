@@ -21,7 +21,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
+var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AppController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
@@ -36,8 +36,10 @@ const pages_service_1 = __webpack_require__(/*! ./modules/pages/pages.service */
 const subscribers_service_1 = __webpack_require__(/*! ./modules/subscribers/subscribers.service */ "./src/modules/subscribers/subscribers.service.ts");
 const blog_schema_1 = __webpack_require__(/*! ./modules/blogs/schemas/blog.schema */ "./src/modules/blogs/schemas/blog.schema.ts");
 const page_schema_1 = __webpack_require__(/*! ./modules/pages/schemas/page.schema */ "./src/modules/pages/schemas/page.schema.ts");
+const mail_service_1 = __webpack_require__(/*! ./modules/mail/mail.service */ "./src/modules/mail/mail.service.ts");
+const enquiry_dto_1 = __webpack_require__(/*! ./modules/enquiry/dtos/enquiry.dto */ "./src/modules/enquiry/dtos/enquiry.dto.ts");
 let AppController = class AppController {
-    constructor(appService, toursService, countriesService, categoriesService, blogsService, reviewsService, pagesService, subscribersService) {
+    constructor(appService, toursService, countriesService, categoriesService, blogsService, reviewsService, pagesService, subscribersService, mailService) {
         this.appService = appService;
         this.toursService = toursService;
         this.countriesService = countriesService;
@@ -46,6 +48,7 @@ let AppController = class AppController {
         this.reviewsService = reviewsService;
         this.pagesService = pagesService;
         this.subscribersService = subscribersService;
+        this.mailService = mailService;
     }
     async getHomePage(pageQuery = '1') {
         var _a;
@@ -53,7 +56,6 @@ let AppController = class AppController {
         const limit = 4;
         const aboutUsPage = await this.pagesService.findOneByType(page_schema_1.PageType.ABOUT);
         const featuredTours = await this.toursService.findFeatured();
-        console.log('AppController: Result from toursService.findFeatured():', featuredTours);
         const result = await this.countriesService.findAll();
         const countries = Array.isArray(result) ? result : (_a = result.data) !== null && _a !== void 0 ? _a : [];
         const reviews = await this.reviewsService.findApproved();
@@ -122,6 +124,76 @@ let AppController = class AppController {
             return res.redirect("/?unsubscribed=false");
         }
     }
+    getEnquiryPage() {
+        return {
+            title: "Enquiry - Roads of Adventure Safaris",
+            layout: "layouts/public",
+        };
+    }
+    async submitEnquiry(createEnquiryDto, res) {
+        try {
+            await this.mailService.sendEnquiryToAdmin(createEnquiryDto);
+            return res.redirect('/enquiry?success=true');
+        }
+        catch (error) {
+            console.error('Error submitting enquiry:', error);
+            return res.redirect('/enquiry?success=false');
+        }
+    }
+    async getImpactPage() {
+        const impactPage = await this.pagesService.findOneByType(page_schema_1.PageType.COMMUNITY);
+        if (!impactPage) {
+            throw new common_1.NotFoundException('Impact page not found.');
+        }
+        return {
+            title: impactPage.seoTitle || `${impactPage.title} - Roads of Adventure Safaris`,
+            impactPage,
+            layout: "layouts/public",
+            seo: {
+                title: impactPage.seoTitle || `${impactPage.title} - Roads of Adventure Safaris`,
+                description: impactPage.seoDescription || impactPage.description,
+                keywords: impactPage.seoKeywords,
+                canonicalUrl: impactPage.seoCanonicalUrl,
+                ogImage: impactPage.seoOgImage || impactPage.coverImage,
+            },
+        };
+    }
+    async getTermsPage() {
+        const termsPage = await this.pagesService.findOneByType(page_schema_1.PageType.TERMS);
+        if (!termsPage) {
+            throw new common_1.NotFoundException('Terms and Conditions page not found.');
+        }
+        return {
+            title: termsPage.seoTitle || `${termsPage.title} - Roads of Adventure Safaris`,
+            termsPage,
+            layout: "layouts/public",
+            seo: {
+                title: termsPage.seoTitle || `${termsPage.title} - Roads of Adventure Safaris`,
+                description: termsPage.seoDescription || termsPage.description,
+                keywords: termsPage.seoKeywords,
+                canonicalUrl: termsPage.seoCanonicalUrl,
+                ogImage: termsPage.seoOgImage || termsPage.coverImage,
+            },
+        };
+    }
+    async getPrivacyPolicyPage() {
+        const privacyPage = await this.pagesService.findOneByType(page_schema_1.PageType.PRIVACY);
+        if (!privacyPage) {
+            throw new common_1.NotFoundException('Privacy Policy page not found.');
+        }
+        return {
+            title: privacyPage.seoTitle || `${privacyPage.title} - Roads of Adventure Safaris`,
+            privacyPage,
+            layout: "layouts/public",
+            seo: {
+                title: privacyPage.seoTitle || `${privacyPage.title} - Roads of Adventure Safaris`,
+                description: privacyPage.seoDescription || privacyPage.description,
+                keywords: privacyPage.seoKeywords,
+                canonicalUrl: privacyPage.seoCanonicalUrl,
+                ogImage: privacyPage.seoOgImage || privacyPage.coverImage,
+            },
+        };
+    }
 };
 __decorate([
     (0, common_1.Get)(),
@@ -144,7 +216,7 @@ __decorate([
     __param(0, (0, common_1.Query)()),
     __param(1, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, typeof (_j = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _j : Object]),
+    __metadata("design:paramtypes", [Object, typeof (_k = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _k : Object]),
     __metadata("design:returntype", Promise)
 ], AppController.prototype, "subscribe", null);
 __decorate([
@@ -160,12 +232,48 @@ __decorate([
     __param(0, (0, common_1.Query)('email')),
     __param(1, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, typeof (_k = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _k : Object]),
+    __metadata("design:paramtypes", [String, typeof (_l = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _l : Object]),
     __metadata("design:returntype", Promise)
 ], AppController.prototype, "unsubscribe", null);
+__decorate([
+    (0, common_1.Get)('enquiry'),
+    (0, common_1.Render)('public/enquiry'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], AppController.prototype, "getEnquiryPage", null);
+__decorate([
+    (0, common_1.Post)('enquiry'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_m = typeof enquiry_dto_1.CreateEnquiryDto !== "undefined" && enquiry_dto_1.CreateEnquiryDto) === "function" ? _m : Object, typeof (_o = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _o : Object]),
+    __metadata("design:returntype", Promise)
+], AppController.prototype, "submitEnquiry", null);
+__decorate([
+    (0, common_1.Get)('impact'),
+    (0, common_1.Render)('public/impact'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], AppController.prototype, "getImpactPage", null);
+__decorate([
+    (0, common_1.Get)('terms'),
+    (0, common_1.Render)('public/terms'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], AppController.prototype, "getTermsPage", null);
+__decorate([
+    (0, common_1.Get)('privacy-policy'),
+    (0, common_1.Render)('public/privacy-policy'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], AppController.prototype, "getPrivacyPolicyPage", null);
 AppController = __decorate([
     (0, common_1.Controller)(),
-    __metadata("design:paramtypes", [typeof (_a = typeof app_service_1.AppService !== "undefined" && app_service_1.AppService) === "function" ? _a : Object, typeof (_b = typeof tours_service_1.ToursService !== "undefined" && tours_service_1.ToursService) === "function" ? _b : Object, typeof (_c = typeof countries_service_1.CountriesService !== "undefined" && countries_service_1.CountriesService) === "function" ? _c : Object, typeof (_d = typeof categories_service_1.CategoriesService !== "undefined" && categories_service_1.CategoriesService) === "function" ? _d : Object, typeof (_e = typeof blogs_service_1.BlogsService !== "undefined" && blogs_service_1.BlogsService) === "function" ? _e : Object, typeof (_f = typeof reviews_service_1.ReviewsService !== "undefined" && reviews_service_1.ReviewsService) === "function" ? _f : Object, typeof (_g = typeof pages_service_1.PagesService !== "undefined" && pages_service_1.PagesService) === "function" ? _g : Object, typeof (_h = typeof subscribers_service_1.SubscribersService !== "undefined" && subscribers_service_1.SubscribersService) === "function" ? _h : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof app_service_1.AppService !== "undefined" && app_service_1.AppService) === "function" ? _a : Object, typeof (_b = typeof tours_service_1.ToursService !== "undefined" && tours_service_1.ToursService) === "function" ? _b : Object, typeof (_c = typeof countries_service_1.CountriesService !== "undefined" && countries_service_1.CountriesService) === "function" ? _c : Object, typeof (_d = typeof categories_service_1.CategoriesService !== "undefined" && categories_service_1.CategoriesService) === "function" ? _d : Object, typeof (_e = typeof blogs_service_1.BlogsService !== "undefined" && blogs_service_1.BlogsService) === "function" ? _e : Object, typeof (_f = typeof reviews_service_1.ReviewsService !== "undefined" && reviews_service_1.ReviewsService) === "function" ? _f : Object, typeof (_g = typeof pages_service_1.PagesService !== "undefined" && pages_service_1.PagesService) === "function" ? _g : Object, typeof (_h = typeof subscribers_service_1.SubscribersService !== "undefined" && subscribers_service_1.SubscribersService) === "function" ? _h : Object, typeof (_j = typeof mail_service_1.MailService !== "undefined" && mail_service_1.MailService) === "function" ? _j : Object])
 ], AppController);
 exports.AppController = AppController;
 
@@ -207,11 +315,15 @@ const bookings_module_1 = __webpack_require__(/*! ./modules/bookings/bookings.mo
 const mail_module_1 = __webpack_require__(/*! ./modules/mail/mail.module */ "./src/modules/mail/mail.module.ts");
 const dashboard_module_1 = __webpack_require__(/*! ./modules/dashboard/dashboard.module */ "./src/modules/dashboard/dashboard.module.ts");
 const header_data_middleware_1 = __webpack_require__(/*! ./common/middleware/header-data.middleware */ "./src/common/middleware/header-data.middleware.ts");
+const footer_data_middleware_1 = __webpack_require__(/*! ./common/middleware/footer-data.middleware */ "./src/common/middleware/footer-data.middleware.ts");
 let AppModule = class AppModule {
     configure(consumer) {
         consumer
             .apply(header_data_middleware_1.HeaderDataMiddleware)
             .forRoutes({ path: '*', method: common_1.RequestMethod.GET });
+        consumer
+            .apply(footer_data_middleware_1.FooterDataMiddleware)
+            .forRoutes('*');
     }
 };
 AppModule = __decorate([
@@ -280,6 +392,63 @@ AppService = __decorate([
     (0, common_1.Injectable)()
 ], AppService);
 exports.AppService = AppService;
+
+
+/***/ }),
+
+/***/ "./src/common/middleware/footer-data.middleware.ts":
+/*!*********************************************************!*\
+  !*** ./src/common/middleware/footer-data.middleware.ts ***!
+  \*********************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.FooterDataMiddleware = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const countries_service_1 = __webpack_require__(/*! ../../modules/countries/countries.service */ "./src/modules/countries/countries.service.ts");
+let FooterDataMiddleware = class FooterDataMiddleware {
+    constructor(countriesService) {
+        this.countriesService = countriesService;
+    }
+    async use(req, res, next) {
+        try {
+            const countriesResult = await this.countriesService.findAll({
+                limit: '10',
+            });
+            const popularFooterCountries = countriesResult.data;
+            if (popularFooterCountries && Array.isArray(popularFooterCountries)) {
+                popularFooterCountries.sort((a, b) => a.name.localeCompare(b.name));
+            }
+            else {
+                res.locals.popularFooterCountries = [];
+                next();
+                return;
+            }
+            res.locals.popularFooterCountries = popularFooterCountries;
+        }
+        catch (error) {
+            console.error('Error fetching footer countries in middleware:', error);
+            res.locals.popularFooterCountries = [];
+        }
+        next();
+    }
+};
+FooterDataMiddleware = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [typeof (_a = typeof countries_service_1.CountriesService !== "undefined" && countries_service_1.CountriesService) === "function" ? _a : Object])
+], FooterDataMiddleware);
+exports.FooterDataMiddleware = FooterDataMiddleware;
 
 
 /***/ }),
@@ -444,6 +613,7 @@ const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
 const crypto_1 = __importDefault(__webpack_require__(/*! crypto */ "crypto"));
 const method_override_1 = __importDefault(__webpack_require__(/*! method-override */ "method-override"));
 const express = __importStar(__webpack_require__(/*! express */ "express"));
+const connect_mongo_1 = __importDefault(__webpack_require__(/*! connect-mongo */ "connect-mongo"));
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     const configService = app.get(config_1.ConfigService);
@@ -452,13 +622,22 @@ async function bootstrap() {
     app.setViewEngine("ejs");
     app.use(express_ejs_layouts_1.default);
     app.set("layout", "layouts/public");
+    const mongoUri = configService.get("MONGODB_URI");
+    if (!mongoUri) {
+        throw new Error("MONGODB_URI is not defined in the environment variables.");
+    }
+    const MongoStore = connect_mongo_1.default.create({
+        mongoUrl: mongoUri,
+        collectionName: 'sessions',
+    });
     app.use((0, express_session_1.default)({
         secret: configService.get("SESSION_SECRET") ||
             crypto_1.default.randomUUID(),
         resave: false,
         saveUninitialized: false,
+        store: MongoStore,
         cookie: {
-            maxAge: 1000 * 60 * 60 * 24,
+            maxAge: 1000 * 60 * 60 * 24 * 7,
             secure: process.env.NODE_ENV === "production",
             httpOnly: true,
             sameSite: "lax",
@@ -492,9 +671,11 @@ async function bootstrap() {
         transform: true,
         forbidNonWhitelisted: true,
     }));
-    const port = configService.get("PORT") || 3000;
-    await app.listen(port, '0.0.0.0');
-    console.log(`Application is running on: http://localhost:${port}`);
+    const port = configService.get("PORT") || 9090;
+    await app.listen(port, '0.0.0.0', () => {
+        console.log(`Application is running on: http://localhost:${port}`);
+        console.log(`Accessible from network on: http://your_network_ip:${port}`);
+    });
 }
 bootstrap();
 
@@ -1461,8 +1642,7 @@ let BlogsController = class BlogsController {
             if (!blog) {
                 throw new common_1.NotFoundException(`Blog with slug '${slug}' not found or not visible.`);
             }
-            const popularTours = await this.toursService.findPopular(4);
-            console.log(`BlogsController: Found ${popularTours.length} popular tours for blog page.`);
+            const popularTours = await this.toursService.findPopular(10);
             const relatedBlogsResult = await this.blogsService.findAll({
                 status: blog_schema_1.BlogStatus.VISIBLE,
                 limit: 4,
@@ -3165,18 +3345,15 @@ let CategoriesService = class CategoriesService {
     }
     async findByCountry(countryId) {
         if (!mongoose_2.Types.ObjectId.isValid(countryId)) {
-            console.log(`[CategoriesService] Invalid country ID format received: ${countryId}`);
             throw new common_1.NotFoundException(`Invalid country ID format: ${countryId}`);
         }
         try {
-            console.log(`[CategoriesService] Searching categories for country ID: ${countryId}`);
             const categories = await this.categoryModel
                 .find({ country: new mongoose_2.Types.ObjectId(countryId) })
                 .populate('country', 'name slug')
                 .select('name slug image')
                 .sort({ name: 1 })
                 .exec();
-            console.log(`[CategoriesService] Found ${categories.length} categories for country ID ${countryId}:`, categories.map(c => c.name));
             return categories;
         }
         catch (error) {
@@ -4246,6 +4423,67 @@ exports.DashboardModule = DashboardModule;
 
 /***/ }),
 
+/***/ "./src/modules/enquiry/dtos/enquiry.dto.ts":
+/*!*************************************************!*\
+  !*** ./src/modules/enquiry/dtos/enquiry.dto.ts ***!
+  \*************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.CreateEnquiryDto = void 0;
+const class_validator_1 = __webpack_require__(/*! class-validator */ "class-validator");
+class CreateEnquiryDto {
+}
+__decorate([
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateEnquiryDto.prototype, "fullName", void 0);
+__decorate([
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsEmail)(),
+    __metadata("design:type", String)
+], CreateEnquiryDto.prototype, "email", void 0);
+__decorate([
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsPhoneNumber)('UG'),
+    __metadata("design:type", String)
+], CreateEnquiryDto.prototype, "phoneNumber", void 0);
+__decorate([
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateEnquiryDto.prototype, "country", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateEnquiryDto.prototype, "travelDate", void 0);
+__decorate([
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateEnquiryDto.prototype, "numberOfTravelers", void 0);
+__decorate([
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateEnquiryDto.prototype, "message", void 0);
+exports.CreateEnquiryDto = CreateEnquiryDto;
+
+
+/***/ }),
+
 /***/ "./src/modules/mail/mail.module.ts":
 /*!*****************************************!*\
   !*** ./src/modules/mail/mail.module.ts ***!
@@ -4602,6 +4840,30 @@ let MailService = class MailService {
           <li><strong>Status:</strong> ${booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}</li>
         </ul>
         <p>If you have any questions, please don't hesitate to contact us.</p>
+      `,
+        });
+    }
+    async sendEnquiryToAdmin(enquiry) {
+        const adminEmail = this.configService.get("ADMIN_EMAIL") || "asiomizunoah@gmail.com";
+        await this.transporter.sendMail({
+            from: `"Roads of Adventure safaris" <${this.configService.get("MAIL_FROM")}>`,
+            to: adminEmail,
+            subject: `New Safari Enquiry from ${enquiry.fullName}`,
+            html: `
+        <h1>Safari Enquiry</h1>
+        <p>You have received a new enquiry from your Roads Of Adventure Safaris:</p>
+        <ul>
+          <li><strong>Full Name:</strong> ${enquiry.fullName}</li>
+          <li><strong>Email Address:</strong> ${enquiry.email}</li>
+          <li><strong>Phone Number:</strong> ${enquiry.phoneNumber}</li>
+          <li><strong>Country of Residence:</strong> ${enquiry.country}</li>
+          <li><strong>Preferred Travel Date:</strong> ${enquiry.travelDate || 'Not specified'}</li>
+          <li><strong>Number of Travelers:</strong> ${enquiry.numberOfTravelers}</li>
+        </ul>
+        <h3>Message:</h3>
+        <p>${enquiry.message}</p>
+        <br>
+        <p>Please respond to this enquiry as soon as possible.</p>
       `,
         });
     }
@@ -7215,7 +7477,6 @@ let ToursService = class ToursService {
         };
     }
     async findFeatured(limit) {
-        console.log('ToursService: findFeatured called. Now returning all PUBLISHED tours.');
         const query = this.tourModel
             .find({ status: tour_schema_1.TourStatus.PUBLISHED })
             .sort({ days: -1 })
@@ -7225,7 +7486,6 @@ let ToursService = class ToursService {
             query.limit(limit);
         }
         const foundTours = await query.exec();
-        console.log(`ToursService: Found ${foundTours.length} PUBLISHED tours.`);
         return foundTours;
     }
     async findOne(id) {
@@ -7346,7 +7606,6 @@ let ToursService = class ToursService {
         return tour.save();
     }
     async findPopular(limit = 4) {
-        console.log(`ToursService: findPopular called. Fetching up to ${limit} popular tours.`);
         const query = this.tourModel
             .find({ status: tour_schema_1.TourStatus.PUBLISHED })
             .sort({ views: -1, createdAt: -1 })
@@ -7354,7 +7613,6 @@ let ToursService = class ToursService {
             .populate("countries", "name slug")
             .populate("categories", "name slug");
         const popularTours = await query.exec();
-        console.log(`ToursService: Found ${popularTours.length} popular tours.`);
         return popularTours;
     }
     async incrementViews(slug) {
@@ -8250,6 +8508,16 @@ module.exports = require("class-validator");
 /***/ ((module) => {
 
 module.exports = require("connect-flash");
+
+/***/ }),
+
+/***/ "connect-mongo":
+/*!********************************!*\
+  !*** external "connect-mongo" ***!
+  \********************************/
+/***/ ((module) => {
+
+module.exports = require("connect-mongo");
 
 /***/ }),
 

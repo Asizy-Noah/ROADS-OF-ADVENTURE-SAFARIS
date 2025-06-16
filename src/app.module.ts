@@ -17,8 +17,8 @@ import { PagesModule } from "./modules/pages/pages.module"
 import { BookingsModule } from "./modules/bookings/bookings.module"
 import { MailModule } from "./modules/mail/mail.module"
 import { DashboardModule } from "./modules/dashboard/dashboard.module"
-import { HeaderDataMiddleware } from './common/middleware/header-data.middleware'; // Import the new middleware
-
+import { HeaderDataMiddleware } from './common/middleware/header-data.middleware'; 
+import { FooterDataMiddleware } from './common/middleware/footer-data.middleware';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -64,5 +64,9 @@ export class AppModule implements NestModule {
         // { path: '/', method: RequestMethod.GET },
         // { path: '/tours/*', method: RequestMethod.GET }, etc.
       );
+
+      consumer
+      .apply(FooterDataMiddleware) // Apply the new footer middleware
+      .forRoutes('*'); // Apply to all routes
   }
 }

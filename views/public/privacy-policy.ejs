@@ -1,0 +1,51 @@
+<!-- Hero Section Start -->
+<section class="terms-hero-section">
+    <!-- Use coverImage for the hero image, or a fallback -->
+    <img src="<%= privacyPage.coverImage ? privacyPage.coverImage : 'img/destination-1.jpg' %>"
+         alt="<%= privacyPage.title %> Hero Image" class="hero-image">
+    <div class="hero-overlay">
+        <!-- Use the page title from the database -->
+        <h1 class="display-4 text-white font-weight-bold"><%= privacyPage.title %></h1>
+    </div>
+</section>
+<!-- Hero Section End -->
+    
+    <!-- Terms Content Section Start -->
+    <section class="terms-content-section">
+        <div class="container">
+            <div class="terms-container">
+                <div class="terms-header">
+                    <h2>Roads of Adventure Safaris - Personal Privacy</h2>
+                    <!-- Render last updated date if available, otherwise keep static or remove -->
+                <p class="lead">Last updated: <%= privacyPage.updatedAt ? new Date(privacyPage.updatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A' %></p>
+                </div>
+                
+                <div class="terms-body">
+                    <!-- Loop through contentBlocks to render each section dynamically -->
+                <% if (privacyPage.contentBlocks && privacyPage.contentBlocks.length > 0) { %>
+                    <% privacyPage.contentBlocks.forEach((block, index) => { %>
+                        <div class="terms-section">
+                            <% if (block.title) { %>
+                                <h3><%= block.title %></h3>
+                            <% } %>
+                            <% if (block.content) { %>
+                                <%- block.content %>
+                            <% } %>
+                        </div>
+                    <% }); %>
+                <% } else if (!privacyPage.description) { %>
+                    <!-- Fallback if no description and no content blocks -->
+                    <div class="terms-section">
+                        <p>No content available for Privacy Policy.</p>
+                    </div>
+                <% } %>
+                </div>
+                
+                <div class="terms-footer">
+                    <p>By booking with Roads of Adventure Safaris, you confirm that you have read, understood, and agree to these Terms and Conditions.</p>
+                    <p>If you have any questions regarding these Terms and Conditions, please contact us at <a href="mailto:info@roadsofadventuresafaris.com">info@roadsofadventuresafaris.com</a>.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Terms Content Section End --> 

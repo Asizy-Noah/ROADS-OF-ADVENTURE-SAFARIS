@@ -222,27 +222,22 @@ document.addEventListener('DOMContentLoaded', function() {
     const countrySelect = document.getElementById('country');
     const categorySelect = document.getElementById('category');
 
-    // Add a log for initial script load
-    console.log('Frontend Script: DOMContentLoaded - Script started.');
-
+    
     function filterCategories() {
         const selectedCountryId = countrySelect.value;
-        console.log('Frontend Script: filterCategories called.');
-        console.log('Frontend Script: Current selected country ID from dropdown:', selectedCountryId);
+       
 
         // Clear existing categories (except the default "Select Category")
         categorySelect.innerHTML = '<option value="">Select Category</option>';
-        console.log('Frontend Script: Category dropdown cleared.');
-
+       
 
         if (selectedCountryId) {
             const apiUrl = `/api/categories/by-country/${selectedCountryId}`;
-            console.log('Frontend Script: Country ID is valid. Fetching categories from URL:', apiUrl);
+          
 
             fetch(apiUrl) // Call your new API endpoint
                 .then(response => {
-                    console.log('Frontend Script: Fetch response received.');
-                    console.log('Frontend Script: Response status ok:', response.ok);
+                   
                     if (!response.ok) {
                         // Log the full response status and text for more details on error
                         console.error('Frontend Script: Network response was not ok. Status:', response.status, 'Status Text:', response.statusText);
@@ -252,10 +247,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     return response.json();
                 })
                 .then(data => {
-                    console.log('Frontend Script: Data received from API:', data);
+                   
 
                     if (data.data && Array.isArray(data.data)) { // Ensure data.data is an array
-                        console.log(`Frontend Script: API returned ${data.data.length} categories.`);
+                        
                         if (data.data.length === 0) {
                             console.warn('Frontend Script: No categories found for this country.');
                         }
@@ -265,52 +260,50 @@ document.addEventListener('DOMContentLoaded', function() {
                             option.value = category._id;
                             option.textContent = category.name;
                             categorySelect.appendChild(option);
-                            // console.log(`Frontend Script: Added category: ${category.name} (${category._id})`); // Uncomment for detailed per-category log
+                            
                         });
-                        console.log('Frontend Script: Categories populated in dropdown.');
+                        
 
                         // Attempt to re-select category if oldInput exists
                         const oldSelectedCategory = '<%= (typeof oldInput !== "undefined" && oldInput.category) ? oldInput.category.toString() : "" %>';
-                        console.log('Frontend Script: oldSelectedCategory from EJS:', oldSelectedCategory);
+                        
 
                         if (oldSelectedCategory) {
                             // Check if the oldSelectedCategory is actually available in the newly loaded options
                             const optionExists = Array.from(categorySelect.options).some(option => option.value === oldSelectedCategory);
-                            console.log('Frontend Script: Checking if oldSelectedCategory exists in new list:', optionExists);
+                            
 
                             if (optionExists) {
                                 categorySelect.value = oldSelectedCategory;
-                                console.log('Frontend Script: oldSelectedCategory re-selected:', oldSelectedCategory);
+                                
                             } else {
                                 categorySelect.value = "";
-                                console.log('Frontend Script: oldSelectedCategory not found for this country, resetting category dropdown.');
+                                
                             }
                         }
                     } else {
-                        console.warn('Frontend Script: API returned unexpected data format or data.data is not an array:', data);
+                        
                     }
                 })
                 .catch(error => {
-                    console.error('Frontend Script: Error fetching categories:', error);
-                    // Optionally display an error message to the user, e.g.,
-                    // alert('Failed to load categories. Please try again.');
+                   
                 });
         } else {
-            console.log('Frontend Script: No country selected, skipping category fetch.');
+           
         }
     }
 
     // Event listener for country select change
     countrySelect.addEventListener('change', filterCategories);
-    console.log('Frontend Script: Event listener added to country dropdown.');
+    
 
     // Initial call to filter categories based on any pre-selected country (e.g., from oldInput)
     // This is crucial for when the page loads with old input from a validation error.
     if (countrySelect.value) { // Only run if a country is already selected
-        console.log('Frontend Script: Initial country value found, triggering filterCategories for page load.');
+       
         filterCategories();
     } else {
-        console.log('Frontend Script: No initial country selected on page load.');
+        
     }
 });
 </script>

@@ -4,6 +4,7 @@ import * as nodemailer from "nodemailer"
 import { User } from "../users/schemas/user.schema"
 import { Blog } from "../blogs/schemas/blog.schema"
 import { Subscriber } from "../subscribers/schemas/subscriber.schema"
+import { CreateEnquiryDto } from "../enquiry/dtos/enquiry.dto";
 import { Booking } from "../bookings/schemas/booking.schema"
 
 
@@ -277,5 +278,33 @@ export class MailService {
         <p>If you have any questions, please don't hesitate to contact us.</p>
       `,
     })
+  }
+
+  // --- NEW ENQUIRY EMAIL METHOD ---
+  async sendEnquiryToAdmin(enquiry: CreateEnquiryDto): Promise<void> {
+    const adminEmail = this.configService.get<string>("ADMIN_EMAIL") || "asiomizunoah@gmail.com"
+
+    await this.transporter.sendMail({
+      from: `"Roads of Adventure safaris" <${this.configService.get<string>("MAIL_FROM")}>`,
+      to: adminEmail,
+      subject: `New Safari Enquiry from ${enquiry.fullName}`,
+      html: `
+        <h1>Safari Enquiry</h1>
+        <p>You have received a new enquiry from your Roads Of Adventure Safaris:</p>
+        <ul>
+          <li><strong>Full Name:</strong> ${enquiry.fullName}</li>
+          <li><strong>Email Address:</strong> ${enquiry.email}</li>
+          <li><strong>Phone Number:</strong> ${enquiry.phoneNumber}</li>
+          <li><strong>Country of Residence:</strong> ${enquiry.country}</li>
+          <li><strong>Preferred Travel Date:</strong> ${enquiry.travelDate || 'Not specified'}</li>
+          <li><strong>Number of Travelers:</strong> ${enquiry.numberOfTravelers}</li>
+        </ul>
+        <h3>Message:</h3>
+        <p>${enquiry.message}</p>
+        <br>
+        <p>Please respond to this enquiry as soon as possible.</p>
+      `,
+    })
+    
   }
 }

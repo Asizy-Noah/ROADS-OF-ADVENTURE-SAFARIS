@@ -24,13 +24,13 @@
             <div class="form-group">
                 <label for="countrySlug">Country Slug (Auto-generated if left empty)</label>
                 <input type="text" id="countrySlug" name="slug" class="form-control" value="<%= typeof body !== 'undefined' ? body.slug : '' %>">
-                <small class="form-text text-muted">A unique, URL-friendly name (e.g., "uganda-safaris").</small>
+                
             </div>
 
             <div class="form-group">
-                <label for="countryOverview">Country Overview</label>
-                <textarea id="countryOverview" name="overview" class="form-control" rows="3" required><%= typeof body !== 'undefined' ? body.overview : '' %></textarea>
-                <small class="form-text text-muted">A brief overview of the country (100-200 characters recommended for SEO snippets).</small>
+                <label for="countryOverview">Country Caption</label>
+                <textarea id="countryOverview" name="overview" class="form-control" rows="2" required><%= typeof body !== 'undefined' ? body.overview : '' %></textarea>
+                
             </div>
 
             <div class="form-group">
@@ -43,8 +43,8 @@
 
             <div class="form-group">
                 <label for="countrySummary">Country Summary</label>
-                <textarea id="countrySummary" name="summary" class="form-control" rows="4"><%= typeof body !== 'undefined' ? body.summary : '' %></textarea>
-                <small class="form-text text-muted">A summary of key attractions and experiences for quick overview.</small>
+                <textarea id="countrySummary" name="summary" class="form-control" rows="2"><%= typeof body !== 'undefined' ? body.summary : '' %></textarea>
+                
             </div>
 
             <div class="form-group">
@@ -72,7 +72,7 @@
 
             <div class="form-group">
                 <label for="seoDescription">Meta Description</label>
-                <textarea id="seoDescription" name="seoDescription" class="form-control" rows="3"><%= typeof body !== 'undefined' ? body.seoDescription : '' %></textarea>
+                <textarea id="seoDescription" name="seoDescription" class="form-control" rows="2"><%= typeof body !== 'undefined' ? body.seoDescription : '' %></textarea>
                 <small class="form-text text-muted">Recommended length: 150-160 characters (for search result snippets).</small>
             </div>
 
@@ -129,7 +129,7 @@
             fallbackTextarea.id = 'countryDescriptionFallback';
             fallbackTextarea.name = 'description';
             fallbackTextarea.className = 'form-control';
-            fallbackTextarea.rows = '10';
+            fallbackTextarea.rows = '5';
             fallbackTextarea.placeholder = 'Write the detailed description of the country here...';
             fallbackTextarea.value = hiddenDescriptionInput.value; // Keep existing content
             descriptionEditor.parentNode.replaceChild(fallbackTextarea, descriptionEditor);

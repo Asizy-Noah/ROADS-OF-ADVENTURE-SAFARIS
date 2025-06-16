@@ -149,12 +149,12 @@ export class CategoriesService {
   async findByCountry(countryId: string): Promise<Category[]> {
     // --- IMPORTANT: Validate countryId is a valid ObjectId format first ---
     if (!Types.ObjectId.isValid(countryId)) {
-      console.log(`[CategoriesService] Invalid country ID format received: ${countryId}`);
+      
       throw new NotFoundException(`Invalid country ID format: ${countryId}`);
     }
 
     try {
-      console.log(`[CategoriesService] Searching categories for country ID: ${countryId}`);
+      
       const categories = await this.categoryModel
         // <<< CRITICAL CORRECTION: Use only one .find() with new Types.ObjectId()
         .find({ country: new Types.ObjectId(countryId) })
@@ -163,7 +163,7 @@ export class CategoriesService {
         .sort({ name: 1 }) // Order categories alphabetically
         .exec();
 
-      console.log(`[CategoriesService] Found ${categories.length} categories for country ID ${countryId}:`, categories.map(c => c.name));
+      
       return categories;
     } catch (error) {
       console.error(`[CategoriesService] Error retrieving categories for country ID ${countryId}:`, error);

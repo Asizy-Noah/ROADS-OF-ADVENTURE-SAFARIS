@@ -1,0 +1,77 @@
+<section class="category-hero-section">
+    <img src="<%= impactPage.galleryImages && impactPage.galleryImages[0] ? impactPage.galleryImages[0] : 'img/destination-1.jpg' %>"
+         alt="<%= impactPage.title %> Hero Image" class="hero-image">
+    <div class="hero-overlay">
+        <h4 class="display-3 font-weight-bold text-white catergory-heading"><%= impactPage.title %></h4>
+    </div>
+</section>
+<div class="container description-section py-5">
+    <div class="impact-container text-container mb-5 impact-description">
+        <div class="impact-content">
+            <h2 class="impact-heading">Our Commitment to Communities</h2>
+            <p class="impact-text">
+                <%- impactPage.description %>
+            </p>
+        </div>
+    </div>
+
+    <div class="impact-container image-left-container mb-5 page-content-1">
+        <div class="row no-gutters">
+            <div class="col-md-4">
+                <div class="impact-image-wrapper">
+                    <img src="<%= impactPage.galleryImages && impactPage.galleryImages[1] ? impactPage.galleryImages[1] : 'img/package-4.jpg' %>"
+                         alt="<%= impactPage.contentBlocks && impactPage.contentBlocks[0] ? impactPage.contentBlocks[0].title : 'Impact Image 1' %>"
+                         class="impact-image">
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="impact-content">
+                    <h3 class="impact-heading"><%= impactPage.contentBlocks && impactPage.contentBlocks[0] ? impactPage.contentBlocks[0].title : 'Content Heading 1' %></h3>
+                    <p class="impact-text">
+                        <%- impactPage.contentBlocks && impactPage.contentBlocks[0] ? impactPage.contentBlocks[0].content : 'No content available for this section.' %>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="impact-container image-right-container mb-5 page-content-2">
+        <div class="row no-gutters">
+            <div class="col-md-8">
+                <div class="impact-content">
+                    <h3 class="impact-heading"><%= impactPage.contentBlocks && impactPage.contentBlocks[1] ? impactPage.contentBlocks[1].title : 'Content Heading 2' %></h3>
+                    <p class="impact-text">
+                        <%- impactPage.contentBlocks && impactPage.contentBlocks[1] ? impactPage.contentBlocks[1].content : 'No content available for this section.' %>
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="impact-image-wrapper">
+                    <img src="<%= impactPage.galleryImages && impactPage.galleryImages[2] ? impactPage.galleryImages[2] : 'img/package-5.jpg' %>"
+                         alt="<%= impactPage.contentBlocks && impactPage.contentBlocks[1] ? impactPage.contentBlocks[1].title : 'Impact Image 2' %>"
+                         class="impact-image">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="impact-container image-left-container page-content-3">
+        <div class="row no-gutters">
+            <div class="col-md-4">
+                <div class="impact-image-wrapper">
+                    <img src="<%= impactPage.galleryImages && impactPage.galleryImages[3] ? impactPage.galleryImages[3] : 'img/package-6.jpg' %>"
+                         alt="<%= impactPage.contentBlocks && impactPage.contentBlocks[2] ? impactPage.contentBlocks[2].title : 'Impact Image 3' %>"
+                         class="impact-image">
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="impact-content">
+                    <h3 class="impact-heading"><%= impactPage.contentBlocks && impactPage.contentBlocks[2] ? impactPage.contentBlocks[2].title : 'Content Heading 3' %></h3>
+                    <p class="impact-text">
+                        <%- impactPage.contentBlocks && impactPage.contentBlocks[2] ? impactPage.contentBlocks[2].content : 'No content available for this section.' %>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

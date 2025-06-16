@@ -25,15 +25,15 @@
             </div>
 
             <div class="form-group">
-                <label for="countrySlug">Country Slug</label>
+                <label for="countrySlug">Country Slug (Auto generated)</label>
                 <input type="text" id="countrySlug" name="slug" class="form-control" value="<%= country.slug %>">
-                <small class="form-text text-muted">A unique, URL-friendly name (e.g., "uganda-safaris"). Change with caution, as it affects public URLs.</small>
+                
             </div>
 
             <div class="form-group">
-                <label for="countryOverview">Country Overview</label>
-                <textarea id="countryOverview" name="overview" class="form-control" rows="3" required><%= country.overview %></textarea>
-                <small class="form-text text-muted">A brief overview of the country (100-200 characters recommended for SEO snippets).</small>
+                <label for="countryOverview">Country Caption</label>
+                <textarea id="countryOverview" name="overview" class="form-control" rows="2" required><%= country.overview %></textarea>
+                
             </div>
 
             <div class="form-group">
@@ -44,8 +44,8 @@
 
             <div class="form-group">
                 <label for="countrySummary">Country Summary</label>
-                <textarea id="countrySummary" name="summary" class="form-control" rows="4"><%= country.summary || '' %></textarea>
-                <small class="form-text text-muted">A summary of key attractions and experiences for quick overview.</small>
+                <textarea id="countrySummary" name="summary" class="form-control" rows="2"><%= country.summary || '' %></textarea>
+                
             </div>
 
             <div class="form-group">
@@ -119,7 +119,7 @@
 
             <div class="form-group">
                 <label for="seoDescription">Meta Description</label>
-                <textarea id="seoDescription" name="seoDescription" class="form-control" rows="3"><%= country.seoDescription || '' %></textarea>
+                <textarea id="seoDescription" name="seoDescription" class="form-control" rows="2"><%= country.seoDescription || '' %></textarea>
                 <small class="form-text text-muted">Recommended length: 150-160 characters (for search result snippets).</small>
             </div>
 
