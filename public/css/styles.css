@@ -135,11 +135,6 @@ a {
   /*-webkit-tap-highlight-color: transparent;*/
 }
 
-.nav__logo i {
-  font-weight: initial;
-  font-size: 1.25rem;
-}
-
 .nav__toggle {
   position: relative;
   width: 32px;
@@ -1342,7 +1337,7 @@ textarea.form-control {
 }
 
 .package-content {
-  padding: 20px;
+  padding: 20px; 
 }
 
 .package-title {
@@ -1921,7 +1916,7 @@ textarea.form-control {
 .map-container {
   position: relative;
   width: 100%;
-  height: 450px;
+  height: 300px;
   overflow: hidden;
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
