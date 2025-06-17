@@ -143,6 +143,7 @@ export class AppController {
     };
   }
 
+
   // --- NEW: POST route to handle enquiry form submission ---
   @Post('enquiry')
   async submitEnquiry(@Body() createEnquiryDto: CreateEnquiryDto, @Res() res: Response) {
@@ -238,6 +239,16 @@ export class AppController {
         canonicalUrl: privacyPage.seoCanonicalUrl,
         ogImage: privacyPage.seoOgImage || privacyPage.coverImage,
       },
+    };
+  }
+
+  
+  @Get('about')
+  @Render('public/about') // Assuming your EJS file is public/about.ejs
+  getaboutPage() {
+    return {
+      title: "About Us - Roads of Adventure Safaris",
+      layout: "layouts/public",
     };
   }
 }

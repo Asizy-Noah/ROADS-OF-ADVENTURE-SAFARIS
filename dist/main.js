@@ -194,6 +194,12 @@ let AppController = class AppController {
             },
         };
     }
+    getaboutPage() {
+        return {
+            title: "About Us - Roads of Adventure Safaris",
+            layout: "layouts/public",
+        };
+    }
 };
 __decorate([
     (0, common_1.Get)(),
@@ -271,6 +277,13 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], AppController.prototype, "getPrivacyPolicyPage", null);
+__decorate([
+    (0, common_1.Get)('about'),
+    (0, common_1.Render)('public/about'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], AppController.prototype, "getaboutPage", null);
 AppController = __decorate([
     (0, common_1.Controller)(),
     __metadata("design:paramtypes", [typeof (_a = typeof app_service_1.AppService !== "undefined" && app_service_1.AppService) === "function" ? _a : Object, typeof (_b = typeof tours_service_1.ToursService !== "undefined" && tours_service_1.ToursService) === "function" ? _b : Object, typeof (_c = typeof countries_service_1.CountriesService !== "undefined" && countries_service_1.CountriesService) === "function" ? _c : Object, typeof (_d = typeof categories_service_1.CategoriesService !== "undefined" && categories_service_1.CategoriesService) === "function" ? _d : Object, typeof (_e = typeof blogs_service_1.BlogsService !== "undefined" && blogs_service_1.BlogsService) === "function" ? _e : Object, typeof (_f = typeof reviews_service_1.ReviewsService !== "undefined" && reviews_service_1.ReviewsService) === "function" ? _f : Object, typeof (_g = typeof pages_service_1.PagesService !== "undefined" && pages_service_1.PagesService) === "function" ? _g : Object, typeof (_h = typeof subscribers_service_1.SubscribersService !== "undefined" && subscribers_service_1.SubscribersService) === "function" ? _h : Object, typeof (_j = typeof mail_service_1.MailService !== "undefined" && mail_service_1.MailService) === "function" ? _j : Object])
