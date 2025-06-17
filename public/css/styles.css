@@ -1710,7 +1710,7 @@ textarea.form-control {
   left: 0;
   width: 70px;
   height: 3px;
-  background-color: var(--primary-color);
+  background-color: var(--orange-buttons);
 }
 
 /* Contact Details */
@@ -1768,7 +1768,7 @@ textarea.form-control {
   background-color: #f9f9f9;
   padding: 25px;
   border-radius: var(--border-radius);
-  border-left: 4px solid var(--primary-color);
+  border-left: 4px solid var(--orange-buttons);
 }
 
 .payment-section h4 {
@@ -1781,14 +1781,17 @@ textarea.form-control {
   margin-top: 15px;
   padding: 10px 25px;
   font-weight: 600;
-  background-color: var(--primary-color);
-  border-color: var(--primary-color);
+  background-color: var(--orange-buttons);
+  border-color: var(--orange-buttons);
+  border-radius: 5px;
+  color: var(--white-color);
   transition: all 0.3s ease;
 }
 
 .btn-pay:hover {
   background-color: var(--primary-color-dark);
   border-color: var(--primary-color-dark);
+  color: var(--white-color);
   transform: translateY(-3px);
   box-shadow: 0 5px 15px rgba(89, 180, 111, 0.3);
 }
@@ -1911,7 +1914,8 @@ textarea.form-control {
 
 /* Map Section */
 .map-section {
-  margin-top: 50px;
+  margin: 50px auto;
+  max-width: 1118px;
 }
 
 .map-container {
