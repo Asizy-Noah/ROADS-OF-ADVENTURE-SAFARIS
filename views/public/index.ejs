@@ -226,27 +226,27 @@
     <!-- Packages End -->
 
     <!-- Destination Start -->
-<div class="container-fluid py-2 mb-4">
-  <div class="container pt-5 pb-3">
-    <div class="text-center mb-3 pb-3">
-      <h6 class="package-header font-weight-bold text-uppercase" style="letter-spacing: 5px; font-size: 28px;">Destination</h6>
-      <p class="font-italic font-weight-bold" style="font-size: 24px;">Explore Our Top Destinations</p>
-    </div>
-    <div class="owl-carousel destination-carousel">
-      <% countries.forEach(function(country) { %>
-        <div class="destination-item position-relative overflow-hidden mb-2">
-          <div class="destination-image">
-            <img class="img-fluid" src="<%= country.coverImage %>" alt="<%= country.name %>">
-          </div>
-          <a class="destination-overlay text-white text-decoration-none" href="/destinations/<%= country.slug %>">
-            <h5 class="text-white"><%= country.name %></h5>
-          </a>
+    <div class="container-fluid py-2 mb-4">
+    <div class="container pt-5 pb-3">
+        <div class="text-center mb-3 pb-3">
+        <h6 class="package-header font-weight-bold text-uppercase" style="letter-spacing: 5px; font-size: 28px;">Destination</h6>
+        <p class="font-italic font-weight-bold" style="font-size: 24px;">Explore Our Top Destinations</p>
         </div>
-      <% }); %>
+        <div class="owl-carousel destination-carousel">
+        <% countries.forEach(function(country) { %>
+            <div class="destination-item position-relative overflow-hidden mb-2">
+            <div class="destination-image">
+                <img class="img-fluid" src="<%= country.coverImage %>" alt="<%= country.name %>">
+            </div>
+            <a class="destination-overlay text-white text-decoration-none" href="/countries/<%= country.slug %>">
+                <h5 class="text-white"><%= country.name %></h5>
+            </a>
+            </div>
+        <% }); %>
+        </div>
     </div>
-  </div>
-</div>
-<!-- Destination End -->
+    </div>
+    <!-- Destination End -->
 
 
 
