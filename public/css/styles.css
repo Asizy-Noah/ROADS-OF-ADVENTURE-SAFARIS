@@ -26,6 +26,7 @@
     --text-color: #333;
     --body-font: "Helvetica", sans-serif;
     --orange-buttons: #FE5D26;
+    --army-green: #6c7c59;
  
   
   
@@ -283,7 +284,7 @@ a {
 }
 
 .nav__link:hover {
-  color: yellow;
+  color: var(--orange-buttons);
   text-decoration: none;
   transform: scale(110%);
 }
@@ -357,7 +358,7 @@ a {
 .dropdown__link:hover, 
 .dropdown__sublink:hover {
   text-decoration: none;
-  color:yellow;
+  color:var(--orange-buttons);
   transform: scale(110%);
 }
 
@@ -567,6 +568,24 @@ a {
   }  
 }
 
+/****** Featured *****/
+.about-items .about-item {
+  background-color: var(--army-green);
+}
+
+/***** Back to Top *****/
+.back-to-top {
+  background-color: var(--army-green);
+  color: var(--white-color);
+  border-radius: 5px;
+}
+
+.back-to-top:hover {
+  background-color: var(--black-color-lighten);
+  color: var(--white-color);
+}
+
+
 /***** About ******/
 .about-home {
   margin-top: 0;
@@ -750,7 +769,7 @@ a {
 }
 
 .book-btn:hover {
-  background: rgb(216, 123, 2);
+  background: var(--orange-buttons);
 }
 
 .rating-text {
