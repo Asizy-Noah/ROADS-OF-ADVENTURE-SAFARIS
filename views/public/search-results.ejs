@@ -1,0 +1,186 @@
+<!-- Hero Section Start -->
+    <section class="terms-hero-section">
+        <img src="img/destination-1.jpg" alt="Uganda Safari" class="hero-image">
+        <div class="hero-overlay">
+            <h1 class="display-4 text-white font-weight-bold">Search Results</h1>
+        </div>
+        </div>
+    </section>
+    <!-- Hero Section End -->
+
+    <div class="container-fluid booking mt-5 ">
+        <div class="container">
+            <div class="bg-light shadow mb-5" style="padding: 30px;">
+            <form id="searchPackagesFormResults" action="/search-packages" method="GET">
+                <div class="row align-items-center" style="min-height: 60px;">
+                    <div class="col-md-10">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3 mb-md-0">
+                                    <select class="custom-select px-4" style="height: 47px;" id="destinationSelectResults" name="countryId">
+                                        <option value="">Destination</option>
+                                        <% if (typeof allCountries !== 'undefined' && Array.isArray(allCountries) && allCountries.length > 0) { %>
+                                            <% allCountries.forEach(country => { %>
+                                                <option value="<%= country._id %>" <%= (selectedCountry && selectedCountry._id.toString() === country._id.toString()) ? 'selected' : '' %>><%= country.name %></option>
+                                            <% }); %>
+                                        <% } %>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3 mb-md-0">
+                                    <select class="custom-select px-4" style="height: 47px;" id="categorySelectResults" name="categoryId" <%= selectedCountry ? '' : 'disabled' %>>
+                                        <option value="">Category</option>
+                                        <% if (selectedCountry) { %>
+                                            <% // You'll need to fetch categories for the selected country here if not done via JS on initial load %>
+                                            <% // For simplicity, this would require another AJAX call or passing a full list %>
+                                            <% // For now, if a category was selected, display it. Otherwise, assume empty. %>
+                                            <% if (selectedCategory) { %>
+                                                <option value="<%= selectedCategory._id %>" selected><%= selectedCategory.name %></option>
+                                            <% } %>
+                                            <% } %>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3 mb-md-0">
+                                    <select class="custom-select px-4" style="height: 47px;" id="durationSelectResults" name="days">
+                                        <option value="">Duration</option>
+                                        <% for (let i = 1; i <= 30; i++) { %>
+                                            <option value="<%= i %>" <%= (selectedDays === i) ? 'selected' : '' %>><%= i %> Day<% if (i > 1) { %>s<% } %></option>
+                                        <% } %>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-primary btn-block" type="submit" style="height: 47px; margin-top: -2px;">Search</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        </div>
+    </div>
+
+<div class="container-fluid py-5">
+    <div class="container pb-">
+        
+        <p class="text-primary font-weight-bold text-center pb-5" style="font-size: 24px;">Found <%= totalTours %> Packages</p>
+            <% if (typeof errorMessage !== 'undefined' && errorMessage) { %>
+                <p class="text-danger"><%= errorMessage %></p>
+            <% } %>
+
+        <div class="row">
+            <% if (tours && tours.length > 0) { %>
+                <% tours.forEach(tour => { %>
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="package-item bg-white mb-2">
+                            <div class="package-image">
+                            <img class="img-fluid" src="<%= tour.coverImage %>" alt="<%= tour.title %>">
+                            </div>
+                            <div class="p-4">
+                                <div class="d-flex justify-content-between mb-3">
+                                    <small class="m-0"><i class="fa fa-map-marker-alt text-primary mr-2"></i>
+                                        <% tour.countries.forEach((country, index) => { %>
+                                            <%= country.name %><% if (index < tour.countries.length - 1) { %>, <% } %>
+                                        <% }); %>
+                                    </small>
+                                    <small class="m-0"><i class="fa fa-calendar-alt text-primary mr-2"></i><%= tour.days %> Days</small>
+                                    
+                                </div>
+                                <a class="h5 text-decoration-none font-weight-bold" href="/tours/<%= tour.slug %>"><%= tour.title %></a>
+                                <p><%- tour.summary || (tour.overview || '').substring(0, 100) + '...' %></p>
+                            </div>
+                            <div class="border-top d-flex justify-content-between align-items-center">
+                            <div class="rating">
+                            <span class="stars">
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star-half-alt"></i>
+                            </span>
+                            </div>
+                            <a href="/tours/<%= tour.slug %>" class="btn font-weight-bold text-white book-btn">Book Now</a>
+                            </div>
+                        </div>
+                    </div>
+                <% }); %>
+            <% } else { %>
+                <div class="col-12 text-center">
+                    <p>No packages found matching your criteria.</p>
+                </div>
+            <% } %>
+        </div>
+
+        <% if (totalPages > 1) { %>
+            <nav aria-label="Page navigation example">
+                <ul class="pagination justify-content-center mt-4">
+                    <% for (let i = 1; i <= totalPages; i++) { %>
+                        <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                            <a class="page-link" href="/search-packages?countryId=<%= countryId || '' %>&categoryId=<%= categoryId || '' %>&days=<%= selectedDays || '' %>&page=<%= i %>"><%= i %></a>
+                        </li>
+                    <% } %>
+                </ul>
+            </nav>
+        <% } %>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const destinationSelectResults = document.getElementById('destinationSelectResults');
+        const categorySelectResults = document.getElementById('categorySelectResults');
+
+        // Initial load for categorySelectResults if a country was selected
+        if (destinationSelectResults.value && categorySelectResults.disabled) {
+            // Re-fetch categories on load if a country is pre-selected and categories are disabled
+            const event = new Event('change');
+            destinationSelectResults.dispatchEvent(event);
+        }
+
+        destinationSelectResults.addEventListener('change', async (event) => {
+            const countryId = event.target.value;
+            categorySelectResults.innerHTML = '<option value="">Category</option>'; // Reset categories
+            categorySelectResults.disabled = true; // Disable until loaded or no country selected
+
+            if (countryId) {
+                try {
+                    const response = await fetch(`/api/categories/by-country/${countryId}`);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const result = await response.json();
+                    const categories = result.data;
+
+                    if (categories && categories.length > 0) {
+                        categories.forEach(category => {
+                            const option = document.createElement('option');
+                            option.value = category._id;
+                            option.textContent = category.name;
+                            // Check if this category was the one previously selected
+                            if (typeof selectedCategory !== 'undefined' && selectedCategory && selectedCategory._id.toString() === category._id.toString()) {
+                                option.selected = true;
+                            }
+                            categorySelectResults.appendChild(option);
+                        });
+                        categorySelectResults.disabled = false;
+                    } else {
+                        const option = document.createElement('option');
+                        option.value = "";
+                        option.textContent = "No categories found";
+                        categorySelectResults.appendChild(option);
+                    }
+
+                } catch (error) {
+                    console.error('Error fetching categories:', error);
+                    const option = document.createElement('option');
+                    option.value = "";
+                    option.textContent = "Error loading categories";
+                    categorySelectResults.appendChild(option);
+                }
+            }
+        });
+    });
+</script>

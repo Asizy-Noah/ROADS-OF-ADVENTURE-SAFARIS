@@ -21,6 +21,15 @@ export interface FindAllToursOptions {
   featured?: string; // 'true' or 'false'
 }
 
+export interface TourSearchOptions {
+  countryId?: string;
+  categoryId?: string;
+  days?: number;
+  page?: number;
+  limit?: number;
+  // Add other options like sortBy, sortOrder if needed
+}
+
 @Injectable()
 export class ToursService {
   constructor(
@@ -361,5 +370,59 @@ export class ToursService {
       { $inc: { views: 1 } }, // Increment the views field by 1
       { new: true } // Return the updated document
     ).exec();
+  }
+
+  // Search Tours
+  async searchTours(options: TourSearchOptions): Promise<{ tours: Tour[]; totalTours: number; page: number; limit: number; totalPages: number }> {
+    const { countryId, categoryId, days, page = 1, limit = 10 } = options;
+
+    const query: any = {
+      status: TourStatus.PUBLISHED, // Only search for published tours
+    };
+
+    if (countryId) {
+      if (!Types.ObjectId.isValid(countryId)) {
+        throw new NotFoundException(`Invalid country ID format: ${countryId}`);
+      }
+      // Assuming 'countries' in Tour schema is an array of ObjectId references
+      query.countries = new Types.ObjectId(countryId);
+    }
+
+    if (categoryId) {
+      if (!Types.ObjectId.isValid(categoryId)) {
+        throw new NotFoundException(`Invalid category ID format: ${categoryId}`);
+      }
+      // Assuming 'categories' in Tour schema is an array of ObjectId references
+      query.categories = new Types.ObjectId(categoryId);
+    }
+
+    if (days) {
+      // Assuming 'days' is a direct match, or you might want a range (e.g., days <= X)
+      query.days = days;
+    }
+
+    const skip = (page - 1) * limit;
+
+    const [tours, totalTours] = await Promise.all([
+      this.tourModel
+        .find(query)
+        .populate('countries', 'name slug code') // Populate relevant country fields
+        .populate('categories', 'name slug') // Populate relevant category fields
+        .skip(skip)
+        .limit(limit)
+        .sort({ title: 1 }) // Or sort by price, popularity, etc.
+        .exec(),
+      this.tourModel.countDocuments(query),
+    ]);
+
+    const totalPages = Math.ceil(totalTours / limit);
+
+    return {
+      tours,
+      totalTours,
+      page,
+      limit,
+      totalPages,
+    };
   }
 }

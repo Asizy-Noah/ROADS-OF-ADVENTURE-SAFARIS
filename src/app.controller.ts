@@ -1,7 +1,7 @@
 import { Controller, Get, Render, Param, Query, Res, Post, Body, NotFoundException, } from "@nestjs/common"
 import { Response } from "express"
 import { AppService } from "./app.service"
-import { ToursService } from "./modules/tours/tours.service"
+import { ToursService, TourSearchOptions } from "./modules/tours/tours.service"
 import { CountriesService } from "./modules/countries/countries.service"
 import { CategoriesService } from "./modules/categories/categories.service"
 import { BlogsService } from "./modules/blogs/blogs.service"
@@ -250,5 +250,76 @@ export class AppController {
       title: "About Us - Roads of Adventure Safaris",
       layout: "layouts/public",
     };
+  }
+
+  @Get('search-packages')
+  @Render('public/search-results') // You will create this EJS file
+  async searchPackages(
+    @Query('countryId') countryId?: string,
+    @Query('categoryId') categoryId?: string,
+    @Query('days') days?: string, // Comes as string from query, convert to number
+    @Query('page') page: string = '1', // For pagination on search results
+  ) {
+    const parsedDays = days ? parseInt(days, 10) : undefined;
+    const parsedPage = parseInt(page, 10);
+    const limit = 9; // Number of tours per page on search results
+
+    // Prepare search options for the service
+    const searchOptions: TourSearchOptions = {
+      countryId: countryId || undefined, // Pass undefined if empty string
+      categoryId: categoryId || undefined, // Pass undefined if empty string
+      days: parsedDays,
+      page: parsedPage,
+      limit: limit,
+    };
+
+    try {
+      const { tours, totalTours, page: currentPage, totalPages } = await this.toursService.searchTours(searchOptions);
+
+      // Fetch all countries again to re-populate the destination dropdown if needed
+      const countriesResult = await this.countriesService.findAll();
+      const allCountries = Array.isArray(countriesResult) ? countriesResult : countriesResult.data ?? [];
+
+
+      // If you want to show selected filters in the rendered form on search results page
+      let selectedCountry = null;
+      let selectedCategory = null;
+      if (countryId) {
+        selectedCountry = await this.countriesService.findOne(countryId); // Assuming you have findOneById
+      }
+      if (categoryId) {
+        selectedCategory = await this.categoriesService.findOne(categoryId); // Assuming you have findOneById
+      }
+
+
+      return {
+        title: "Search Results - Roads of Adventure Safaris",
+        tours,
+        totalTours,
+        currentPage,
+        totalPages,
+        allCountries, // Pass all countries for potential re-population of search form filters
+        selectedCountry, // Pass selected country object
+        selectedCategory, // Pass selected category object
+        selectedDays: parsedDays, // Pass selected days number
+        layout: 'layouts/public',
+      };
+    } catch (error) {
+      console.error('Error during package search:', error);
+      // Handle errors: render an error page or an empty results page with a message
+      return {
+        title: "Search Results - Error",
+        tours: [],
+        totalTours: 0,
+        currentPage: 1,
+        totalPages: 0,
+        allCountries: [], // Pass empty array if error
+        selectedCountry: null,
+        selectedCategory: null,
+        selectedDays: undefined,
+        errorMessage: 'An error occurred while searching for packages. Please try again.',
+        layout: 'layouts/public',
+      };
+    }
   }
 }

@@ -200,6 +200,60 @@ let AppController = class AppController {
             layout: "layouts/public",
         };
     }
+    async searchPackages(countryId, categoryId, days, page = '1') {
+        var _a;
+        const parsedDays = days ? parseInt(days, 10) : undefined;
+        const parsedPage = parseInt(page, 10);
+        const limit = 9;
+        const searchOptions = {
+            countryId: countryId || undefined,
+            categoryId: categoryId || undefined,
+            days: parsedDays,
+            page: parsedPage,
+            limit: limit,
+        };
+        try {
+            const { tours, totalTours, page: currentPage, totalPages } = await this.toursService.searchTours(searchOptions);
+            const countriesResult = await this.countriesService.findAll();
+            const allCountries = Array.isArray(countriesResult) ? countriesResult : (_a = countriesResult.data) !== null && _a !== void 0 ? _a : [];
+            let selectedCountry = null;
+            let selectedCategory = null;
+            if (countryId) {
+                selectedCountry = await this.countriesService.findOne(countryId);
+            }
+            if (categoryId) {
+                selectedCategory = await this.categoriesService.findOne(categoryId);
+            }
+            return {
+                title: "Search Results - Roads of Adventure Safaris",
+                tours,
+                totalTours,
+                currentPage,
+                totalPages,
+                allCountries,
+                selectedCountry,
+                selectedCategory,
+                selectedDays: parsedDays,
+                layout: 'layouts/public',
+            };
+        }
+        catch (error) {
+            console.error('Error during package search:', error);
+            return {
+                title: "Search Results - Error",
+                tours: [],
+                totalTours: 0,
+                currentPage: 1,
+                totalPages: 0,
+                allCountries: [],
+                selectedCountry: null,
+                selectedCategory: null,
+                selectedDays: undefined,
+                errorMessage: 'An error occurred while searching for packages. Please try again.',
+                layout: 'layouts/public',
+            };
+        }
+    }
 };
 __decorate([
     (0, common_1.Get)(),
@@ -284,6 +338,17 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], AppController.prototype, "getaboutPage", null);
+__decorate([
+    (0, common_1.Get)('search-packages'),
+    (0, common_1.Render)('public/search-results'),
+    __param(0, (0, common_1.Query)('countryId')),
+    __param(1, (0, common_1.Query)('categoryId')),
+    __param(2, (0, common_1.Query)('days')),
+    __param(3, (0, common_1.Query)('page')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String, String]),
+    __metadata("design:returntype", Promise)
+], AppController.prototype, "searchPackages", null);
 AppController = __decorate([
     (0, common_1.Controller)(),
     __metadata("design:paramtypes", [typeof (_a = typeof app_service_1.AppService !== "undefined" && app_service_1.AppService) === "function" ? _a : Object, typeof (_b = typeof tours_service_1.ToursService !== "undefined" && tours_service_1.ToursService) === "function" ? _b : Object, typeof (_c = typeof countries_service_1.CountriesService !== "undefined" && countries_service_1.CountriesService) === "function" ? _c : Object, typeof (_d = typeof categories_service_1.CategoriesService !== "undefined" && categories_service_1.CategoriesService) === "function" ? _d : Object, typeof (_e = typeof blogs_service_1.BlogsService !== "undefined" && blogs_service_1.BlogsService) === "function" ? _e : Object, typeof (_f = typeof reviews_service_1.ReviewsService !== "undefined" && reviews_service_1.ReviewsService) === "function" ? _f : Object, typeof (_g = typeof pages_service_1.PagesService !== "undefined" && pages_service_1.PagesService) === "function" ? _g : Object, typeof (_h = typeof subscribers_service_1.SubscribersService !== "undefined" && subscribers_service_1.SubscribersService) === "function" ? _h : Object, typeof (_j = typeof mail_service_1.MailService !== "undefined" && mail_service_1.MailService) === "function" ? _j : Object])
@@ -1311,31 +1376,15 @@ let BlogsController = class BlogsController {
                 { content: { $regex: query.search, $options: 'i' } }
             ];
         }
-        if (query.category) {
-            filterOptions.category = query.category;
-        }
-        if (query.tag) {
-            filterOptions.tag = query.tag;
-        }
-        const { blogs, totalBlogs, currentPage, totalPages } = await this.blogsService.findAll(Object.assign(Object.assign({}, filterOptions), { page: query.page ? parseInt(query.page) : 1, limit: query.limit ? parseInt(query.limit) : 10, sortBy: query.sortBy || 'newest' }));
-        const countriesResult = await this.countriesService.findAll({});
-        const categoriesResult = await this.categoriesService.findAll({});
-        const allTags = blogs.reduce((tags, blog) => {
-            if (blog.tags && blog.tags.length) {
-                return [...tags, ...blog.tags];
-            }
-            return tags;
-        }, []);
-        const uniqueTags = [...new Set(allTags)];
+        const { blogs, totalBlogs, currentPage, totalPages } = await this.blogsService.findAll(Object.assign(Object.assign({}, filterOptions), { page: query.page ? parseInt(query.page) : 1, limit: query.limit ? parseInt(query.limit) : 8, sortBy: query.sortBy || 'newest' }));
+        const popularBlogs = await this.blogsService.findPopular(5);
         return {
             title: "Safari Updates & Blog - Roads of Adventure Safaris",
             blogs,
-            countries: countriesResult.data || [],
-            categories: categoriesResult.data || [],
-            tags: uniqueTags,
             query,
             currentPage,
             totalPages,
+            popularBlogs,
             layout: "layouts/public",
         };
     }
@@ -2072,6 +2121,29 @@ let BlogsService = class BlogsService {
         }
         return updatedBlog;
     }
+    async findPopular(limit = 5) {
+        try {
+            const blogs = await this.blogModel
+                .find({ status: blog_schema_1.BlogStatus.VISIBLE })
+                .sort({ views: -1, createdAt: -1 })
+                .limit(limit)
+                .select('title slug coverImage excerpt createdAt')
+                .exec();
+            return blogs;
+        }
+        catch (error) {
+            console.error(`[BlogsService] Error retrieving popular blogs:`, error);
+            return [];
+        }
+    }
+    async incrementViews(slug) {
+        try {
+            await this.blogModel.findOneAndUpdate({ slug, status: blog_schema_1.BlogStatus.VISIBLE }, { $inc: { views: 1 } }, { new: true }).exec();
+        }
+        catch (error) {
+            console.error(`[BlogsService] Error incrementing views for blog slug ${slug}:`, error);
+        }
+    }
 };
 BlogsService = __decorate([
     (0, common_1.Injectable)(),
@@ -2169,6 +2241,10 @@ __decorate([
     (0, mongoose_1.Prop)({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: "Category" }] }),
     __metadata("design:type", Array)
 ], Blog.prototype, "categories", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: Number, default: 0 }),
+    __metadata("design:type", Number)
+], Blog.prototype, "views", void 0);
 __decorate([
     (0, mongoose_1.Prop)(),
     __metadata("design:type", String)
@@ -7630,6 +7706,47 @@ let ToursService = class ToursService {
     }
     async incrementViews(slug) {
         return this.tourModel.findOneAndUpdate({ slug }, { $inc: { views: 1 } }, { new: true }).exec();
+    }
+    async searchTours(options) {
+        const { countryId, categoryId, days, page = 1, limit = 10 } = options;
+        const query = {
+            status: tour_schema_1.TourStatus.PUBLISHED,
+        };
+        if (countryId) {
+            if (!mongoose_2.Types.ObjectId.isValid(countryId)) {
+                throw new common_1.NotFoundException(`Invalid country ID format: ${countryId}`);
+            }
+            query.countries = new mongoose_2.Types.ObjectId(countryId);
+        }
+        if (categoryId) {
+            if (!mongoose_2.Types.ObjectId.isValid(categoryId)) {
+                throw new common_1.NotFoundException(`Invalid category ID format: ${categoryId}`);
+            }
+            query.categories = new mongoose_2.Types.ObjectId(categoryId);
+        }
+        if (days) {
+            query.days = days;
+        }
+        const skip = (page - 1) * limit;
+        const [tours, totalTours] = await Promise.all([
+            this.tourModel
+                .find(query)
+                .populate('countries', 'name slug code')
+                .populate('categories', 'name slug')
+                .skip(skip)
+                .limit(limit)
+                .sort({ title: 1 })
+                .exec(),
+            this.tourModel.countDocuments(query),
+        ]);
+        const totalPages = Math.ceil(totalTours / limit);
+        return {
+            tours,
+            totalTours,
+            page,
+            limit,
+            totalPages,
+        };
     }
 };
 ToursService = __decorate([

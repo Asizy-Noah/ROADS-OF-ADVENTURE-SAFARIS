@@ -42,6 +42,9 @@ export class Blog extends Document {
   @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: "Category" }] })
   categories: Category[]
 
+  @Prop({ type: Number, default: 0 })
+  views: number;
+
   // SEO fields - No changes needed, they match
   @Prop()
   seoTitle: string

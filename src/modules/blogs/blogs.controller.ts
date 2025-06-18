@@ -79,44 +79,45 @@ export class BlogsController {
                 { content: { $regex: query.search, $options: 'i' } }
             ];
         }
-        if (query.category) {
-            filterOptions.category = query.category; // Assumes service handles ObjectId conversion
-        }
-        if (query.tag) {
-            filterOptions.tag = query.tag; // Assumes service handles tag array filtering
-        }
-        // No 'country' filter for public blogs unless explicitly needed and handled by service
+        // Removed category and tag filtering for this specific request,
+        // but you had it before, consider if you want to keep it as an option.
+        // if (query.category) { filterOptions.category = query.category; }
+        // if (query.tag) { filterOptions.tag = query.tag; }
 
         const { blogs, totalBlogs, currentPage, totalPages } = await this.blogsService.findAll({
             ...filterOptions,
             page: query.page ? parseInt(query.page) : 1,
-            limit: query.limit ? parseInt(query.limit) : 10,
+            limit: query.limit ? parseInt(query.limit) : 8, // Adjust limit if you want more/fewer cards per page
             sortBy: query.sortBy || 'newest',
         });
 
-        const countriesResult = await this.countriesService.findAll({});
-        const categoriesResult = await this.categoriesService.findAll({});
+        // Fetch popular blogs for the sidebar
+        const popularBlogs = await this.blogsService.findPopular(5); // Fetch top 5 popular blogs
 
-        const allTags = blogs.reduce((tags: string[], blog) => {
-            if (blog.tags && blog.tags.length) {
-                return [...tags, ...blog.tags];
-            }
-            return tags;
-        }, []);
-        const uniqueTags = [...new Set(allTags)];
+        // Countries and Categories are no longer needed here if you remove the sections from the sidebar.
+        // If you remove them, you can also remove the lines fetching them and passing them to the template.
+        // For now, I'll remove passing them, assume the service calls themselves are fine for other uses.
+        // const countriesResult = await this.countriesService.findAll({});
+        // const categoriesResult = await this.categoriesService.findAll({});
+
+        // The allTags and uniqueTags calculation is also not needed if the Tags section is removed.
+        // const allTags = blogs.reduce((tags: string[], blog) => { /* ... */ }, []);
+        // const uniqueTags = [...new Set(allTags)];
 
         return {
             title: "Safari Updates & Blog - Roads of Adventure Safaris",
             blogs,
-            countries: countriesResult.data || [],
-            categories: categoriesResult.data || [],
-            tags: uniqueTags,
-            query, // Pass query to template for sticky filters
+            // countries: countriesResult.data || [], // Removed based on request
+            // categories: categoriesResult.data || [], // Removed based on request
+            // tags: uniqueTags, // Removed based on request
+            query, // Still pass query for the search bar to keep sticky value
             currentPage,
             totalPages,
+            popularBlogs, // Pass popular blogs
             layout: "layouts/public",
         };
     }
+
 
     // IMPORTANT: Specific routes like 'dashboard' or 'add' MUST come before dynamic ':slug'
     // Otherwise, 'dashboard' might be interpreted as a slug!

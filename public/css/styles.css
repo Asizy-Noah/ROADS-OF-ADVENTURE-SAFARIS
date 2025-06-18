@@ -1512,7 +1512,6 @@ textarea.form-control {
   }
   
   .col-md-4 {
-      min-height: 250px;
   }
 }
 
@@ -1911,6 +1910,20 @@ textarea.form-control {
 .map-section {
   margin: 50px auto;
   max-width: 1118px;
+  border-radius: 5px;
+  border: 1px solid var(--army-green);
+}
+
+.map-section .container-fluid {
+  border-radius: 5px;
+}
+
+.map-section .container-fluid iframe {
+  border-radius: 5px;
+}
+
+.map-container {
+  border-radius: 5px;
 }
 
 .map-container {

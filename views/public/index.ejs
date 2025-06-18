@@ -31,58 +31,56 @@
         </div>
     </div>
 
-<!-- Booking Form -->
+<!-- Search Safari by Destination, category and No. of days Form -->
 <div class="container-fluid booking mt-5 pb-5">
     <div class="container pb-5">
         <div class="bg-light shadow" style="padding: 30px;">
-            <div class="row align-items-center" style="min-height: 60px;">
-                <div class="col-md-10">
-                    <div class="row">
-                        <div class="col-md-3">
-                            <div class="mb-3 mb-md-0">
-                                <select class="custom-select px-4" style="height: 47px;">
-                                    <option selected>Destination</option>
-                                    <option value="1">Uganda</option>
-                                    <option value="2">Kenya</option>
-                                    <option value="3">Tanzania</option>
-                                    <option value="4">Rwanda</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="mb-3 mb-md-0">
-                                <div class="date" id="date1" data-target-input="nearest">
-                                    <input type="text" class="form-control p-4 datetimepicker-input" placeholder="Depart Date" data-target="#date1" data-toggle="datetimepicker"/>
+            <form id="searchPackagesForm" action="/search-packages" method="GET">
+                <div class="row align-items-center" style="min-height: 60px;">
+                    <div class="col-md-10">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3 mb-md-0">
+                                    <select class="custom-select px-4" style="height: 47px;" id="destinationSelect" name="countryId">
+                                        <option value="" selected>Destination</option>
+                                        <% if (typeof countries !== 'undefined' && Array.isArray(countries) && countries.length > 0) { %>
+                                            <% countries.forEach(country => { %>
+                                                <option value="<%= country._id %>"><%= country.name %></option>
+                                            <% }); %>
+                                        <% } else { %>
+                                            <option value="">No destinations available</option>
+                                        <% } %>
+                                    </select>
                                 </div>
                             </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="mb-3 mb-md-0">
-                                <div class="date" id="date2" data-target-input="nearest">
-                                    <input type="text" class="form-control p-4 datetimepicker-input" placeholder="Return Date" data-target="#date2" data-toggle="datetimepicker"/>
+                            <div class="col-md-4">
+                                <div class="mb-3 mb-md-0">
+                                    <select class="custom-select px-4" style="height: 47px;" id="categorySelect" name="categoryId" disabled>
+                                        <option value="" selected>Category</option>
+                                    </select>
                                 </div>
                             </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="mb-3 mb-md-0">
-                                <select class="custom-select px-4" style="height: 47px;">
-                                    <option selected>Duration</option>
-                                    <option value="1">1-3 Days</option>
-                                    <option value="2">3-5 Days</option>
-                                    <option value="3">5-7 Days</option>
-                                    <option value="4">7+ Days</option>
-                                </select>
+                            <div class="col-md-4">
+                                <div class="mb-3 mb-md-0">
+                                    <select class="custom-select px-4" style="height: 47px;" id="durationSelect" name="days">
+                                        <option value="" selected>Duration</option>
+                                        <% for (let i = 1; i <= 30; i++) { %> <option value="<%= i %>"><%= i %> Day<% if (i > 1) { %>s<% } %></option>
+                                        <% } %>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-primary btn-block" type="submit" style="height: 47px; margin-top: -2px;">Search</button>
+                    </div>
                 </div>
-                <div class="col-md-2">
-                    <button class="btn btn-primary btn-block" type="submit" style="height: 47px; margin-top: -2px;">Submit</button>
-                </div>
-            </div>
+            </form>
         </div>
     </div>
 </div>
+
+
 
 <div class="container-fluid about-home py-2" id="about">
     <div class="container ">
@@ -190,33 +188,33 @@
                 <div class="owl-carousel package-carousel">
                 <% featuredTours.forEach(tour => { %>
                     <div class="package-item bg-white mb-2">
-                    <div class="package-image">
-                        <img class="img-fluid" src="<%= tour.coverImage %>" alt="<%= tour.title %>">
-                    </div>
-                    <div class="p-4">
-                        <div class="d-flex justify-content-between mb-3">
-                        <small class="m-0">
-                            <span class="font-weight-bold">Duration:</span>
-                            <i class="ri-time-line text-primary"></i> <%= tour.days %> days
-                        </small>
+                        <div class="package-image">
+                            <img class="img-fluid" src="<%= tour.coverImage %>" alt="<%= tour.title %>">
                         </div>
-                        <a class="h5 text-decoration-none font-weight-bold" href="/tours/<%= tour.slug %>">
-                        <%= tour.title %>
-                        </a>
-                        <p><%- tour.summary || (tour.overview || '').substring(0, 100) + '...' %></p>
-                    </div>
-                    <div class="border-top d-flex justify-content-between align-items-center">
-                        <div class="rating">
-                        <span class="stars">
-                            <i class="fa fa-star"></i>
-                            <i class="fa fa-star"></i>
-                            <i class="fa fa-star"></i>
-                            <i class="fa fa-star"></i>
-                            <i class="fa fa-star-half-alt"></i>
-                        </span>
+                        <div class="p-4">
+                            <div class="d-flex justify-content-between mb-3">
+                            <small class="m-0">
+                                <span class="font-weight-bold">Duration:</span>
+                                <i class="ri-time-line text-primary"></i> <%= tour.days %> days
+                            </small>
+                            </div>
+                            <a class="h5 text-decoration-none font-weight-bold" href="/tours/<%= tour.slug %>">
+                            <%= tour.title %>
+                            </a>
+                            <p><%- tour.summary || (tour.overview || '').substring(0, 100) + '...' %></p>
                         </div>
-                        <a href="/tours/<%= tour.slug %>" class="btn font-weight-bold text-white book-btn">Book Now</a>
-                    </div>
+                        <div class="border-top d-flex justify-content-between align-items-center">
+                            <div class="rating">
+                            <span class="stars">
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star-half-alt"></i>
+                            </span>
+                            </div>
+                            <a href="/tours/<%= tour.slug %>" class="btn font-weight-bold text-white book-btn">Book Now</a>
+                        </div>
                     </div>
                 <% }) %>
                 </div>
@@ -331,3 +329,51 @@
             <div><a href="https://partner5.com" target="_blank"><img src="img/UWA.webp" alt="Partner 5"></a></div>
         </div>
     </div>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const destinationSelect = document.getElementById('destinationSelect');
+        const categorySelect = document.getElementById('categorySelect');
+
+        destinationSelect.addEventListener('change', async (event) => {
+            const countryId = event.target.value;
+            categorySelect.innerHTML = '<option value="" selected>Category</option>'; // Reset categories
+            categorySelect.disabled = true; // Disable until loaded or no country selected
+
+            if (countryId) {
+                try {
+                    // Fetch categories using the API endpoint you created
+                    const response = await fetch(`/api/categories/by-country/${countryId}`);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const result = await response.json();
+                    const categories = result.data; // Assuming your API returns { data: [...] }
+
+                    if (categories && categories.length > 0) {
+                        categories.forEach(category => {
+                            const option = document.createElement('option');
+                            option.value = category._id;
+                            option.textContent = category.name;
+                            categorySelect.appendChild(option);
+                        });
+                        categorySelect.disabled = false; // Enable category select
+                    } else {
+                        const option = document.createElement('option');
+                        option.value = "";
+                        option.textContent = "No categories found";
+                        categorySelect.appendChild(option);
+                    }
+
+                } catch (error) {
+                    console.error('Error fetching categories:', error);
+                    const option = document.createElement('option');
+                    option.value = "";
+                    option.textContent = "Error loading categories";
+                    categorySelect.appendChild(option);
+                }
+            }
+        });
+    });
+</script>

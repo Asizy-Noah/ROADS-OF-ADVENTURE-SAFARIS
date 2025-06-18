@@ -285,4 +285,42 @@ export class BlogsService {
 
         return updatedBlog;
     }
+
+    /**
+   * Finds popular blogs based on views.
+   * @param limit The maximum number of popular blogs to return.
+   * @returns A promise that resolves to an array of popular Blog documents.
+   */
+  async findPopular(limit: number = 5): Promise<Blog[]> {
+    try {
+      const blogs = await this.blogModel
+        .find({ status: BlogStatus.VISIBLE }) // Only visible blogs
+        .sort({ views: -1, createdAt: -1 }) // Sort by views (desc), then by newest (desc)
+        .limit(limit)
+        .select('title slug coverImage excerpt createdAt') // Select fields needed for card/list
+        .exec();
+      return blogs;
+    } catch (error) {
+      console.error(`[BlogsService] Error retrieving popular blogs:`, error);
+      // Depending on how critical this is, you might re-throw or return an empty array
+      return [];
+    }
+  }
+
+  /**
+   * Increments the views count for a given blog slug.
+   * @param slug The slug of the blog to increment views for.
+   */
+  async incrementViews(slug: string): Promise<void> {
+    try {
+      await this.blogModel.findOneAndUpdate(
+        { slug, status: BlogStatus.VISIBLE },
+        { $inc: { views: 1 } }, // Increment the 'views' field by 1
+        { new: true } // Return the updated document (optional, but good for validation)
+      ).exec();
+    } catch (error) {
+      console.error(`[BlogsService] Error incrementing views for blog slug ${slug}:`, error);
+      // Don't throw a major error for view increment failures; it's a background task.
+    }
+  }
 }
