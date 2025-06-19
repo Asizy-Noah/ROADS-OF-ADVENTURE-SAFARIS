@@ -22,18 +22,17 @@ export class SubscribersService {
   }
 
   async create(createSubscriberDto: CreateSubscriberDto): Promise<Subscriber> {
-    console.log("SubscribersService: Attempting to create/reactivate subscriber:", createSubscriberDto.email);
-
+    
     // Check if subscriber with same email already exists
     const existingSubscriber = await this.subscriberModel.findOne({ email: createSubscriberDto.email });
 
     if (existingSubscriber) {
       if (existingSubscriber.isActive) {
-        console.log("SubscribersService: Email already subscribed and active.");
+        
         throw new ConflictException("Email is already subscribed to our newsletter");
       } else {
         // If subscriber exists but is inactive, reactivate them
-        console.log("SubscribersService: Reactivating inactive subscriber.");
+        
         existingSubscriber.isActive = true;
         // Update other fields if provided in dto (optional, depending on your logic)
         if (createSubscriberDto.name) existingSubscriber.name = createSubscriberDto.name;
@@ -44,13 +43,13 @@ export class SubscribersService {
         // Send confirmation email to reactivated subscriber
         await this.mailService.sendSubscriptionConfirmation(reactivatedSubscriber);
         // No need to send admin notification again for reactivation, as they were already subscribed.
-        console.log("SubscribersService: Reactivated subscriber and sent confirmation email.");
+        
         return reactivatedSubscriber;
       }
     }
 
     // If no existing subscriber, create a new one
-    console.log("SubscribersService: Creating new subscriber.");
+    
     const newSubscriber = new this.subscriberModel(createSubscriberDto);
     const savedSubscriber = await newSubscriber.save();
 
@@ -58,8 +57,7 @@ export class SubscribersService {
     await this.mailService.sendSubscriptionConfirmation(savedSubscriber);
     // Send notification email to admin
     await this.mailService.sendNewSubscriberNotification(savedSubscriber);
-    console.log("SubscribersService: New subscriber created and emails sent.");
-
+    
     return savedSubscriber;
   }
 

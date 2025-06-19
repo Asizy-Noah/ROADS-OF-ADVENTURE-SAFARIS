@@ -862,8 +862,17 @@ body {
 .tour-title {
     font-size: 1rem;
     font-weight: 600;
-    color: var(--text-color);
     margin: 0;
+}
+
+.tour-title a {
+    text-decoration: none;
+    color: var(--text-color);
+    transition: all 0.3s ease;
+}
+
+.tour-title a:hover {
+    color: var(--primary-color);
 }
 
 .tour-actions {

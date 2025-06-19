@@ -1911,7 +1911,7 @@ textarea.form-control {
   margin: 50px auto;
   max-width: 1118px;
   border-radius: 5px;
-  border: 1px solid var(--army-green);
+  border: 2px solid var(--army-green);
 }
 
 .map-section .container-fluid {

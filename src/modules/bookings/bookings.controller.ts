@@ -184,7 +184,7 @@ export class BookingsController {
     }
   }
 
-  @Get("dashboard/delete/:id")
+  @Post("dashboard/delete/:id")
   @UseGuards(SessionAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   async deleteBooking(@Param("id") id: string, @Req() req, @Res() res: Response) {

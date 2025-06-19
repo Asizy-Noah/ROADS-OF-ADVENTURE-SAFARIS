@@ -1,23 +1,24 @@
 // src/modules/tours/tours.module.ts
-import { Module, forwardRef } from "@nestjs/common"; // Keep forwardRef
+import { Module, forwardRef } from "@nestjs/common";
 import { MongooseModule } from "@nestjs/mongoose";
 import { ToursService } from "./tours.service";
 import { ToursController } from "./tours.controller";
 import { Tour, TourSchema } from "./schemas/tour.schema";
-// Re-import these modules:
-import { CountriesModule } from "../countries/countries.module"; // <--- UNCOMMENT/ADD
-import { CategoriesModule } from "../categories/categories.module"; // <--- UNCOMMENT/ADD
+import { CountriesModule } from "../countries/countries.module";
+import { CategoriesModule } from "../categories/categories.module";
+import { GoogleCloudStorageService } from "../google-cloud/google-cloud-storage.service"; // <--- IMPORT GCS SERVICE
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Tour.name, schema: TourSchema }]),
-    // Apply forwardRef to both CountriesModule and CategoriesModule because ToursModule
-    // is part of the circular dependency with both of them.
-    forwardRef(() => CountriesModule), // <--- Re-add with forwardRef
-    forwardRef(() => CategoriesModule), // <--- Re-add with forwardRef
+    forwardRef(() => CountriesModule),
+    forwardRef(() => CategoriesModule),
   ],
   controllers: [ToursController],
-  providers: [ToursService],
-  exports: [ToursService], // Ensure ToursService is exported
+  providers: [
+    ToursService,
+    GoogleCloudStorageService, 
+  ],
+  exports: [ToursService],
 })
 export class ToursModule {}

@@ -14,14 +14,14 @@ export class SubscribersController {
 
  @Post()
   async createSubscriber(@Body() createSubscriberDto: CreateSubscriberDto, @Res() res: Response, @Req() req: any) { // Add @Req() req for flash messages
-    console.log("SubscribersController: Received subscription request for email:", createSubscriberDto.email);
+    
     try {
       await this.subscribersService.create(createSubscriberDto);
       req.flash("success_msg", "You've successfully subscribed to our newsletter!");
-      console.log("SubscribersController: Subscriber created/reactivated, redirecting with success.");
+      
       return res.redirect("/"); // Redirect to homepage
     } catch (error) {
-      console.error("SubscribersController: Error creating subscriber:", error.message);
+      
       req.flash("error_msg", error.message || "Failed to subscribe. Please try again.");
       return res.redirect("/"); // Redirect to homepage
     }
@@ -93,7 +93,7 @@ export class SubscribersController {
     }
   }
 
-  @Get("dashboard/delete/:id")
+  @Post("dashboard/delete/:id") 
   @UseGuards(SessionAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   async deleteSubscriber(@Param("id") id: string, @Req() req, @Res() res: Response) {

@@ -6,17 +6,21 @@ import { CategoriesController } from './categories.controller';
 import { Category, CategorySchema } from './schemas/category.schema';
 import { CountriesModule } from '../countries/countries.module';
 import { CategoriesApiController } from './categories.api.controller';
-import { ToursModule } from '../tours/tours.module'; // Still imports ToursModule directly
-import { CategoriesPublicController } from './categories-public.controller'; // If you're using this
+import { ToursModule } from '../tours/tours.module';
+import { CategoriesPublicController } from './categories-public.controller';
+import { GoogleCloudStorageService } from "../google-cloud/google-cloud-storage.service"; // <--- IMPORT GCS SERVICE
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Category.name, schema: CategorySchema }]),
     forwardRef(() => CountriesModule),
-    forwardRef(() => ToursModule), // ❗ Wrap this in forwardRef
+    forwardRef(() => ToursModule), // ❗ Keep this wrapped in forwardRef for circular dependency
   ],
   controllers: [CategoriesController, CategoriesApiController, CategoriesPublicController],
-  providers: [CategoriesService],
+  providers: [
+    CategoriesService,
+    GoogleCloudStorageService, // <--- ADD GCS SERVICE TO PROVIDERS
+  ],
   exports: [CategoriesService],
 })
 export class CategoriesModule {}

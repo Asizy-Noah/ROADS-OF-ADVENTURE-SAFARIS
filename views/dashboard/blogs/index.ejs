@@ -61,7 +61,8 @@
                         <img src="<%= blog.coverImage || '/img/default-blog.jpg' %>" alt="<%= blog.title %>">
                     </div> 
                     <div class="tour-info">
-                        <h3 class="tour-title"><%= blog.title %></h3>
+                        
+                        <h3 class="tour-title"><a href="/blogs/<%= blog.slug || blog._id %>"><%= blog.title %></a></h3>
                         <p class="tour-excerpt"><%= blog.excerpt ? blog.excerpt.substring(0, 100) + '...' : 'No excerpt provided.' %></p>
                         <small>Status: <span class="badge <%= blog.status === 'visible' ? 'bg-success' : blog.status === 'hidden' ? 'bg-warning text-dark' : 'bg-secondary' %>"><%= blog.status.toUpperCase() %></span></small>
                         <small>Published: <%= new Date(blog.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></small>

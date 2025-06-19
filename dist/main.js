@@ -577,58 +577,16 @@ exports.HeaderDataMiddleware = HeaderDataMiddleware;
 /*!*************************************!*\
   !*** ./src/config/multer.config.ts ***!
   \*************************************/
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getMulterConfig = void 0;
 const multer_1 = __webpack_require__(/*! multer */ "multer");
-const path_1 = __webpack_require__(/*! path */ "path");
-const uuid_1 = __webpack_require__(/*! uuid */ "uuid");
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const fs = __importStar(__webpack_require__(/*! fs */ "fs"));
-const baseUploadDir = "./uploads";
 const getMulterConfig = (subfolder) => {
-    const uploadDir = `${baseUploadDir}/${subfolder}`;
-    if (!fs.existsSync(baseUploadDir)) {
-        fs.mkdirSync(baseUploadDir, { recursive: true });
-    }
-    if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-    }
     return {
-        storage: (0, multer_1.diskStorage)({
-            destination: uploadDir,
-            filename: (req, file, callback) => {
-                const uniqueSuffix = (0, uuid_1.v4)();
-                const ext = (0, path_1.extname)(file.originalname);
-                const filename = `${uniqueSuffix}${ext}`;
-                callback(null, filename);
-            },
-        }),
+        storage: (0, multer_1.memoryStorage)(),
         fileFilter: (req, file, callback) => {
             if (!file.originalname.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
                 return callback(new common_1.HttpException("Only image files are allowed!", common_1.HttpStatus.BAD_REQUEST), false);
@@ -1344,7 +1302,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q;
+var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.BlogsController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
@@ -1360,12 +1318,14 @@ const tours_service_1 = __webpack_require__(/*! ../tours/tours.service */ "./src
 const categories_service_1 = __webpack_require__(/*! ../categories/categories.service */ "./src/modules/categories/categories.service.ts");
 const roles_guard_1 = __webpack_require__(/*! ../auth/guards/roles.guard */ "./src/modules/auth/guards/roles.guard.ts");
 const roles_decorator_1 = __webpack_require__(/*! ../auth/decorators/roles.decorator */ "./src/modules/auth/decorators/roles.decorator.ts");
+const google_cloud_storage_service_1 = __webpack_require__(/*! ../google-cloud/google-cloud-storage.service */ "./src/modules/google-cloud/google-cloud-storage.service.ts");
 let BlogsController = class BlogsController {
-    constructor(blogsService, countriesService, categoriesService, toursService) {
+    constructor(blogsService, countriesService, categoriesService, toursService, googleCloudStorageService) {
         this.blogsService = blogsService;
         this.countriesService = countriesService;
         this.categoriesService = categoriesService;
         this.toursService = toursService;
+        this.googleCloudStorageService = googleCloudStorageService;
     }
     async getPublicAllBlogs(query) {
         const filterOptions = { status: blog_schema_1.BlogStatus.VISIBLE };
@@ -1377,7 +1337,7 @@ let BlogsController = class BlogsController {
             ];
         }
         const { blogs, totalBlogs, currentPage, totalPages } = await this.blogsService.findAll(Object.assign(Object.assign({}, filterOptions), { page: query.page ? parseInt(query.page) : 1, limit: query.limit ? parseInt(query.limit) : 8, sortBy: query.sortBy || 'newest' }));
-        const popularBlogs = await this.blogsService.findPopular(5);
+        const popularBlogs = await this.blogsService.findPopular(15);
         return {
             title: "Safari Updates & Blog - Roads of Adventure Safaris",
             blogs,
@@ -1391,7 +1351,7 @@ let BlogsController = class BlogsController {
     async getDashboardBlogs(query, req) {
         const filters = {};
         const page = parseInt(query.page, 10) || 1;
-        const limit = parseInt(query.limit, 10) || 10;
+        const limit = parseInt(query.limit, 10) || 100;
         if (query.status && query.status !== 'all' && Object.values(blog_schema_1.BlogStatus).includes(query.status)) {
             filters.status = query.status;
         }
@@ -1486,7 +1446,7 @@ let BlogsController = class BlogsController {
     async addBlog(createBlogDto, file, req, res) {
         try {
             if (file) {
-                createBlogDto.coverImage = `/uploads/blogs/${file.filename}`;
+                createBlogDto.coverImage = await this.googleCloudStorageService.uploadFile(file, 'blogs/');
             }
             else if (createBlogDto.coverImage === '') {
                 createBlogDto.coverImage = null;
@@ -1595,9 +1555,16 @@ let BlogsController = class BlogsController {
                 return res.redirect("/blogs/dashboard/blogs");
             }
             if (file) {
-                updateBlogDto.coverImage = `/uploads/blogs/${file.filename}`;
+                const newImageUrl = await this.googleCloudStorageService.uploadFile(file, 'blogs/');
+                if (existingBlog.coverImage && existingBlog.coverImage !== newImageUrl) {
+                    await this.googleCloudStorageService.deleteFile(existingBlog.coverImage);
+                }
+                updateBlogDto.coverImage = newImageUrl;
             }
             else if (updateBlogDto.coverImage === '') {
+                if (existingBlog.coverImage) {
+                    await this.googleCloudStorageService.deleteFile(existingBlog.coverImage);
+                }
                 updateBlogDto.coverImage = null;
             }
             if (typeof updateBlogDto.tags === "string") {
@@ -1665,6 +1632,9 @@ let BlogsController = class BlogsController {
                 req.flash("error_msg", "You are not authorized to delete this blog");
                 return res.redirect("/blogs/dashboard/blogs");
             }
+            if (blog.coverImage) {
+                await this.googleCloudStorageService.deleteFile(blog.coverImage);
+            }
             await this.blogsService.remove(id);
             req.flash("success_msg", "Blog deleted successfully");
             return res.redirect("/blogs/dashboard/blogs");
@@ -1704,6 +1674,7 @@ let BlogsController = class BlogsController {
             if (!blog) {
                 throw new common_1.NotFoundException(`Blog with slug '${slug}' not found or not visible.`);
             }
+            await this.blogsService.incrementViews(slug);
             const popularTours = await this.toursService.findPopular(10);
             const relatedBlogsResult = await this.blogsService.findAll({
                 status: blog_schema_1.BlogStatus.VISIBLE,
@@ -1775,7 +1746,7 @@ __decorate([
     __param(2, (0, common_1.Req)()),
     __param(3, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, typeof (_f = typeof Express !== "undefined" && (_e = Express.Multer) !== void 0 && _e.File) === "function" ? _f : Object, Object, typeof (_g = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _g : Object]),
+    __metadata("design:paramtypes", [Object, typeof (_g = typeof Express !== "undefined" && (_f = Express.Multer) !== void 0 && _f.File) === "function" ? _g : Object, Object, typeof (_h = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _h : Object]),
     __metadata("design:returntype", Promise)
 ], BlogsController.prototype, "addBlog", null);
 __decorate([
@@ -1787,7 +1758,7 @@ __decorate([
     __param(1, (0, common_1.Req)()),
     __param(2, (0, common_1.Res)({ passthrough: true })),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object, typeof (_h = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _h : Object]),
+    __metadata("design:paramtypes", [String, Object, typeof (_j = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _j : Object]),
     __metadata("design:returntype", Promise)
 ], BlogsController.prototype, "getEditBlogPage", null);
 __decorate([
@@ -1801,7 +1772,7 @@ __decorate([
     __param(3, (0, common_1.Req)()),
     __param(4, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object, typeof (_k = typeof Express !== "undefined" && (_j = Express.Multer) !== void 0 && _j.File) === "function" ? _k : Object, Object, typeof (_l = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _l : Object]),
+    __metadata("design:paramtypes", [String, Object, typeof (_l = typeof Express !== "undefined" && (_k = Express.Multer) !== void 0 && _k.File) === "function" ? _l : Object, Object, typeof (_m = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _m : Object]),
     __metadata("design:returntype", Promise)
 ], BlogsController.prototype, "updateBlog", null);
 __decorate([
@@ -1812,7 +1783,7 @@ __decorate([
     __param(1, (0, common_1.Req)()),
     __param(2, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object, typeof (_m = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _m : Object]),
+    __metadata("design:paramtypes", [String, Object, typeof (_o = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _o : Object]),
     __metadata("design:returntype", Promise)
 ], BlogsController.prototype, "deleteBlog", null);
 __decorate([
@@ -1824,7 +1795,7 @@ __decorate([
     __param(2, (0, common_1.Req)()),
     __param(3, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, typeof (_o = typeof blog_schema_1.BlogStatus !== "undefined" && blog_schema_1.BlogStatus) === "function" ? _o : Object, Object, typeof (_p = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _p : Object]),
+    __metadata("design:paramtypes", [String, typeof (_p = typeof blog_schema_1.BlogStatus !== "undefined" && blog_schema_1.BlogStatus) === "function" ? _p : Object, Object, typeof (_q = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _q : Object]),
     __metadata("design:returntype", Promise)
 ], BlogsController.prototype, "updateBlogStatus", null);
 __decorate([
@@ -1834,12 +1805,12 @@ __decorate([
     __param(1, (0, common_1.Req)()),
     __param(2, (0, common_1.Res)({ passthrough: true })),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object, typeof (_q = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _q : Object]),
+    __metadata("design:paramtypes", [String, Object, typeof (_r = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _r : Object]),
     __metadata("design:returntype", Promise)
 ], BlogsController.prototype, "getPublicSingleBlog", null);
 BlogsController = __decorate([
     (0, common_1.Controller)("blogs"),
-    __metadata("design:paramtypes", [typeof (_a = typeof blogs_service_1.BlogsService !== "undefined" && blogs_service_1.BlogsService) === "function" ? _a : Object, typeof (_b = typeof countries_service_1.CountriesService !== "undefined" && countries_service_1.CountriesService) === "function" ? _b : Object, typeof (_c = typeof categories_service_1.CategoriesService !== "undefined" && categories_service_1.CategoriesService) === "function" ? _c : Object, typeof (_d = typeof tours_service_1.ToursService !== "undefined" && tours_service_1.ToursService) === "function" ? _d : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof blogs_service_1.BlogsService !== "undefined" && blogs_service_1.BlogsService) === "function" ? _a : Object, typeof (_b = typeof countries_service_1.CountriesService !== "undefined" && countries_service_1.CountriesService) === "function" ? _b : Object, typeof (_c = typeof categories_service_1.CategoriesService !== "undefined" && categories_service_1.CategoriesService) === "function" ? _c : Object, typeof (_d = typeof tours_service_1.ToursService !== "undefined" && tours_service_1.ToursService) === "function" ? _d : Object, typeof (_e = typeof google_cloud_storage_service_1.GoogleCloudStorageService !== "undefined" && google_cloud_storage_service_1.GoogleCloudStorageService) === "function" ? _e : Object])
 ], BlogsController);
 exports.BlogsController = BlogsController;
 
@@ -1871,6 +1842,7 @@ const subscribers_module_1 = __webpack_require__(/*! ../subscribers/subscribers.
 const countries_module_1 = __webpack_require__(/*! ../countries/countries.module */ "./src/modules/countries/countries.module.ts");
 const categories_module_1 = __webpack_require__(/*! ../categories/categories.module */ "./src/modules/categories/categories.module.ts");
 const tours_module_1 = __webpack_require__(/*! ../tours/tours.module */ "./src/modules/tours/tours.module.ts");
+const google_cloud_storage_service_1 = __webpack_require__(/*! ../google-cloud/google-cloud-storage.service */ "./src/modules/google-cloud/google-cloud-storage.service.ts");
 let BlogsModule = class BlogsModule {
 };
 BlogsModule = __decorate([
@@ -1884,7 +1856,7 @@ BlogsModule = __decorate([
             tours_module_1.ToursModule,
         ],
         controllers: [blogs_controller_1.BlogsController],
-        providers: [blogs_service_1.BlogsService],
+        providers: [blogs_service_1.BlogsService, google_cloud_storage_service_1.GoogleCloudStorageService,],
         exports: [blogs_service_1.BlogsService],
     })
 ], BlogsModule);
@@ -2514,7 +2486,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], BookingsController.prototype, "assignBookingToAgent", null);
 __decorate([
-    (0, common_1.Get)("dashboard/delete/:id"),
+    (0, common_1.Post)("dashboard/delete/:id"),
     (0, common_1.UseGuards)(session_auth_guard_1.SessionAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(user_schema_1.UserRole.ADMIN),
     __param(0, (0, common_1.Param)("id")),
@@ -2999,7 +2971,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
+var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.CategoriesController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
@@ -3013,17 +2985,20 @@ const session_auth_guard_1 = __webpack_require__(/*! ../auth/guards/session-auth
 const roles_guard_1 = __webpack_require__(/*! ../auth/guards/roles.guard */ "./src/modules/auth/guards/roles.guard.ts");
 const update_category_dto_1 = __webpack_require__(/*! ./dto/update-category.dto */ "./src/modules/categories/dto/update-category.dto.ts");
 const countries_service_1 = __webpack_require__(/*! ../countries/countries.service */ "./src/modules/countries/countries.service.ts");
-const multer_1 = __webpack_require__(/*! multer */ "multer");
-const path_1 = __webpack_require__(/*! path */ "path");
+const google_cloud_storage_service_1 = __webpack_require__(/*! ../google-cloud/google-cloud-storage.service */ "./src/modules/google-cloud/google-cloud-storage.service.ts");
 let CategoriesController = class CategoriesController {
-    constructor(categoriesService, countriesService) {
+    constructor(categoriesService, countriesService, googleCloudStorageService) {
         this.categoriesService = categoriesService;
         this.countriesService = countriesService;
+        this.googleCloudStorageService = googleCloudStorageService;
     }
-    async getCategories(req, page = '1', limit = '10', search, countryId = "all") {
+    async getCategories(req, page = "1", limit = "10", search, countryId = "all") {
         const currentPage = parseInt(page, 10);
         const perPageLimit = parseInt(limit, 10);
-        const findCategoriesOptions = { page: currentPage.toString(), limit: perPageLimit.toString() };
+        const findCategoriesOptions = {
+            page: currentPage.toString(),
+            limit: perPageLimit.toString(),
+        };
         if (search)
             findCategoriesOptions.search = search;
         if (countryId && countryId !== "all")
@@ -3036,11 +3011,16 @@ let CategoriesController = class CategoriesController {
         const allCountriesResult = await this.countriesService.findAll({});
         const countries = allCountriesResult.data;
         return {
-            title: 'Categories - Dashboard',
+            title: "Categories - Dashboard",
             categories,
             countries,
             user: req.user,
-            query: { page: currentPage.toString(), limit: perPageLimit.toString(), search, countryId },
+            query: {
+                page: currentPage.toString(),
+                limit: perPageLimit.toString(),
+                search,
+                countryId,
+            },
             pagination: {
                 totalDocs,
                 limit: resLimit,
@@ -3052,7 +3032,7 @@ let CategoriesController = class CategoriesController {
                 prevPage,
             },
             messages: req.flash(),
-            layout: 'layouts/dashboard',
+            layout: "layouts/dashboard",
         };
     }
     async getAddCategoryPage(req) {
@@ -3060,40 +3040,76 @@ let CategoriesController = class CategoriesController {
         const countries = allCountriesResult.data;
         const body = {};
         return {
-            title: 'Add Category - Dashboard',
-            layout: 'layouts/dashboard',
+            title: "Add Category - Dashboard",
+            layout: "layouts/dashboard",
             countries,
             user: req.user,
             messages: req.flash(),
-            body,
+            oldInput: body,
         };
     }
     async addCategory(createCategoryDto, file, req, res) {
         if (!req.user || !req.user.id) {
-            req.flash('error_msg', 'You must be logged in to add a category.');
-            return res.redirect('/auth/login');
+            req.flash("error_msg", "You must be logged in to add a category.");
+            return res.redirect("/auth/login");
         }
         try {
             if (file) {
-                createCategoryDto.image = `/uploads/categories/${file.filename}`;
+                createCategoryDto.image = await this.googleCloudStorageService.uploadFile(file, "categories");
             }
             else {
-                delete createCategoryDto.image;
+                createCategoryDto.image = null;
             }
             const userId = req.user.id.toString();
-            const newCategory = await this.categoriesService.create(createCategoryDto, userId);
-            req.flash('success_msg', 'Category added successfully!');
-            return res.redirect('/categories/dashboard');
+            await this.categoriesService.create(createCategoryDto, userId);
+            req.flash("success_msg", "Category added successfully!");
+            return res.redirect("/categories/dashboard");
         }
         catch (error) {
-            req.flash('error_msg', error.message || 'Failed to add category.');
+            console.error("Error adding category:", error);
+            let flashMessage = "Failed to add category.";
+            if (error instanceof common_1.HttpException) {
+                const response = error.getResponse();
+                if (typeof response === "object" &&
+                    response !== null &&
+                    "message" in response) {
+                    if (Array.isArray(response.message)) {
+                        flashMessage = response.message.join(", ");
+                    }
+                    else {
+                        flashMessage = response.message;
+                    }
+                }
+                else if (typeof response === "string") {
+                    flashMessage = response;
+                }
+                else {
+                    flashMessage = error.message || "An unknown error occurred.";
+                }
+            }
+            else if (error.message) {
+                if (error.code === 11000 && error.keyPattern && error.keyValue) {
+                    if (error.keyPattern.slug)
+                        flashMessage =
+                            "A category with this slug already exists. Please choose a different name or slug.";
+                    else if (error.keyPattern.name)
+                        flashMessage = "A category with this name already exists.";
+                    else
+                        flashMessage = "A duplicate entry error occurred.";
+                }
+                else {
+                    flashMessage = error.message;
+                }
+            }
+            req.flash("error_msg", flashMessage);
+            req.flash("oldInput", createCategoryDto);
             const allCountriesResult = await this.countriesService.findAll({});
             const countries = allCountriesResult.data;
-            return res.render('dashboard/categories/add', {
-                title: 'Add Category - Dashboard',
+            return res.render("dashboard/categories/add", {
+                title: "Add Category - Dashboard",
                 countries,
                 user: req.user,
-                layout: 'layouts/dashboard',
+                layout: "layouts/dashboard",
                 messages: req.flash(),
                 oldInput: createCategoryDto,
             });
@@ -3102,55 +3118,117 @@ let CategoriesController = class CategoriesController {
     async getEditCategoryPage(id, req, res) {
         try {
             const category = await this.categoriesService.findOne(id);
+            if (!category) {
+                req.flash("error_msg", "Category not found.");
+                return res.redirect("/categories/dashboard");
+            }
             const allCountriesResult = await this.countriesService.findAll({});
             const countries = allCountriesResult.data;
             const user = req.user;
-            if (user.role === user_schema_1.UserRole.AGENT && category.createdBy.toString() !== user._id.toString()) {
-                req.flash('error', 'You are not authorized to edit this category.');
-                return res.redirect('/dashboard/categories');
+            if (user.role === user_schema_1.UserRole.AGENT &&
+                category.createdBy.toString() !== user._id.toString()) {
+                req.flash("error_msg", "You are not authorized to edit this category.");
+                return res.redirect("/categories/dashboard");
             }
             return {
-                title: 'Edit Category - Dashboard',
+                title: "Edit Category - Dashboard",
                 category,
                 countries,
                 user: req.user,
-                layout: 'layouts/dashboard',
+                layout: "layouts/dashboard",
                 messages: req.flash(),
             };
         }
         catch (error) {
-            console.error('Error fetching category for edit:', error);
-            req.flash('error', error.message || 'Category not found or an error occurred.');
-            return res.redirect('/dashboard/categories');
+            console.error("Error fetching category for edit:", error);
+            req.flash("error_msg", error.message || "Category not found or an error occurred.");
+            return res.redirect("/categories/dashboard");
         }
     }
     async updateCategory(id, updateCategoryDto, file, req, res) {
         if (!req.user || !req.user.id) {
-            req.flash('error_msg', 'You must be logged in to update a category.');
-            return res.redirect('/auth/login');
+            req.flash("error_msg", "You must be logged in to update a category.");
+            return res.redirect("/auth/login");
         }
         try {
-            if (file) {
-                updateCategoryDto.image = `/uploads/categories/${file.filename}`;
+            const existingCategory = await this.categoriesService.findOne(id);
+            if (!existingCategory) {
+                throw new common_1.HttpException("Category not found", common_1.HttpStatus.NOT_FOUND);
             }
-            else if (updateCategoryDto.image === '') {
+            const user = req.user;
+            if (user.role === user_schema_1.UserRole.AGENT &&
+                existingCategory.createdBy.toString() !== user._id.toString()) {
+                req.flash("error_msg", "You are not authorized to update this category.");
+                return res.redirect("/categories/dashboard");
+            }
+            if (file) {
+                const newImageUrl = await this.googleCloudStorageService.uploadFile(file, "categories");
+                if (existingCategory.image) {
+                    await this.googleCloudStorageService.deleteFile(existingCategory.image);
+                }
+                updateCategoryDto.image = newImageUrl;
+            }
+            else if (updateCategoryDto.image === "") {
+                if (existingCategory.image) {
+                    await this.googleCloudStorageService.deleteFile(existingCategory.image);
+                }
                 updateCategoryDto.image = null;
             }
+            else {
+                updateCategoryDto.image = existingCategory.image;
+            }
             const userId = req.user.id.toString();
-            const updatedCategory = await this.categoriesService.update(id, updateCategoryDto, userId);
-            req.flash('success_msg', 'Category updated successfully!');
-            return res.redirect('/categories/dashboard');
+            await this.categoriesService.update(id, updateCategoryDto, userId);
+            req.flash("success_msg", "Category updated successfully!");
+            return res.redirect("/categories/dashboard");
         }
         catch (error) {
-            req.flash('error_msg', error.message || 'Failed to update category.');
+            console.error("Error updating category:", error);
+            let flashMessage = "Failed to update category.";
+            if (error instanceof common_1.HttpException) {
+                const response = error.getResponse();
+                if (typeof response === "object" &&
+                    response !== null &&
+                    "message" in response) {
+                    if (Array.isArray(response.message)) {
+                        flashMessage = response.message.join(", ");
+                    }
+                    else {
+                        flashMessage = response.message;
+                    }
+                }
+                else if (typeof response === "string") {
+                    flashMessage = response;
+                }
+                else {
+                    flashMessage = error.message || "An unknown error occurred.";
+                }
+            }
+            else if (error.message) {
+                if (error.code === 11000 && error.keyPattern && error.keyValue) {
+                    if (error.keyPattern.slug)
+                        flashMessage =
+                            "A category with this slug already exists. Please choose a different name or slug.";
+                    else if (error.keyPattern.name)
+                        flashMessage = "A category with this name already exists.";
+                    else
+                        flashMessage = "A duplicate entry error occurred.";
+                }
+                else {
+                    flashMessage = error.message;
+                }
+            }
+            req.flash("error_msg", flashMessage);
+            req.flash("oldInput", updateCategoryDto);
             const allCountriesResult = await this.countriesService.findAll({});
             const countries = allCountriesResult.data;
-            return res.render('dashboard/categories/edit', {
-                title: 'Edit Category - Dashboard',
-                category: Object.assign({ _id: id }, updateCategoryDto),
+            const categoryToRender = await this.categoriesService.findOne(id).catch(() => null);
+            return res.render("dashboard/categories/edit", {
+                title: "Edit Category - Dashboard",
+                category: categoryToRender || Object.assign({ _id: id }, updateCategoryDto),
                 countries,
                 user: req.user,
-                layout: 'layouts/dashboard',
+                layout: "layouts/dashboard",
                 messages: req.flash(),
                 oldInput: updateCategoryDto,
             });
@@ -3160,106 +3238,105 @@ let CategoriesController = class CategoriesController {
         try {
             const user = req.user;
             const existingCategory = await this.categoriesService.findOne(id);
-            if (user.role === user_schema_1.UserRole.AGENT && existingCategory.createdBy.toString() !== user._id.toString()) {
-                req.flash('error_msg', 'You are not authorized to delete this category.');
-                return res.status(403).json({ success: false, message: 'Unauthorized' });
+            if (!existingCategory) {
+                throw new common_1.HttpException("Category not found", common_1.HttpStatus.NOT_FOUND);
+            }
+            if (user.role === user_schema_1.UserRole.AGENT &&
+                existingCategory.createdBy.toString() !== user._id.toString()) {
+                return res.status(common_1.HttpStatus.FORBIDDEN).json({
+                    success: false,
+                    message: "You are not authorized to delete this category.",
+                });
+            }
+            if (existingCategory.image) {
+                await this.googleCloudStorageService.deleteFile(existingCategory.image);
             }
             await this.categoriesService.remove(id);
-            req.flash('success_msg', 'Category deleted successfully!');
-            return res.redirect('/categories/dashboard');
+            return res.status(common_1.HttpStatus.OK).json({
+                success: true,
+                message: "Category deleted successfully!",
+                redirectUrl: "/categories/dashboard",
+            });
         }
         catch (error) {
-            console.error('Error deleting category:', error);
-            req.flash('error_msg', error.message || 'Failed to delete category.');
-            return res.status(500).json({ success: false, message: error.message || 'Failed to delete category' });
+            console.error("Error deleting category:", error);
+            let errorMessage = error.message || "Failed to delete category.";
+            if (error instanceof common_1.HttpException) {
+                errorMessage = error.getResponse().message || errorMessage;
+            }
+            return res
+                .status(error instanceof common_1.HttpException ? error.getStatus() : common_1.HttpStatus.INTERNAL_SERVER_ERROR)
+                .json({ success: false, message: errorMessage });
         }
     }
 };
 __decorate([
-    (0, common_1.Get)('dashboard'),
-    (0, common_1.Render)('dashboard/categories/index'),
+    (0, common_1.Get)("dashboard"),
+    (0, common_1.Render)("dashboard/categories/index"),
     __param(0, (0, common_1.Req)()),
-    __param(1, (0, common_1.Query)('page')),
-    __param(2, (0, common_1.Query)('limit')),
-    __param(3, (0, common_1.Query)('search')),
-    __param(4, (0, common_1.Query)('countryId')),
+    __param(1, (0, common_1.Query)("page")),
+    __param(2, (0, common_1.Query)("limit")),
+    __param(3, (0, common_1.Query)("search")),
+    __param(4, (0, common_1.Query)("countryId")),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, String, String, String, String]),
     __metadata("design:returntype", Promise)
 ], CategoriesController.prototype, "getCategories", null);
 __decorate([
-    (0, common_1.Get)('dashboard/add'),
-    (0, common_1.Render)('dashboard/categories/add'),
+    (0, common_1.Get)("dashboard/add"),
+    (0, common_1.Render)("dashboard/categories/add"),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], CategoriesController.prototype, "getAddCategoryPage", null);
 __decorate([
-    (0, common_1.Post)('dashboard/add'),
-    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('image', {
-        storage: (0, multer_1.diskStorage)({
-            destination: './public/uploads/categories',
-            filename: (req, file, callback) => {
-                const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-                const ext = (0, path_1.extname)(file.originalname);
-                callback(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
-            },
-        }),
-        fileFilter: (req, file, callback) => {
-            if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
-                return callback(new Error('Only image files are allowed!'), false);
-            }
-            callback(null, true);
-        },
-        limits: {
-            fileSize: 1024 * 1024 * 5
-        }
-    })),
+    (0, common_1.Post)("dashboard/add"),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)("image")),
     __param(0, (0, common_1.Body)(common_1.ValidationPipe)),
     __param(1, (0, common_1.UploadedFile)()),
     __param(2, (0, common_1.Req)()),
     __param(3, (0, common_1.Res)({ passthrough: true })),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_c = typeof create_category_dto_1.CreateCategoryDto !== "undefined" && create_category_dto_1.CreateCategoryDto) === "function" ? _c : Object, typeof (_e = typeof Express !== "undefined" && (_d = Express.Multer) !== void 0 && _d.File) === "function" ? _e : Object, Object, typeof (_f = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _f : Object]),
+    __metadata("design:paramtypes", [typeof (_d = typeof create_category_dto_1.CreateCategoryDto !== "undefined" && create_category_dto_1.CreateCategoryDto) === "function" ? _d : Object, typeof (_f = typeof Express !== "undefined" && (_e = Express.Multer) !== void 0 && _e.File) === "function" ? _f : Object, Object, typeof (_g = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _g : Object]),
     __metadata("design:returntype", Promise)
 ], CategoriesController.prototype, "addCategory", null);
 __decorate([
-    (0, common_1.Get)('dashboard/edit/:id'),
-    (0, common_1.Render)('dashboard/categories/edit'),
-    __param(0, (0, common_1.Param)('id')),
+    (0, common_1.Get)("dashboard/edit/:id"),
+    (0, common_1.Render)("dashboard/categories/edit"),
+    __param(0, (0, common_1.Param)("id")),
     __param(1, (0, common_1.Req)()),
     __param(2, (0, common_1.Res)({ passthrough: true })),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object, typeof (_g = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _g : Object]),
+    __metadata("design:paramtypes", [String, Object, typeof (_h = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _h : Object]),
     __metadata("design:returntype", Promise)
 ], CategoriesController.prototype, "getEditCategoryPage", null);
 __decorate([
-    (0, common_1.Put)('dashboard/edit/:id'),
-    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('image', {})),
-    __param(0, (0, common_1.Param)('id')),
+    (0, common_1.Patch)("dashboard/edit/:id"),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)("image")),
+    __param(0, (0, common_1.Param)("id")),
     __param(1, (0, common_1.Body)(common_1.ValidationPipe)),
     __param(2, (0, common_1.UploadedFile)()),
     __param(3, (0, common_1.Req)()),
     __param(4, (0, common_1.Res)({ passthrough: true })),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, typeof (_h = typeof update_category_dto_1.UpdateCategoryDto !== "undefined" && update_category_dto_1.UpdateCategoryDto) === "function" ? _h : Object, typeof (_k = typeof Express !== "undefined" && (_j = Express.Multer) !== void 0 && _j.File) === "function" ? _k : Object, Object, typeof (_l = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _l : Object]),
+    __metadata("design:paramtypes", [String, typeof (_j = typeof update_category_dto_1.UpdateCategoryDto !== "undefined" && update_category_dto_1.UpdateCategoryDto) === "function" ? _j : Object, typeof (_l = typeof Express !== "undefined" && (_k = Express.Multer) !== void 0 && _k.File) === "function" ? _l : Object, Object, typeof (_m = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _m : Object]),
     __metadata("design:returntype", Promise)
 ], CategoriesController.prototype, "updateCategory", null);
 __decorate([
-    (0, common_1.Delete)('dashboard/delete/:id'),
-    __param(0, (0, common_1.Param)('id')),
+    (0, common_1.Delete)("dashboard/delete/:id"),
+    __param(0, (0, common_1.Param)("id")),
     __param(1, (0, common_1.Req)()),
     __param(2, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object, typeof (_m = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _m : Object]),
+    __metadata("design:paramtypes", [String, Object, typeof (_o = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _o : Object]),
     __metadata("design:returntype", Promise)
 ], CategoriesController.prototype, "deleteCategory", null);
 CategoriesController = __decorate([
-    (0, common_1.Controller)('categories'),
+    (0, common_1.Controller)("categories"),
     (0, common_1.UseGuards)(session_auth_guard_1.SessionAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(user_schema_1.UserRole.ADMIN, user_schema_1.UserRole.AGENT),
-    __metadata("design:paramtypes", [typeof (_a = typeof categories_service_1.CategoriesService !== "undefined" && categories_service_1.CategoriesService) === "function" ? _a : Object, typeof (_b = typeof countries_service_1.CountriesService !== "undefined" && countries_service_1.CountriesService) === "function" ? _b : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof categories_service_1.CategoriesService !== "undefined" && categories_service_1.CategoriesService) === "function" ? _a : Object, typeof (_b = typeof countries_service_1.CountriesService !== "undefined" && countries_service_1.CountriesService) === "function" ? _b : Object, typeof (_c = typeof google_cloud_storage_service_1.GoogleCloudStorageService !== "undefined" && google_cloud_storage_service_1.GoogleCloudStorageService) === "function" ? _c : Object])
 ], CategoriesController);
 exports.CategoriesController = CategoriesController;
 
@@ -3290,6 +3367,7 @@ const countries_module_1 = __webpack_require__(/*! ../countries/countries.module
 const categories_api_controller_1 = __webpack_require__(/*! ./categories.api.controller */ "./src/modules/categories/categories.api.controller.ts");
 const tours_module_1 = __webpack_require__(/*! ../tours/tours.module */ "./src/modules/tours/tours.module.ts");
 const categories_public_controller_1 = __webpack_require__(/*! ./categories-public.controller */ "./src/modules/categories/categories-public.controller.ts");
+const google_cloud_storage_service_1 = __webpack_require__(/*! ../google-cloud/google-cloud-storage.service */ "./src/modules/google-cloud/google-cloud-storage.service.ts");
 let CategoriesModule = class CategoriesModule {
 };
 CategoriesModule = __decorate([
@@ -3300,7 +3378,10 @@ CategoriesModule = __decorate([
             (0, common_1.forwardRef)(() => tours_module_1.ToursModule),
         ],
         controllers: [categories_controller_1.CategoriesController, categories_api_controller_1.CategoriesApiController, categories_public_controller_1.CategoriesPublicController],
-        providers: [categories_service_1.CategoriesService],
+        providers: [
+            categories_service_1.CategoriesService,
+            google_cloud_storage_service_1.GoogleCloudStorageService,
+        ],
         exports: [categories_service_1.CategoriesService],
     })
 ], CategoriesModule);
@@ -3667,7 +3748,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c, _d, _e, _f, _g;
+var _a, _b, _c, _d, _e, _f, _g, _h;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.CountriesController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
@@ -3678,14 +3759,15 @@ const session_auth_guard_1 = __webpack_require__(/*! ../auth/guards/session-auth
 const roles_guard_1 = __webpack_require__(/*! ../auth/guards/roles.guard */ "./src/modules/auth/guards/roles.guard.ts");
 const roles_decorator_1 = __webpack_require__(/*! ../auth/decorators/roles.decorator */ "./src/modules/auth/decorators/roles.decorator.ts");
 const user_schema_1 = __webpack_require__(/*! ../users/schemas/user.schema */ "./src/modules/users/schemas/user.schema.ts");
-const multer_config_1 = __webpack_require__(/*! ../../config/multer.config */ "./src/config/multer.config.ts");
 const tours_service_1 = __webpack_require__(/*! ../tours/tours.service */ "./src/modules/tours/tours.service.ts");
 const categories_service_1 = __webpack_require__(/*! ../categories/categories.service */ "./src/modules/categories/categories.service.ts");
+const google_cloud_storage_service_1 = __webpack_require__(/*! ../google-cloud/google-cloud-storage.service */ "./src/modules/google-cloud/google-cloud-storage.service.ts");
 let CountriesController = class CountriesController {
-    constructor(countriesService, categoriesService, toursService) {
+    constructor(countriesService, categoriesService, toursService, googleCloudStorageService) {
         this.countriesService = countriesService;
         this.categoriesService = categoriesService;
         this.toursService = toursService;
+        this.googleCloudStorageService = googleCloudStorageService;
     }
     async getAllCountries() {
         const countries = await this.countriesService.findAll();
@@ -3698,6 +3780,9 @@ let CountriesController = class CountriesController {
     async getCountry(slug, req, res) {
         try {
             const country = await this.countriesService.findBySlug(slug);
+            if (!country) {
+                throw new common_1.HttpException('Country not found', common_1.HttpStatus.NOT_FOUND);
+            }
             const categories = await this.categoriesService.findByCountry(country._id.toString());
             const tours = await this.toursService.findByCountry(country._id.toString());
             return {
@@ -3718,15 +3803,19 @@ let CountriesController = class CountriesController {
         }
         catch (error) {
             console.error(`Error loading country page for slug ${slug}:`, error);
-            req.flash('error_msg', error.message || 'Country not found or an error occurred.');
-            return res.redirect('/');
+            req.flash("error_msg", error.message || "Country not found or an error occurred.");
+            return res.redirect("/");
         }
     }
     async getCountries(query, req) {
-        const page = parseInt(query.page || '1');
-        const limit = parseInt(query.limit || '6');
-        const search = query.search || '';
-        const { data: countries, total, totalPages } = await this.countriesService.findAll({ search, page: page.toString(), limit: limit.toString() });
+        const page = parseInt(query.page || "1");
+        const limit = parseInt(query.limit || "6");
+        const search = query.search || "";
+        const { data: countries, total, totalPages } = await this.countriesService.findAll({
+            search,
+            page: page.toString(),
+            limit: limit.toString(),
+        });
         return {
             title: "Countries - Dashboard",
             countries,
@@ -3749,16 +3838,23 @@ let CountriesController = class CountriesController {
     }
     async addCountry(createCountryDto, uploadedFiles, req, res) {
         try {
-            const newCoverImageFile = uploadedFiles.coverImage ? uploadedFiles.coverImage[0] : null;
+            const newCoverImageFile = uploadedFiles.coverImage
+                ? uploadedFiles.coverImage[0]
+                : null;
             const newGalleryImageFiles = uploadedFiles.galleryImages || [];
             if (newCoverImageFile) {
-                createCountryDto.coverImage = `/uploads/countries/${newCoverImageFile.filename}`;
+                createCountryDto.coverImage = await this.googleCloudStorageService.uploadFile(newCoverImageFile, "countries/cover_images");
             }
-            else if (createCountryDto.coverImage === '') {
+            else if (createCountryDto.coverImage === "") {
                 createCountryDto.coverImage = null;
             }
             if (newGalleryImageFiles.length > 0) {
-                createCountryDto.galleryImages = newGalleryImageFiles.map((file) => `/uploads/countries/${file.filename}`);
+                const galleryImageUrls = [];
+                for (const file of newGalleryImageFiles) {
+                    const url = await this.googleCloudStorageService.uploadFile(file, "countries/gallery_images");
+                    galleryImageUrls.push(url);
+                }
+                createCountryDto.galleryImages = galleryImageUrls;
             }
             else if (!createCountryDto.galleryImages) {
                 createCountryDto.galleryImages = [];
@@ -3768,19 +3864,21 @@ let CountriesController = class CountriesController {
             return res.redirect("/countries/dashboard/countries");
         }
         catch (error) {
-            console.error('Error adding country:', error);
+            console.error("Error adding country:", error);
             let flashMessage = "Failed to add country.";
             if (error instanceof common_1.HttpException) {
                 const response = error.getResponse();
-                if (typeof response === 'object' && response !== null && 'message' in response) {
+                if (typeof response === "object" &&
+                    response !== null &&
+                    "message" in response) {
                     if (Array.isArray(response.message)) {
-                        flashMessage = response.message.join(', ');
+                        flashMessage = response.message.join(", ");
                     }
                     else {
                         flashMessage = response.message;
                     }
                 }
-                else if (typeof response === 'string') {
+                else if (typeof response === "string") {
                     flashMessage = response;
                 }
                 else {
@@ -3790,9 +3888,10 @@ let CountriesController = class CountriesController {
             else if (error.message) {
                 if (error.code === 11000 && error.keyPattern && error.keyValue) {
                     if (error.keyPattern.slug)
-                        flashMessage = "A country with this slug already exists. Please choose a different title or slug.";
-                    else if (error.keyPattern.title)
-                        flashMessage = "A country with this title already exists.";
+                        flashMessage =
+                            "A country with this slug already exists. Please choose a different title or slug.";
+                    else if (error.keyPattern.name)
+                        flashMessage = "A country with this name already exists.";
                     else
                         flashMessage = "A duplicate entry error occurred.";
                 }
@@ -3801,7 +3900,7 @@ let CountriesController = class CountriesController {
                 }
             }
             req.flash("error_msg", flashMessage);
-            req.flash('oldInput', createCountryDto);
+            req.flash("oldInput", createCountryDto);
             return res.redirect("/countries/dashboard/countries/add");
         }
     }
@@ -3833,47 +3932,75 @@ let CountriesController = class CountriesController {
                 req.flash("error_msg", "Country not found.");
                 return res.redirect("/countries/dashboard/countries");
             }
-            const newCoverImageFile = uploadedFiles.coverImage ? uploadedFiles.coverImage[0] : null;
+            const newCoverImageFile = uploadedFiles.coverImage
+                ? uploadedFiles.coverImage[0]
+                : null;
             if (newCoverImageFile) {
-                updateCountryDto.coverImage = `/uploads/countries/${newCoverImageFile.filename}`;
+                const newCoverImageUrl = await this.googleCloudStorageService.uploadFile(newCoverImageFile, "countries/cover_images");
+                if (country.coverImage) {
+                    await this.googleCloudStorageService.deleteFile(country.coverImage);
+                }
+                updateCountryDto.coverImage = newCoverImageUrl;
             }
             else if (updateCountryDto.coverImage === "remove") {
+                if (country.coverImage) {
+                    await this.googleCloudStorageService.deleteFile(country.coverImage);
+                }
                 updateCountryDto.coverImage = null;
+            }
+            else {
+                updateCountryDto.coverImage = country.coverImage;
             }
             const newGalleryImageFiles = uploadedFiles.galleryImages || [];
             let currentGalleryImages = country.galleryImages || [];
             const removedGalleryImagePaths = updateCountryDto.removedGalleryImages
-                ? updateCountryDto.removedGalleryImages.split(',').map(img => img.trim()).filter(Boolean)
+                ? updateCountryDto.removedGalleryImages
+                    .split(",")
+                    .map((img) => img.trim())
+                    .filter(Boolean)
                 : [];
-            currentGalleryImages = currentGalleryImages.filter(img => !removedGalleryImagePaths.includes(img));
+            for (const imageUrl of removedGalleryImagePaths) {
+                await this.googleCloudStorageService.deleteFile(imageUrl);
+            }
+            currentGalleryImages = currentGalleryImages.filter((img) => !removedGalleryImagePaths.includes(img));
             if (newGalleryImageFiles.length > 0) {
-                const newlyAddedGalleryPaths = newGalleryImageFiles.map((file) => `/uploads/countries/${file.filename}`);
+                const newlyAddedGalleryPaths = [];
+                for (const file of newGalleryImageFiles) {
+                    const url = await this.googleCloudStorageService.uploadFile(file, "countries/gallery_images");
+                    newlyAddedGalleryPaths.push(url);
+                }
                 currentGalleryImages = [...currentGalleryImages, ...newlyAddedGalleryPaths];
             }
             updateCountryDto.galleryImages = currentGalleryImages;
-            if (updateCountryDto.name && updateCountryDto.name !== country.name && !updateCountryDto.slug) {
+            delete updateCountryDto.removedGalleryImages;
+            if (updateCountryDto.name &&
+                updateCountryDto.name !== country.name &&
+                !updateCountryDto.slug) {
                 updateCountryDto.slug = this.countriesService.generateSlug(updateCountryDto.name);
             }
             else if (updateCountryDto.slug && updateCountryDto.slug !== country.slug) {
+                updateCountryDto.slug = this.countriesService.generateSlug(updateCountryDto.slug);
             }
             await this.countriesService.update(id, updateCountryDto, req.user._id);
             req.flash("success_msg", "Country updated successfully!");
             return res.redirect("/countries/dashboard/countries");
         }
         catch (error) {
-            console.error('Error updating country:', error);
+            console.error("Error updating country:", error);
             let flashMessage = "Failed to update country. Please try again.";
             if (error instanceof common_1.HttpException) {
                 const response = error.getResponse();
-                if (typeof response === 'object' && response !== null && 'message' in response) {
+                if (typeof response === "object" &&
+                    response !== null &&
+                    "message" in response) {
                     if (Array.isArray(response.message)) {
-                        flashMessage = response.message.join(', ');
+                        flashMessage = response.message.join(", ");
                     }
                     else {
                         flashMessage = response.message;
                     }
                 }
-                else if (typeof response === 'string') {
+                else if (typeof response === "string") {
                     flashMessage = response;
                 }
                 else {
@@ -3883,7 +4010,8 @@ let CountriesController = class CountriesController {
             else if (error.message) {
                 if (error.code === 11000 && error.keyPattern && error.keyValue) {
                     if (error.keyPattern.slug)
-                        flashMessage = "A country with this slug already exists. Please choose a different title or slug.";
+                        flashMessage =
+                            "A country with this slug already exists. Please choose a different title or slug.";
                     else if (error.keyPattern.name)
                         flashMessage = "A country with this name already exists.";
                     else
@@ -3894,18 +4022,32 @@ let CountriesController = class CountriesController {
                 }
             }
             req.flash("error_msg", flashMessage);
-            req.flash('oldInput', updateCountryDto);
+            req.flash("oldInput", updateCountryDto);
             return res.redirect(`/countries/dashboard/countries/edit/${id}`);
         }
     }
     async deleteCountry(id, req, res) {
         try {
+            const country = await this.countriesService.findOne(id);
+            if (!country) {
+                req.flash("error_msg", "Country not found.");
+                return res.redirect("/countries/dashboard/countries");
+            }
+            if (country.coverImage) {
+                await this.googleCloudStorageService.deleteFile(country.coverImage);
+            }
+            if (country.galleryImages && country.galleryImages.length > 0) {
+                for (const imageUrl of country.galleryImages) {
+                    await this.googleCloudStorageService.deleteFile(imageUrl);
+                }
+            }
             await this.countriesService.remove(id);
             req.flash("success_msg", "Country deleted successfully");
             return res.redirect("/countries/dashboard/countries");
         }
         catch (error) {
-            req.flash("error_msg", error.message);
+            console.error('Error deleting country:', error);
+            req.flash("error_msg", error.message || "Failed to delete country.");
             return res.redirect("/countries/dashboard/countries");
         }
     }
@@ -3924,7 +4066,7 @@ __decorate([
     __param(1, (0, common_1.Req)()),
     __param(2, (0, common_1.Res)({ passthrough: true })),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object, typeof (_d = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _d : Object]),
+    __metadata("design:paramtypes", [String, Object, typeof (_e = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _e : Object]),
     __metadata("design:returntype", Promise)
 ], CountriesController.prototype, "getCountry", null);
 __decorate([
@@ -3953,15 +4095,15 @@ __decorate([
     (0, common_1.UseGuards)(session_auth_guard_1.SessionAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(user_schema_1.UserRole.ADMIN),
     (0, common_1.UseInterceptors)((0, platform_express_1.FileFieldsInterceptor)([
-        { name: 'coverImage', maxCount: 1 },
-        { name: 'galleryImages', maxCount: 10 },
-    ], (0, multer_config_1.getMulterConfig)('countries'))),
+        { name: "coverImage", maxCount: 1 },
+        { name: "galleryImages", maxCount: 10 },
+    ])),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.UploadedFiles)()),
     __param(2, (0, common_1.Req)()),
     __param(3, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object, Object, typeof (_e = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _e : Object]),
+    __metadata("design:paramtypes", [Object, Object, Object, typeof (_f = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _f : Object]),
     __metadata("design:returntype", Promise)
 ], CountriesController.prototype, "addCountry", null);
 __decorate([
@@ -3980,32 +4122,32 @@ __decorate([
     (0, common_1.UseGuards)(session_auth_guard_1.SessionAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(user_schema_1.UserRole.ADMIN),
     (0, common_1.UseInterceptors)((0, platform_express_1.FileFieldsInterceptor)([
-        { name: 'coverImage', maxCount: 1 },
-        { name: 'galleryImages', maxCount: 10 },
-    ], (0, multer_config_1.getMulterConfig)('countries'))),
+        { name: "coverImage", maxCount: 1 },
+        { name: "galleryImages", maxCount: 10 },
+    ])),
     __param(0, (0, common_1.Param)("id")),
     __param(1, (0, common_1.Body)()),
     __param(2, (0, common_1.UploadedFiles)()),
     __param(3, (0, common_1.Req)()),
     __param(4, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object, Object, Object, typeof (_f = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _f : Object]),
+    __metadata("design:paramtypes", [String, Object, Object, Object, typeof (_g = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _g : Object]),
     __metadata("design:returntype", Promise)
 ], CountriesController.prototype, "updateCountry", null);
 __decorate([
-    (0, common_1.Get)("dashboard/countries/delete/:id"),
+    (0, common_1.Delete)("dashboard/countries/:id"),
     (0, common_1.UseGuards)(session_auth_guard_1.SessionAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(user_schema_1.UserRole.ADMIN),
     __param(0, (0, common_1.Param)("id")),
     __param(1, (0, common_1.Req)()),
     __param(2, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object, typeof (_g = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _g : Object]),
+    __metadata("design:paramtypes", [String, Object, typeof (_h = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _h : Object]),
     __metadata("design:returntype", Promise)
 ], CountriesController.prototype, "deleteCountry", null);
 CountriesController = __decorate([
     (0, common_1.Controller)("countries"),
-    __metadata("design:paramtypes", [typeof (_a = typeof countries_service_1.CountriesService !== "undefined" && countries_service_1.CountriesService) === "function" ? _a : Object, typeof (_b = typeof categories_service_1.CategoriesService !== "undefined" && categories_service_1.CategoriesService) === "function" ? _b : Object, typeof (_c = typeof tours_service_1.ToursService !== "undefined" && tours_service_1.ToursService) === "function" ? _c : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof countries_service_1.CountriesService !== "undefined" && countries_service_1.CountriesService) === "function" ? _a : Object, typeof (_b = typeof categories_service_1.CategoriesService !== "undefined" && categories_service_1.CategoriesService) === "function" ? _b : Object, typeof (_c = typeof tours_service_1.ToursService !== "undefined" && tours_service_1.ToursService) === "function" ? _c : Object, typeof (_d = typeof google_cloud_storage_service_1.GoogleCloudStorageService !== "undefined" && google_cloud_storage_service_1.GoogleCloudStorageService) === "function" ? _d : Object])
 ], CountriesController);
 exports.CountriesController = CountriesController;
 
@@ -4034,6 +4176,7 @@ const countries_controller_1 = __webpack_require__(/*! ./countries.controller */
 const country_schema_1 = __webpack_require__(/*! ./schemas/country.schema */ "./src/modules/countries/schemas/country.schema.ts");
 const tours_module_1 = __webpack_require__(/*! ../tours/tours.module */ "./src/modules/tours/tours.module.ts");
 const categories_module_1 = __webpack_require__(/*! ../categories/categories.module */ "./src/modules/categories/categories.module.ts");
+const google_cloud_storage_service_1 = __webpack_require__(/*! ../google-cloud/google-cloud-storage.service */ "./src/modules/google-cloud/google-cloud-storage.service.ts");
 let CountriesModule = class CountriesModule {
 };
 CountriesModule = __decorate([
@@ -4044,7 +4187,10 @@ CountriesModule = __decorate([
             (0, common_1.forwardRef)(() => categories_module_1.CategoriesModule),
         ],
         controllers: [countries_controller_1.CountriesController],
-        providers: [countries_service_1.CountriesService],
+        providers: [
+            countries_service_1.CountriesService,
+            google_cloud_storage_service_1.GoogleCloudStorageService,
+        ],
         exports: [countries_service_1.CountriesService],
     })
 ], CountriesModule);
@@ -4573,6 +4719,100 @@ exports.CreateEnquiryDto = CreateEnquiryDto;
 
 /***/ }),
 
+/***/ "./src/modules/google-cloud/google-cloud-storage.service.ts":
+/*!******************************************************************!*\
+  !*** ./src/modules/google-cloud/google-cloud-storage.service.ts ***!
+  \******************************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.GoogleCloudStorageService = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const storage_1 = __webpack_require__(/*! @google-cloud/storage */ "@google-cloud/storage");
+const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
+const util_1 = __webpack_require__(/*! util */ "util");
+let GoogleCloudStorageService = class GoogleCloudStorageService {
+    constructor(configService) {
+        this.configService = configService;
+        this.storage = new storage_1.Storage({
+            projectId: this.configService.get('GCS_PROJECT_ID'),
+            keyFilename: this.configService.get('GCS_KEYFILE_PATH'),
+        });
+        this.bucketName = this.configService.get('GCS_BUCKET_NAME');
+        if (!this.bucketName) {
+            throw new Error('GCS_BUCKET_NAME environment variable is not set.');
+        }
+    }
+    async uploadFile(file, destinationFolder) {
+        if (!file || !file.buffer) {
+            throw new common_1.InternalServerErrorException('No file buffer provided for upload.');
+        }
+        const bucket = this.storage.bucket(this.bucketName);
+        const safeDestinationFolder = destinationFolder.endsWith('/') ? destinationFolder : destinationFolder + '/';
+        const uniqueFileName = `${safeDestinationFolder}${Date.now()}-${file.originalname}`;
+        const blob = bucket.file(uniqueFileName);
+        const blobStream = blob.createWriteStream({
+            resumable: false,
+            metadata: {
+                contentType: file.mimetype,
+            },
+        });
+        return new Promise((resolve, reject) => {
+            blobStream.on('error', (err) => {
+                console.error('GCS Upload Error:', err);
+                reject(new common_1.InternalServerErrorException('Failed to upload file to Google Cloud Storage.'));
+            });
+            blobStream.on('finish', () => {
+                const publicUrl = (0, util_1.format)(`https://storage.googleapis.com/${bucket.name}/${blob.name}`);
+                resolve(publicUrl);
+            });
+            blobStream.end(file.buffer);
+        });
+    }
+    async deleteFile(filePath) {
+        if (!filePath) {
+            return;
+        }
+        try {
+            const bucket = this.storage.bucket(this.bucketName);
+            const fileNameInBucket = filePath.startsWith(`https://storage.googleapis.com/${this.bucketName}/`)
+                ? filePath.substring(`https://storage.googleapis.com/${this.bucketName}/`.length)
+                : filePath;
+            const [exists] = await bucket.file(fileNameInBucket).exists();
+            if (exists) {
+                await bucket.file(fileNameInBucket).delete();
+                console.log(`File ${fileNameInBucket} deleted from GCS.`);
+            }
+            else {
+                console.warn(`File ${fileNameInBucket} not found in GCS for deletion.`);
+            }
+        }
+        catch (error) {
+            console.error(`Error deleting file ${filePath} from GCS:`, error);
+            throw new common_1.InternalServerErrorException('Failed to delete file from Google Cloud Storage.');
+        }
+    }
+};
+GoogleCloudStorageService = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [typeof (_a = typeof config_1.ConfigService !== "undefined" && config_1.ConfigService) === "function" ? _a : Object])
+], GoogleCloudStorageService);
+exports.GoogleCloudStorageService = GoogleCloudStorageService;
+
+
+/***/ }),
+
 /***/ "./src/modules/mail/mail.module.ts":
 /*!*****************************************!*\
   !*** ./src/modules/mail/mail.module.ts ***!
@@ -4690,7 +4930,7 @@ const nodemailer = __importStar(__webpack_require__(/*! nodemailer */ "nodemaile
 let MailService = class MailService {
     constructor(configService) {
         this.configService = configService;
-        this.transporter = nodemailer.createTransport({
+        this.adminTransporter = nodemailer.createTransport({
             host: this.configService.get("MAIL_HOST"),
             port: this.configService.get("MAIL_PORT"),
             secure: this.configService.get("MAIL_SECURE"),
@@ -4699,10 +4939,19 @@ let MailService = class MailService {
                 pass: this.configService.get("MAIL_PASSWORD"),
             },
         });
+        this.bookingsTransporter = nodemailer.createTransport({
+            host: this.configService.get("MAIL_HOST"),
+            port: this.configService.get("MAIL_PORT"),
+            secure: this.configService.get("MAIL_SECURE"),
+            auth: {
+                user: this.configService.get("BOOKINGS_MAIL_USER"),
+                pass: this.configService.get("BOOKINGS_MAIL_PASSWORD"),
+            },
+        });
     }
     async sendNewAgentNotification(agent) {
-        const adminEmail = this.configService.get("ADMIN_EMAIL") || "asiomizunoah@gmail.com";
-        await this.transporter.sendMail({
+        const adminEmail = this.configService.get("ADMIN_EMAIL") || "admin@roadsofadventuresafaris.com";
+        await this.adminTransporter.sendMail({
             from: `"Roads of Adventure Safaris" <${this.configService.get("MAIL_FROM")}>`,
             to: adminEmail,
             subject: "New Agent Registration",
@@ -4721,7 +4970,7 @@ let MailService = class MailService {
         });
     }
     async sendAgentActivationEmail(agent) {
-        await this.transporter.sendMail({
+        await this.adminTransporter.sendMail({
             from: `"Roads of Adventure Safaris" <${this.configService.get("MAIL_FROM")}>`,
             to: agent.email,
             subject: "Your Agent Account has been Activated",
@@ -4735,7 +4984,7 @@ let MailService = class MailService {
         });
     }
     async sendAgentDeactivationEmail(agent) {
-        await this.transporter.sendMail({
+        await this.adminTransporter.sendMail({
             from: `"Roads of Adventure Safaris" <${this.configService.get("MAIL_FROM")}>`,
             to: agent.email,
             subject: "Your Agent Account has been Deactivated",
@@ -4743,13 +4992,13 @@ let MailService = class MailService {
         <h1>Account Deactivated</h1>
         <p>Dear ${agent.name},</p>
         <p>Your agent account with Roads of Adventure Safaris has been deactivated. Please contact our admin team for more information.</p>
-        <p>Email: ${this.configService.get("ADMIN_EMAIL") || "asiomizunoah@gmail.com"}</p>
+        <p>Email: ${this.configService.get("ADMIN_EMAIL") || "admin@roadsofadventuresafaris.com"}</p>
       `,
         });
     }
     async sendPasswordResetEmail(user, token) {
         const resetUrl = `${this.configService.get("WEBSITE_URL")}/auth/reset-password/${token}`;
-        await this.transporter.sendMail({
+        await this.adminTransporter.sendMail({
             from: `"Roads of Adventure Safaris" <${this.configService.get("MAIL_FROM")}>`,
             to: user.email,
             subject: "Password Reset Request",
@@ -4762,10 +5011,9 @@ let MailService = class MailService {
         <p>If you did not request this, please ignore this email and your password will remain unchanged.</p>
       `,
         });
-        console.log(`Reset link: ${resetUrl}`);
     }
     async sendPasswordChangedEmail(user) {
-        await this.transporter.sendMail({
+        await this.adminTransporter.sendMail({
             from: `"Roads of Adventure Safaris" <${this.configService.get("MAIL_FROM")}>`,
             to: user.email,
             subject: "Password Changed Successfully",
@@ -4780,7 +5028,7 @@ let MailService = class MailService {
     async sendNewBlogNotification(blog, subscribers) {
         const blogUrl = `${this.configService.get("WEBSITE_URL")}/blogs/${blog.slug}`;
         for (const subscriber of subscribers) {
-            await this.transporter.sendMail({
+            await this.adminTransporter.sendMail({
                 from: `"Roads of Adventure Safaris" <${this.configService.get("MAIL_FROM")}>`,
                 to: subscriber.email,
                 subject: `New Safari Update: ${blog.title}`,
@@ -4795,36 +5043,32 @@ let MailService = class MailService {
         }
     }
     async sendSubscriptionConfirmation(subscriber) {
-        console.log(`MailService: Preparing subscription confirmation for: ${subscriber.email}`);
         if (!subscriber.email) {
-            console.error("MailService: Subscriber email is undefined or empty for confirmation email!");
             throw new Error("No recipient email defined for subscription confirmation.");
         }
         const mailOptions = {
-            from: `"Roads of Adventure" <${this.configService.get('EMAIL_USER')}>`,
+            from: `"Roads of Adventure" <${this.configService.get("MAIL_FROM")}>`,
             to: subscriber.email,
             subject: `Welcome to the Roads of Adventure Newsletter!`,
             html: `
-        <h2>Hello<%= subscriber.name ? ' ' + subscriber.name : '' %>,</h2>
+        <h2>Hello there,</h2>
         <p>Thank you for subscribing to our newsletter! You'll now receive our latest news, tour updates, and exclusive offers.</p>
         <p>Get ready to explore the world with Roads of Adventure!</p>
         <p>Best regards,<br>The Roads of Adventure Team</p>
-        <p>If you wish to unsubscribe at any time, please click here: <a href="${this.configService.get('BASE_URL')}/unsubscribe?email=${subscriber.email}">Unsubscribe</a></p>
+        <p>If you wish to unsubscribe at any time, please click here: <a href="${this.configService.get("BASE_URL")}/unsubscribe?email=${subscriber.email}">Unsubscribe</a></p>
       `,
         };
         try {
-            await this.transporter.sendMail(mailOptions);
-            console.log(`MailService: Successfully sent subscription confirmation to ${subscriber.email}`);
+            await this.adminTransporter.sendMail(mailOptions);
         }
         catch (error) {
-            console.error(`MailService: Failed to send subscription confirmation to ${subscriber.email}:`, error);
             throw error;
         }
     }
     async sendNewSubscriberNotification(subscriber) {
-        const adminEmail = this.configService.get("ADMIN_EMAIL") || "asiomizunoah@gmail.com";
+        const adminEmail = this.configService.get("ADMIN_EMAIL") || "admin@roadsofadventuresafaris.com";
         const mailOptions = {
-            from: `"Roads of Adventure" <${this.configService.get('EMAIL_USER')}>`,
+            from: `"Roads of Adventure" <${this.configService.get("MAIL_FROM")}>`,
             to: adminEmail,
             subject: `New Newsletter Subscriber: ${subscriber.email}`,
             html: `
@@ -4832,27 +5076,23 @@ let MailService = class MailService {
         <p>A new email address has subscribed to your newsletter:</p>
         <ul>
           <li><strong>Email:</strong> ${subscriber.email}</li>
-          <li><strong>Name:</strong> ${subscriber.name || 'N/A'}</li>
-          <li><strong>Phone:</strong> ${subscriber.phoneNumber || 'N/A'}</li>
           <li><strong>Subscribed On:</strong> ${new Date(subscriber.createdAt).toLocaleString()}</li>
         </ul>
-        <p>View all subscribers in your dashboard: <a href="${this.configService.get('BASE_URL')}/subscribers/dashboard">View Subscribers</a></p>
+        <p>View all subscribers in your dashboard: <a href="${this.configService.get("BASE_URL")}/subscribers/dashboard">View Subscribers</a></p>
       `,
         };
         try {
-            await this.transporter.sendMail(mailOptions);
-            console.log(`MailService: Successfully sent new subscriber notification to admin (${this.adminEmail})`);
+            await this.adminTransporter.sendMail(mailOptions);
         }
         catch (error) {
-            console.error(`MailService: Failed to send new subscriber notification to admin (${this.adminEmail}):`, error);
             throw error;
         }
     }
     async sendBookingNotification(booking) {
-        const adminEmail = this.configService.get("ADMIN_EMAIL") || "asiomizunoah@gmail.com";
-        await this.transporter.sendMail({
-            from: `"Roads of Adventure Safaris" <${this.configService.get("MAIL_FROM")}>`,
-            to: adminEmail,
+        const bookingsAdminEmail = this.configService.get("BOOKINGS_MAIL_USER") || "bookings@roadsofadventuresafaris.com";
+        await this.bookingsTransporter.sendMail({
+            from: `"Roads of Adventure Safaris" <${this.configService.get("BOOKINGS_MAIL_FROM")}>`,
+            to: bookingsAdminEmail,
             subject: "New Tour Booking",
             html: `
         <h1>New Tour Booking</h1>
@@ -4874,20 +5114,15 @@ let MailService = class MailService {
         });
     }
     async sendBookingConfirmation(booking) {
-        await this.transporter.sendMail({
-            from: `"Roads of Adventure Safaris" <${this.configService.get("MAIL_FROM")}>`,
+        await this.bookingsTransporter.sendMail({
+            from: `"Roads of Adventure Safaris" <${this.configService.get("BOOKINGS_MAIL_FROM")}>`,
             to: booking.email,
             subject: "Your Safari Booking Confirmation",
             html: `
         <h1>Booking Received</h1>
         <p>Dear ${booking.fullName},</p>
         <p>Thank you for your booking with Roads of Adventure Safaris. We have received your request and will contact you shortly to discuss the details.</p>
-        <h2>Booking Details:</h2>
-        <ul>
-          <li><strong>Tour:</strong> ${booking.tour ? "Selected Tour" : "Custom Tour Request"}</li>
-          <li><strong>Travel Date:</strong> ${booking.travelDate ? new Date(booking.travelDate).toLocaleDateString() : "N/A"}</li>
-          <li><strong>Number of Travelers:</strong> ${(booking.numberOfAdults || 0) + (booking.numberOfChildren || 0)}</li>
-        </ul>
+        
         <p>If you have any questions, please don't hesitate to contact us.</p>
         <p>We look forward to helping you plan your African adventure!</p>
       `,
@@ -4914,8 +5149,8 @@ let MailService = class MailService {
                 subject = "Your Safari Booking Status Update";
                 statusMessage = "There has been an update to your booking status.";
         }
-        await this.transporter.sendMail({
-            from: `"Roads of Adventure Safaris" <${this.configService.get("MAIL_FROM")}>`,
+        await this.bookingsTransporter.sendMail({
+            from: `"Roads of Adventure Safaris" <${this.configService.get("BOOKINGS_MAIL_FROM")}>`,
             to: booking.email,
             subject,
             html: `
@@ -4933,8 +5168,8 @@ let MailService = class MailService {
         });
     }
     async sendEnquiryToAdmin(enquiry) {
-        const adminEmail = this.configService.get("ADMIN_EMAIL") || "asiomizunoah@gmail.com";
-        await this.transporter.sendMail({
+        const adminEmail = this.configService.get("ADMIN_EMAIL") || "admin@roadsofadventuresafaris.com";
+        await this.adminTransporter.sendMail({
             from: `"Roads of Adventure safaris" <${this.configService.get("MAIL_FROM")}>`,
             to: adminEmail,
             subject: `New Safari Enquiry from ${enquiry.fullName}`,
@@ -4985,7 +5220,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
+var _a, _b, _c, _d, _e, _f, _g, _h, _j;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.PagesController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
@@ -4997,10 +5232,11 @@ const roles_guard_1 = __webpack_require__(/*! ../auth/guards/roles.guard */ "./s
 const roles_decorator_1 = __webpack_require__(/*! ../auth/decorators/roles.decorator */ "./src/modules/auth/decorators/roles.decorator.ts");
 const user_schema_1 = __webpack_require__(/*! ../users/schemas/user.schema */ "./src/modules/users/schemas/user.schema.ts");
 const page_schema_1 = __webpack_require__(/*! ./schemas/page.schema */ "./src/modules/pages/schemas/page.schema.ts");
-const multer_config_1 = __webpack_require__(/*! ../../config/multer.config */ "./src/config/multer.config.ts");
+const google_cloud_storage_service_1 = __webpack_require__(/*! ../google-cloud/google-cloud-storage.service */ "./src/modules/google-cloud/google-cloud-storage.service.ts");
 let PagesController = class PagesController {
-    constructor(pagesService) {
+    constructor(pagesService, googleCloudStorageService) {
         this.pagesService = pagesService;
+        this.googleCloudStorageService = googleCloudStorageService;
     }
     async getPages(query, req) {
         try {
@@ -5059,33 +5295,33 @@ let PagesController = class PagesController {
             pageStatuses: Object.values(page_schema_1.PageStatus),
         };
     }
-    async addPage(createPageDto, files, req, res) {
+    async addPage(createPageDto, uploadedFiles, req, res) {
         try {
-            const categorizedFiles = {};
-            files.forEach(file => {
-                if (!categorizedFiles[file.fieldname]) {
-                    categorizedFiles[file.fieldname] = [];
-                }
-                categorizedFiles[file.fieldname].push(file);
-            });
-            if (categorizedFiles.coverImage && categorizedFiles.coverImage.length > 0) {
-                createPageDto.coverImage = `/uploads/pages/${categorizedFiles.coverImage[0].filename}`;
+            const coverImageFile = uploadedFiles.coverImage ? uploadedFiles.coverImage[0] : null;
+            if (coverImageFile) {
+                createPageDto.coverImage = await this.googleCloudStorageService.uploadFile(coverImageFile, "pages/cover_images");
             }
             else if (createPageDto.coverImage === '') {
                 createPageDto.coverImage = null;
             }
-            if (categorizedFiles.galleryImages && categorizedFiles.galleryImages.length > 0) {
-                createPageDto.galleryImages = categorizedFiles.galleryImages.map((file) => `/uploads/pages/${file.filename}`);
+            const galleryImageFiles = uploadedFiles.galleryImages || [];
+            if (galleryImageFiles.length > 0) {
+                const galleryImageUrls = [];
+                for (const file of galleryImageFiles) {
+                    const url = await this.googleCloudStorageService.uploadFile(file, "pages/gallery_images");
+                    galleryImageUrls.push(url);
+                }
+                createPageDto.galleryImages = galleryImageUrls;
             }
-            else if (createPageDto.galleryImages && createPageDto.galleryImages.length === 0) {
+            else if (!createPageDto.galleryImages) {
                 createPageDto.galleryImages = [];
             }
             if (!createPageDto.slug && createPageDto.title) {
                 createPageDto.slug = createPageDto.title
                     .toLowerCase()
-                    .replace(/[^a-z0-9\s-]/g, '')
+                    .replace(/[^a-z0-9\s-]/g, "")
                     .trim()
-                    .replace(/\s+/g, '-');
+                    .replace(/\s+/g, "-");
             }
             await this.pagesService.create(createPageDto, req.user.id);
             req.flash("success_msg", "Page added successfully");
@@ -5114,7 +5350,8 @@ let PagesController = class PagesController {
             else if (error.message) {
                 if (error.code === 11000 && error.keyPattern && error.keyValue) {
                     if (error.keyPattern.slug)
-                        flashMessage = "A page with this slug already exists. Please choose a different title or slug.";
+                        flashMessage =
+                            "A page with this slug already exists. Please choose a different title or slug.";
                     else if (error.keyPattern.title)
                         flashMessage = "A page with this title already exists.";
                     else
@@ -5157,39 +5394,57 @@ let PagesController = class PagesController {
             return res.redirect("/pages/dashboard");
         }
     }
-    async updatePage(id, updatePageDto, files, req, res) {
+    async updatePage(id, updatePageDto, uploadedFiles, req, res) {
         try {
             const existingPage = await this.pagesService.findOne(id);
             if (!existingPage) {
                 throw new common_1.NotFoundException(`Page with ID ${id} not found.`);
             }
-            const categorizedFiles = {};
-            files.forEach(file => {
-                if (!categorizedFiles[file.fieldname]) {
-                    categorizedFiles[file.fieldname] = [];
+            const newCoverImageFile = uploadedFiles.coverImage ? uploadedFiles.coverImage[0] : null;
+            if (newCoverImageFile) {
+                const newImageUrl = await this.googleCloudStorageService.uploadFile(newCoverImageFile, "pages/cover_images");
+                if (existingPage.coverImage) {
+                    await this.googleCloudStorageService.deleteFile(existingPage.coverImage);
                 }
-                categorizedFiles[file.fieldname].push(file);
-            });
-            if (categorizedFiles.coverImage && categorizedFiles.coverImage.length > 0) {
-                updatePageDto.coverImage = `/uploads/pages/${categorizedFiles.coverImage[0].filename}`;
+                updatePageDto.coverImage = newImageUrl;
             }
             else if (updatePageDto.coverImage === '') {
+                if (existingPage.coverImage) {
+                    await this.googleCloudStorageService.deleteFile(existingPage.coverImage);
+                }
                 updatePageDto.coverImage = null;
             }
             else {
                 updatePageDto.coverImage = existingPage.coverImage;
             }
-            if (categorizedFiles.galleryImages && categorizedFiles.galleryImages.length > 0) {
-                updatePageDto.galleryImages = categorizedFiles.galleryImages.map((file) => `/uploads/pages/${file.filename}`);
+            const newGalleryImageFiles = uploadedFiles.galleryImages || [];
+            let currentGalleryImages = existingPage.galleryImages || [];
+            const removedGalleryImagePaths = updatePageDto.removedGalleryImages
+                ? updatePageDto.removedGalleryImages.split(',').map((img) => img.trim()).filter(Boolean)
+                : [];
+            for (const imageUrl of removedGalleryImagePaths) {
+                await this.googleCloudStorageService.deleteFile(imageUrl);
             }
-            else if (updatePageDto.galleryImages && updatePageDto.galleryImages.length === 0) {
-                updatePageDto.galleryImages = [];
+            currentGalleryImages = currentGalleryImages.filter(img => !removedGalleryImagePaths.includes(img));
+            if (newGalleryImageFiles.length > 0) {
+                const newlyAddedGalleryPaths = [];
+                for (const file of newGalleryImageFiles) {
+                    const url = await this.googleCloudStorageService.uploadFile(file, "pages/gallery_images");
+                    newlyAddedGalleryPaths.push(url);
+                }
+                currentGalleryImages = [...currentGalleryImages, ...newlyAddedGalleryPaths];
             }
-            else {
-                updatePageDto.galleryImages = existingPage.galleryImages;
-            }
-            if (!updatePageDto.slug && updatePageDto.title) {
+            updatePageDto.galleryImages = currentGalleryImages;
+            delete updatePageDto.removedGalleryImages;
+            if (updatePageDto.title && updatePageDto.title !== existingPage.title && !updatePageDto.slug) {
                 updatePageDto.slug = updatePageDto.title
+                    .toLowerCase()
+                    .replace(/[^a-z0-9\s-]/g, '')
+                    .trim()
+                    .replace(/\s+/g, '-');
+            }
+            else if (updatePageDto.slug && updatePageDto.slug !== existingPage.slug) {
+                updatePageDto.slug = updatePageDto.slug
                     .toLowerCase()
                     .replace(/[^a-z0-9\s-]/g, '')
                     .trim()
@@ -5222,7 +5477,8 @@ let PagesController = class PagesController {
             else if (error.message) {
                 if (error.code === 11000 && error.keyPattern && error.keyValue) {
                     if (error.keyPattern.slug)
-                        flashMessage = "A page with this slug already exists. Please choose a different title or slug.";
+                        flashMessage =
+                            "A page with this slug already exists. Please choose a different title or slug.";
                     else
                         flashMessage = "A duplicate entry error occurred.";
                 }
@@ -5237,6 +5493,18 @@ let PagesController = class PagesController {
     }
     async deletePage(id, req, res) {
         try {
+            const pageToDelete = await this.pagesService.findOne(id);
+            if (!pageToDelete) {
+                throw new common_1.NotFoundException(`Page with ID ${id} not found.`);
+            }
+            if (pageToDelete.coverImage) {
+                await this.googleCloudStorageService.deleteFile(pageToDelete.coverImage);
+            }
+            if (pageToDelete.galleryImages && pageToDelete.galleryImages.length > 0) {
+                for (const imageUrl of pageToDelete.galleryImages) {
+                    await this.googleCloudStorageService.deleteFile(imageUrl);
+                }
+            }
             await this.pagesService.remove(id);
             req.flash("success_msg", "Page deleted successfully");
             return res.redirect("/pages/dashboard");
@@ -5265,7 +5533,7 @@ let PagesController = class PagesController {
     async getPublicSinglePage(slug, req, res) {
         try {
             const page = await this.pagesService.findBySlug(slug);
-            if (!page) {
+            if (!page || page.status !== page_schema_1.PageStatus.PUBLISHED) {
                 throw new common_1.NotFoundException(`Page with slug '${slug}' not found or not published.`);
             }
             return {
@@ -5284,11 +5552,11 @@ let PagesController = class PagesController {
         catch (error) {
             if (error instanceof common_1.NotFoundException) {
                 req.flash('error_msg', error.message);
-                return res.redirect('/pages');
+                return res.redirect('/');
             }
             console.error('Error loading public page:', error);
             req.flash('error_msg', 'An unexpected error occurred while loading the page.');
-            return res.redirect('/pages');
+            return res.redirect('/');
         }
     }
 };
@@ -5317,13 +5585,16 @@ __decorate([
     (0, common_1.Post)("dashboard/add"),
     (0, common_1.UseGuards)(session_auth_guard_1.SessionAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(user_schema_1.UserRole.ADMIN),
-    (0, common_1.UseInterceptors)((0, platform_express_1.AnyFilesInterceptor)((0, multer_config_1.getMulterConfig)('pages'))),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileFieldsInterceptor)([
+        { name: 'coverImage', maxCount: 1 },
+        { name: 'galleryImages', maxCount: 10 },
+    ])),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.UploadedFiles)()),
     __param(2, (0, common_1.Req)()),
     __param(3, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, typeof (_b = typeof Array !== "undefined" && Array) === "function" ? _b : Object, Object, typeof (_c = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _c : Object]),
+    __metadata("design:paramtypes", [Object, Object, Object, typeof (_c = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _c : Object]),
     __metadata("design:returntype", Promise)
 ], PagesController.prototype, "addPage", null);
 __decorate([
@@ -5342,14 +5613,17 @@ __decorate([
     (0, common_1.Patch)("dashboard/edit/:id"),
     (0, common_1.UseGuards)(session_auth_guard_1.SessionAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(user_schema_1.UserRole.ADMIN),
-    (0, common_1.UseInterceptors)((0, platform_express_1.AnyFilesInterceptor)((0, multer_config_1.getMulterConfig)('pages'))),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileFieldsInterceptor)([
+        { name: 'coverImage', maxCount: 1 },
+        { name: 'galleryImages', maxCount: 10 },
+    ])),
     __param(0, (0, common_1.Param)("id")),
     __param(1, (0, common_1.Body)()),
     __param(2, (0, common_1.UploadedFiles)()),
     __param(3, (0, common_1.Req)()),
     __param(4, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object, typeof (_e = typeof Array !== "undefined" && Array) === "function" ? _e : Object, Object, typeof (_f = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _f : Object]),
+    __metadata("design:paramtypes", [String, Object, Object, Object, typeof (_e = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _e : Object]),
     __metadata("design:returntype", Promise)
 ], PagesController.prototype, "updatePage", null);
 __decorate([
@@ -5360,7 +5634,7 @@ __decorate([
     __param(1, (0, common_1.Req)()),
     __param(2, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object, typeof (_g = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _g : Object]),
+    __metadata("design:paramtypes", [String, Object, typeof (_f = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _f : Object]),
     __metadata("design:returntype", Promise)
 ], PagesController.prototype, "deletePage", null);
 __decorate([
@@ -5372,7 +5646,7 @@ __decorate([
     __param(2, (0, common_1.Req)()),
     __param(3, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, typeof (_h = typeof page_schema_1.PageStatus !== "undefined" && page_schema_1.PageStatus) === "function" ? _h : Object, Object, typeof (_j = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _j : Object]),
+    __metadata("design:paramtypes", [String, typeof (_g = typeof page_schema_1.PageStatus !== "undefined" && page_schema_1.PageStatus) === "function" ? _g : Object, Object, typeof (_h = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _h : Object]),
     __metadata("design:returntype", Promise)
 ], PagesController.prototype, "updatePageStatus", null);
 __decorate([
@@ -5382,12 +5656,12 @@ __decorate([
     __param(1, (0, common_1.Req)()),
     __param(2, (0, common_1.Res)({ passthrough: true })),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object, typeof (_k = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _k : Object]),
+    __metadata("design:paramtypes", [String, Object, typeof (_j = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _j : Object]),
     __metadata("design:returntype", Promise)
 ], PagesController.prototype, "getPublicSinglePage", null);
 PagesController = __decorate([
     (0, common_1.Controller)("pages"),
-    __metadata("design:paramtypes", [typeof (_a = typeof pages_service_1.PagesService !== "undefined" && pages_service_1.PagesService) === "function" ? _a : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof pages_service_1.PagesService !== "undefined" && pages_service_1.PagesService) === "function" ? _a : Object, typeof (_b = typeof google_cloud_storage_service_1.GoogleCloudStorageService !== "undefined" && google_cloud_storage_service_1.GoogleCloudStorageService) === "function" ? _b : Object])
 ], PagesController);
 exports.PagesController = PagesController;
 
@@ -5414,13 +5688,17 @@ const mongoose_1 = __webpack_require__(/*! @nestjs/mongoose */ "@nestjs/mongoose
 const pages_service_1 = __webpack_require__(/*! ./pages.service */ "./src/modules/pages/pages.service.ts");
 const pages_controller_1 = __webpack_require__(/*! ./pages.controller */ "./src/modules/pages/pages.controller.ts");
 const page_schema_1 = __webpack_require__(/*! ./schemas/page.schema */ "./src/modules/pages/schemas/page.schema.ts");
+const google_cloud_storage_service_1 = __webpack_require__(/*! ../google-cloud/google-cloud-storage.service */ "./src/modules/google-cloud/google-cloud-storage.service.ts");
 let PagesModule = class PagesModule {
 };
 PagesModule = __decorate([
     (0, common_1.Module)({
         imports: [mongoose_1.MongooseModule.forFeature([{ name: page_schema_1.Page.name, schema: page_schema_1.PageSchema }])],
         controllers: [pages_controller_1.PagesController],
-        providers: [pages_service_1.PagesService],
+        providers: [
+            pages_service_1.PagesService,
+            google_cloud_storage_service_1.GoogleCloudStorageService,
+        ],
         exports: [pages_service_1.PagesService],
     })
 ], PagesModule);
@@ -6281,15 +6559,12 @@ let SubscribersController = class SubscribersController {
         this.subscribersService = subscribersService;
     }
     async createSubscriber(createSubscriberDto, res, req) {
-        console.log("SubscribersController: Received subscription request for email:", createSubscriberDto.email);
         try {
             await this.subscribersService.create(createSubscriberDto);
             req.flash("success_msg", "You've successfully subscribed to our newsletter!");
-            console.log("SubscribersController: Subscriber created/reactivated, redirecting with success.");
             return res.redirect("/");
         }
         catch (error) {
-            console.error("SubscribersController: Error creating subscriber:", error.message);
             req.flash("error_msg", error.message || "Failed to subscribe. Please try again.");
             return res.redirect("/");
         }
@@ -6402,7 +6677,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], SubscribersController.prototype, "toggleSubscriberStatus", null);
 __decorate([
-    (0, common_1.Get)("dashboard/delete/:id"),
+    (0, common_1.Post)("dashboard/delete/:id"),
     (0, common_1.UseGuards)(session_auth_guard_1.SessionAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(user_schema_1.UserRole.ADMIN),
     __param(0, (0, common_1.Param)("id")),
@@ -6490,15 +6765,12 @@ let SubscribersService = class SubscribersService {
         this.mailService = mailService;
     }
     async create(createSubscriberDto) {
-        console.log("SubscribersService: Attempting to create/reactivate subscriber:", createSubscriberDto.email);
         const existingSubscriber = await this.subscriberModel.findOne({ email: createSubscriberDto.email });
         if (existingSubscriber) {
             if (existingSubscriber.isActive) {
-                console.log("SubscribersService: Email already subscribed and active.");
                 throw new common_1.ConflictException("Email is already subscribed to our newsletter");
             }
             else {
-                console.log("SubscribersService: Reactivating inactive subscriber.");
                 existingSubscriber.isActive = true;
                 if (createSubscriberDto.name)
                     existingSubscriber.name = createSubscriberDto.name;
@@ -6506,16 +6778,13 @@ let SubscribersService = class SubscribersService {
                     existingSubscriber.phoneNumber = createSubscriberDto.phoneNumber;
                 const reactivatedSubscriber = await existingSubscriber.save();
                 await this.mailService.sendSubscriptionConfirmation(reactivatedSubscriber);
-                console.log("SubscribersService: Reactivated subscriber and sent confirmation email.");
                 return reactivatedSubscriber;
             }
         }
-        console.log("SubscribersService: Creating new subscriber.");
         const newSubscriber = new this.subscriberModel(createSubscriberDto);
         const savedSubscriber = await newSubscriber.save();
         await this.mailService.sendSubscriptionConfirmation(savedSubscriber);
         await this.mailService.sendNewSubscriberNotification(savedSubscriber);
-        console.log("SubscribersService: New subscriber created and emails sent.");
         return savedSubscriber;
     }
     async findAll(query) {
@@ -7016,7 +7285,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p;
+var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ToursController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
@@ -7030,22 +7299,23 @@ const roles_guard_1 = __webpack_require__(/*! ../auth/guards/roles.guard */ "./s
 const roles_decorator_1 = __webpack_require__(/*! ../auth/decorators/roles.decorator */ "./src/modules/auth/decorators/roles.decorator.ts");
 const user_schema_1 = __webpack_require__(/*! ../users/schemas/user.schema */ "./src/modules/users/schemas/user.schema.ts");
 const tour_schema_1 = __webpack_require__(/*! ./schemas/tour.schema */ "./src/modules/tours/schemas/tour.schema.ts");
-const multer_config_1 = __webpack_require__(/*! ../../config/multer.config */ "./src/config/multer.config.ts");
 const countries_service_1 = __webpack_require__(/*! ../countries/countries.service */ "./src/modules/countries/countries.service.ts");
 const categories_service_1 = __webpack_require__(/*! ../categories/categories.service */ "./src/modules/categories/categories.service.ts");
+const google_cloud_storage_service_1 = __webpack_require__(/*! ../google-cloud/google-cloud-storage.service */ "./src/modules/google-cloud/google-cloud-storage.service.ts");
 let ToursController = class ToursController {
-    constructor(toursService, countriesService, categoriesService) {
+    constructor(toursService, countriesService, categoriesService, googleCloudStorageService) {
         this.toursService = toursService;
         this.countriesService = countriesService;
         this.categoriesService = categoriesService;
+        this.googleCloudStorageService = googleCloudStorageService;
     }
-    async getAllTours(page = '1', limit = '10', search = '', countryId = 'all', categoryId = 'all', status = tour_schema_1.TourStatus.PUBLISHED) {
+    async getAllTours(page = "1", limit = "10", search = "", countryId = "all", categoryId = "all", status = tour_schema_1.TourStatus.PUBLISHED) {
         const { tours, totalDocs, limit: perPageLimit, totalPages, page: currentPage, hasNextPage, hasPrevPage, nextPage, prevPage, } = await this.toursService.findAll({
             page,
             limit,
             search,
-            country: countryId === 'all' ? undefined : countryId,
-            category: categoryId === 'all' ? undefined : categoryId,
+            country: countryId === "all" ? undefined : countryId,
+            category: categoryId === "all" ? undefined : categoryId,
             status: status,
         });
         const countries = await this.countriesService.findAll({});
@@ -7055,7 +7325,14 @@ let ToursController = class ToursController {
             tours,
             countries: countries.data,
             categories: categories.data,
-            query: { page: currentPage.toString(), limit: perPageLimit.toString(), search, countryId, categoryId, status },
+            query: {
+                page: currentPage.toString(),
+                limit: perPageLimit.toString(),
+                search,
+                countryId,
+                categoryId,
+                status,
+            },
             pagination: {
                 totalDocs,
                 totalPages,
@@ -7071,10 +7348,13 @@ let ToursController = class ToursController {
     async getTour(slug) {
         var _a;
         const tour = await this.toursService.findBySlug(slug);
+        if (!tour) {
+            throw new common_1.HttpException('Tour not found', common_1.HttpStatus.NOT_FOUND);
+        }
         const relatedToursResult = await this.toursService.findAll({
             country: tour.countries.length > 0 ? (_a = tour.countries[0]) === null || _a === void 0 ? void 0 : _a._id.toString() : undefined,
             status: tour_schema_1.TourStatus.PUBLISHED,
-            limit: '4',
+            limit: "4",
         });
         const filteredRelatedTours = relatedToursResult.tours.filter((relatedTour) => relatedTour._id.toString() !== tour._id.toString());
         return {
@@ -7091,14 +7371,14 @@ let ToursController = class ToursController {
             },
         };
     }
-    async getTours(page = '1', limit = '10', search = '', countryId = 'all', categoryId = 'all', status = 'all', req) {
+    async getTours(page = "1", limit = "150", search = "", countryId = "all", categoryId = "all", status = "all", req) {
         const filterOptions = {
             page,
             limit,
             search,
-            country: countryId === 'all' ? undefined : countryId,
-            category: categoryId === 'all' ? undefined : categoryId,
-            status: status === 'all' ? undefined : status,
+            country: countryId === "all" ? undefined : countryId,
+            category: categoryId === "all" ? undefined : categoryId,
+            status: status === "all" ? undefined : status,
         };
         if (req.user.role === user_schema_1.UserRole.AGENT) {
             filterOptions.createdBy = req.user.id;
@@ -7112,7 +7392,14 @@ let ToursController = class ToursController {
             countries: countries.data,
             categories: categories.data,
             user: req.user,
-            query: { page: currentPage.toString(), limit: perPageLimit.toString(), search, countryId, categoryId, status },
+            query: {
+                page: currentPage.toString(),
+                limit: perPageLimit.toString(),
+                search,
+                countryId,
+                categoryId,
+                status,
+            },
             pagination: {
                 totalDocs,
                 totalPages,
@@ -7139,16 +7426,23 @@ let ToursController = class ToursController {
     }
     async addTour(createTourDto, uploadedFiles, req, res) {
         try {
-            const newCoverImageFile = uploadedFiles.coverImage ? uploadedFiles.coverImage[0] : null;
+            const newCoverImageFile = uploadedFiles.coverImage
+                ? uploadedFiles.coverImage[0]
+                : null;
             const newGalleryImageFiles = uploadedFiles.galleryImages || [];
             if (newCoverImageFile) {
-                createTourDto.coverImage = `/uploads/tours/${newCoverImageFile.filename}`;
+                createTourDto.coverImage = await this.googleCloudStorageService.uploadFile(newCoverImageFile, "tours/cover_images");
             }
-            else if (createTourDto.coverImage === '') {
+            else if (createTourDto.coverImage === "") {
                 createTourDto.coverImage = null;
             }
             if (newGalleryImageFiles.length > 0) {
-                createTourDto.galleryImages = newGalleryImageFiles.map((file) => `/uploads/tours/${file.filename}`);
+                const galleryImageUrls = [];
+                for (const file of newGalleryImageFiles) {
+                    const url = await this.googleCloudStorageService.uploadFile(file, "tours/gallery_images");
+                    galleryImageUrls.push(url);
+                }
+                createTourDto.galleryImages = galleryImageUrls;
             }
             else if (!createTourDto.galleryImages) {
                 createTourDto.galleryImages = [];
@@ -7161,19 +7455,21 @@ let ToursController = class ToursController {
             return res.redirect("/tours/dashboard/tours");
         }
         catch (error) {
-            console.error('Error adding tour:', error);
+            console.error("Error adding tour:", error);
             let flashMessage = "Failed to add tour.";
             if (error instanceof common_1.HttpException) {
                 const response = error.getResponse();
-                if (typeof response === 'object' && response !== null && 'message' in response) {
+                if (typeof response === "object" &&
+                    response !== null &&
+                    "message" in response) {
                     if (Array.isArray(response.message)) {
-                        flashMessage = response.message.join(', ');
+                        flashMessage = response.message.join(", ");
                     }
                     else {
                         flashMessage = response.message;
                     }
                 }
-                else if (typeof response === 'string') {
+                else if (typeof response === "string") {
                     flashMessage = response;
                 }
                 else {
@@ -7184,19 +7480,23 @@ let ToursController = class ToursController {
                 flashMessage = error.message;
             }
             req.flash("error_msg", flashMessage);
-            req.flash('oldInput', createTourDto);
+            req.flash("oldInput", createTourDto);
             return res.redirect("/tours/dashboard/tours/add");
         }
     }
     async getEditTourPage(id, req, res) {
         try {
             const tour = await this.toursService.findOne(id);
-            const countries = await this.countriesService.findAll({});
-            const categories = await this.categoriesService.findAll({});
+            if (!tour) {
+                req.flash("error_msg", "Tour not found.");
+                return res.redirect("/tours/dashboard/tours");
+            }
             if (req.user.role === user_schema_1.UserRole.AGENT && tour.createdBy.toString() !== req.user.id) {
                 req.flash("error_msg", "You are not authorized to edit this tour");
                 return res.redirect("/tours/dashboard/tours");
             }
+            const countries = await this.countriesService.findAll({});
+            const categories = await this.categoriesService.findAll({});
             return {
                 title: "Edit Tour - Dashboard",
                 tour,
@@ -7208,7 +7508,7 @@ let ToursController = class ToursController {
             };
         }
         catch (error) {
-            console.error('Error fetching tour for edit:', error);
+            console.error("Error fetching tour for edit:", error);
             req.flash("error_msg", error.message || "Failed to load tour for editing.");
             return res.redirect("/tours/dashboard/tours");
         }
@@ -7224,29 +7524,57 @@ let ToursController = class ToursController {
                 req.flash("error_msg", "You are not authorized to edit this tour");
                 return res.redirect("/dashboard/tours");
             }
-            const newCoverImageFile = uploadedFiles.coverImage ? uploadedFiles.coverImage[0] : null;
+            const newCoverImageFile = uploadedFiles.coverImage
+                ? uploadedFiles.coverImage[0]
+                : null;
             const newGalleryImageFiles = uploadedFiles.galleryImages || [];
             if (newCoverImageFile) {
-                updateTourDto.coverImage = `/uploads/tours/${newCoverImageFile.filename}`;
+                const newCoverImageUrl = await this.googleCloudStorageService.uploadFile(newCoverImageFile, "tours/cover_images");
+                if (tour.coverImage) {
+                    await this.googleCloudStorageService.deleteFile(tour.coverImage);
+                }
+                updateTourDto.coverImage = newCoverImageUrl;
             }
-            else if (updateTourDto.coverImage === '') {
+            else if (updateTourDto.coverImage === "") {
+                if (tour.coverImage) {
+                    await this.googleCloudStorageService.deleteFile(tour.coverImage);
+                }
                 updateTourDto.coverImage = null;
+            }
+            else {
+                updateTourDto.coverImage = tour.coverImage;
             }
             let currentGalleryImages = tour.galleryImages || [];
             if (updateTourDto.removedGalleryImages && Array.isArray(updateTourDto.removedGalleryImages)) {
-                currentGalleryImages = currentGalleryImages.filter(img => !updateTourDto.removedGalleryImages.includes(img));
+                for (const imageUrl of updateTourDto.removedGalleryImages) {
+                    await this.googleCloudStorageService.deleteFile(imageUrl);
+                }
+                currentGalleryImages = currentGalleryImages.filter((img) => !updateTourDto.removedGalleryImages.includes(img));
             }
-            const uploadedGalleryPaths = newGalleryImageFiles.map((file) => `/uploads/tours/${file.filename}`);
+            const uploadedGalleryPaths = [];
+            for (const file of newGalleryImageFiles) {
+                const url = await this.googleCloudStorageService.uploadFile(file, "tours/gallery_images");
+                uploadedGalleryPaths.push(url);
+            }
             updateTourDto.galleryImages = [...currentGalleryImages, ...uploadedGalleryPaths];
-            const tourDataToUpdate = Object.assign(Object.assign({}, updateTourDto), { countries: updateTourDto.country ? (Array.isArray(updateTourDto.country) ? updateTourDto.country : [updateTourDto.country]) : [], categories: updateTourDto.category ? (Array.isArray(updateTourDto.category) ? updateTourDto.category : [updateTourDto.category]) : [] });
+            const tourDataToUpdate = Object.assign(Object.assign({}, updateTourDto), { countries: updateTourDto.country
+                    ? Array.isArray(updateTourDto.country)
+                        ? updateTourDto.country
+                        : [updateTourDto.country]
+                    : [], categories: updateTourDto.category
+                    ? Array.isArray(updateTourDto.category)
+                        ? updateTourDto.category
+                        : [updateTourDto.category]
+                    : [] });
             delete tourDataToUpdate.country;
             delete tourDataToUpdate.category;
+            delete tourDataToUpdate.removedGalleryImages;
             await this.toursService.update(id, tourDataToUpdate, req.user.id);
             req.flash("success_msg", "Tour updated successfully");
             return res.redirect("/tours/dashboard/tours");
         }
         catch (error) {
-            console.error('Error updating tour:', error);
+            console.error("Error updating tour:", error);
             req.flash("error_msg", error.message || "Failed to update tour.");
             return res.redirect(`/dashboard/tours/edit/${id}`);
         }
@@ -7254,16 +7582,28 @@ let ToursController = class ToursController {
     async deleteTour(id, req, res) {
         try {
             const tour = await this.toursService.findOne(id);
+            if (!tour) {
+                req.flash("error_msg", "Tour not found.");
+                return res.redirect("/tours/dashboard/tours");
+            }
             if (req.user.role === user_schema_1.UserRole.AGENT && tour.createdBy.toString() !== req.user.id) {
                 req.flash("error_msg", "You are not authorized to delete this tour");
                 return res.redirect("/tours/dashboard/tours");
+            }
+            if (tour.coverImage) {
+                await this.googleCloudStorageService.deleteFile(tour.coverImage);
+            }
+            if (tour.galleryImages && tour.galleryImages.length > 0) {
+                for (const imageUrl of tour.galleryImages) {
+                    await this.googleCloudStorageService.deleteFile(imageUrl);
+                }
             }
             await this.toursService.remove(id);
             req.flash("success_msg", "Tour deleted successfully");
             return res.redirect("/tours/dashboard/tours");
         }
         catch (error) {
-            console.error('Error deleting tour:', error);
+            console.error("Error deleting tour:", error);
             req.flash("error_msg", error.message || "Failed to delete tour.");
             return res.redirect("/tours/dashboard/tours");
         }
@@ -7271,6 +7611,10 @@ let ToursController = class ToursController {
     async updateTourStatus(id, status, req, res) {
         try {
             const tour = await this.toursService.findOne(id);
+            if (!tour) {
+                req.flash("error_msg", "Tour not found.");
+                return res.redirect("/tours/dashboard/tours");
+            }
             if (req.user.role === user_schema_1.UserRole.AGENT && tour.createdBy.toString() !== req.user.id) {
                 req.flash("error_msg", "You are not authorized to update this tour");
                 return res.redirect("/tours/dashboard/tours");
@@ -7280,7 +7624,7 @@ let ToursController = class ToursController {
             return res.redirect("/tours/dashboard/tours");
         }
         catch (error) {
-            console.error('Error updating tour status:', error);
+            console.error("Error updating tour status:", error);
             req.flash("error_msg", error.message || "Failed to update tour status.");
             return res.redirect("/tours/dashboard/tours");
         }
@@ -7292,7 +7636,7 @@ let ToursController = class ToursController {
             return res.redirect("/tours/dashboard/tours");
         }
         catch (error) {
-            console.error('Error toggling featured status:', error);
+            console.error("Error toggling featured status:", error);
             req.flash("error_msg", error.message || "Failed to toggle featured status.");
             return res.redirect("/tours/dashboard/tours");
         }
@@ -7301,14 +7645,14 @@ let ToursController = class ToursController {
 __decorate([
     (0, common_1.Get)(),
     (0, common_1.Render)("public/tours/index"),
-    __param(0, (0, common_1.Query)('page')),
-    __param(1, (0, common_1.Query)('limit')),
-    __param(2, (0, common_1.Query)('search')),
-    __param(3, (0, common_1.Query)('countryId')),
-    __param(4, (0, common_1.Query)('categoryId')),
-    __param(5, (0, common_1.Query)('status')),
+    __param(0, (0, common_1.Query)("page")),
+    __param(1, (0, common_1.Query)("limit")),
+    __param(2, (0, common_1.Query)("search")),
+    __param(3, (0, common_1.Query)("countryId")),
+    __param(4, (0, common_1.Query)("categoryId")),
+    __param(5, (0, common_1.Query)("status")),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, String, String, String, typeof (_d = typeof tour_schema_1.TourStatus !== "undefined" && tour_schema_1.TourStatus) === "function" ? _d : Object]),
+    __metadata("design:paramtypes", [String, String, String, String, String, typeof (_e = typeof tour_schema_1.TourStatus !== "undefined" && tour_schema_1.TourStatus) === "function" ? _e : Object]),
     __metadata("design:returntype", Promise)
 ], ToursController.prototype, "getAllTours", null);
 __decorate([
@@ -7323,12 +7667,12 @@ __decorate([
     (0, common_1.Get)("dashboard/tours"),
     (0, common_1.UseGuards)(session_auth_guard_1.SessionAuthGuard),
     (0, common_1.Render)("dashboard/tours/index"),
-    __param(0, (0, common_1.Query)('page')),
-    __param(1, (0, common_1.Query)('limit')),
-    __param(2, (0, common_1.Query)('search')),
-    __param(3, (0, common_1.Query)('countryId')),
-    __param(4, (0, common_1.Query)('categoryId')),
-    __param(5, (0, common_1.Query)('status')),
+    __param(0, (0, common_1.Query)("page")),
+    __param(1, (0, common_1.Query)("limit")),
+    __param(2, (0, common_1.Query)("search")),
+    __param(3, (0, common_1.Query)("countryId")),
+    __param(4, (0, common_1.Query)("categoryId")),
+    __param(5, (0, common_1.Query)("status")),
     __param(6, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, String, String, String, String, Object, Object]),
@@ -7347,15 +7691,15 @@ __decorate([
     (0, common_1.Post)("dashboard/tours/add"),
     (0, common_1.UseGuards)(session_auth_guard_1.SessionAuthGuard),
     (0, common_1.UseInterceptors)((0, platform_express_1.FileFieldsInterceptor)([
-        { name: 'coverImage', maxCount: 1 },
-        { name: 'galleryImages', maxCount: 10 },
-    ], (0, multer_config_1.getMulterConfig)('tours'))),
+        { name: "coverImage", maxCount: 1 },
+        { name: "galleryImages", maxCount: 10 },
+    ])),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.UploadedFiles)()),
     __param(2, (0, common_1.Req)()),
     __param(3, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_f = typeof create_tour_dto_1.CreateTourDto !== "undefined" && create_tour_dto_1.CreateTourDto) === "function" ? _f : Object, Object, Object, typeof (_g = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _g : Object]),
+    __metadata("design:paramtypes", [typeof (_g = typeof create_tour_dto_1.CreateTourDto !== "undefined" && create_tour_dto_1.CreateTourDto) === "function" ? _g : Object, Object, Object, typeof (_h = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _h : Object]),
     __metadata("design:returntype", Promise)
 ], ToursController.prototype, "addTour", null);
 __decorate([
@@ -7366,23 +7710,23 @@ __decorate([
     __param(1, (0, common_1.Req)()),
     __param(2, (0, common_1.Res)({ passthrough: true })),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object, typeof (_h = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _h : Object]),
+    __metadata("design:paramtypes", [String, Object, typeof (_j = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _j : Object]),
     __metadata("design:returntype", Promise)
 ], ToursController.prototype, "getEditTourPage", null);
 __decorate([
     (0, common_1.Patch)("dashboard/tours/edit/:id"),
     (0, common_1.UseGuards)(session_auth_guard_1.SessionAuthGuard),
     (0, common_1.UseInterceptors)((0, platform_express_1.FileFieldsInterceptor)([
-        { name: 'coverImage', maxCount: 1 },
-        { name: 'galleryImages', maxCount: 10 },
-    ], (0, multer_config_1.getMulterConfig)('tours'))),
+        { name: "coverImage", maxCount: 1 },
+        { name: "galleryImages", maxCount: 10 },
+    ])),
     __param(0, (0, common_1.Param)("id")),
     __param(1, (0, common_1.Body)()),
     __param(2, (0, common_1.UploadedFiles)()),
     __param(3, (0, common_1.Req)()),
     __param(4, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, typeof (_j = typeof update_tour_dto_1.UpdateTourDto !== "undefined" && update_tour_dto_1.UpdateTourDto) === "function" ? _j : Object, Object, Object, typeof (_k = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _k : Object]),
+    __metadata("design:paramtypes", [String, typeof (_k = typeof update_tour_dto_1.UpdateTourDto !== "undefined" && update_tour_dto_1.UpdateTourDto) === "function" ? _k : Object, Object, Object, typeof (_l = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _l : Object]),
     __metadata("design:returntype", Promise)
 ], ToursController.prototype, "updateTour", null);
 __decorate([
@@ -7392,7 +7736,7 @@ __decorate([
     __param(1, (0, common_1.Req)()),
     __param(2, (0, common_1.Res)({ passthrough: true })),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object, typeof (_l = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _l : Object]),
+    __metadata("design:paramtypes", [String, Object, typeof (_m = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _m : Object]),
     __metadata("design:returntype", Promise)
 ], ToursController.prototype, "deleteTour", null);
 __decorate([
@@ -7403,7 +7747,7 @@ __decorate([
     __param(2, (0, common_1.Req)()),
     __param(3, (0, common_1.Res)({ passthrough: true })),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, typeof (_m = typeof tour_schema_1.TourStatus !== "undefined" && tour_schema_1.TourStatus) === "function" ? _m : Object, Object, typeof (_o = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _o : Object]),
+    __metadata("design:paramtypes", [String, typeof (_o = typeof tour_schema_1.TourStatus !== "undefined" && tour_schema_1.TourStatus) === "function" ? _o : Object, Object, typeof (_p = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _p : Object]),
     __metadata("design:returntype", Promise)
 ], ToursController.prototype, "updateTourStatus", null);
 __decorate([
@@ -7414,12 +7758,12 @@ __decorate([
     __param(1, (0, common_1.Req)()),
     __param(2, (0, common_1.Res)({ passthrough: true })),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object, typeof (_p = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _p : Object]),
+    __metadata("design:paramtypes", [String, Object, typeof (_q = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _q : Object]),
     __metadata("design:returntype", Promise)
 ], ToursController.prototype, "toggleFeatured", null);
 ToursController = __decorate([
     (0, common_1.Controller)("tours"),
-    __metadata("design:paramtypes", [typeof (_a = typeof tours_service_1.ToursService !== "undefined" && tours_service_1.ToursService) === "function" ? _a : Object, typeof (_b = typeof countries_service_1.CountriesService !== "undefined" && countries_service_1.CountriesService) === "function" ? _b : Object, typeof (_c = typeof categories_service_1.CategoriesService !== "undefined" && categories_service_1.CategoriesService) === "function" ? _c : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof tours_service_1.ToursService !== "undefined" && tours_service_1.ToursService) === "function" ? _a : Object, typeof (_b = typeof countries_service_1.CountriesService !== "undefined" && countries_service_1.CountriesService) === "function" ? _b : Object, typeof (_c = typeof categories_service_1.CategoriesService !== "undefined" && categories_service_1.CategoriesService) === "function" ? _c : Object, typeof (_d = typeof google_cloud_storage_service_1.GoogleCloudStorageService !== "undefined" && google_cloud_storage_service_1.GoogleCloudStorageService) === "function" ? _d : Object])
 ], ToursController);
 exports.ToursController = ToursController;
 
@@ -7448,6 +7792,7 @@ const tours_controller_1 = __webpack_require__(/*! ./tours.controller */ "./src/
 const tour_schema_1 = __webpack_require__(/*! ./schemas/tour.schema */ "./src/modules/tours/schemas/tour.schema.ts");
 const countries_module_1 = __webpack_require__(/*! ../countries/countries.module */ "./src/modules/countries/countries.module.ts");
 const categories_module_1 = __webpack_require__(/*! ../categories/categories.module */ "./src/modules/categories/categories.module.ts");
+const google_cloud_storage_service_1 = __webpack_require__(/*! ../google-cloud/google-cloud-storage.service */ "./src/modules/google-cloud/google-cloud-storage.service.ts");
 let ToursModule = class ToursModule {
 };
 ToursModule = __decorate([
@@ -7458,7 +7803,10 @@ ToursModule = __decorate([
             (0, common_1.forwardRef)(() => categories_module_1.CategoriesModule),
         ],
         controllers: [tours_controller_1.ToursController],
-        providers: [tours_service_1.ToursService],
+        providers: [
+            tours_service_1.ToursService,
+            google_cloud_storage_service_1.GoogleCloudStorageService,
+        ],
         exports: [tours_service_1.ToursService],
     })
 ], ToursModule);
@@ -8521,6 +8869,16 @@ exports.UsersService = UsersService;
 
 /***/ }),
 
+/***/ "@google-cloud/storage":
+/*!****************************************!*\
+  !*** external "@google-cloud/storage" ***!
+  \****************************************/
+/***/ ((module) => {
+
+module.exports = require("@google-cloud/storage");
+
+/***/ }),
+
 /***/ "@nestjs/common":
 /*!*********************************!*\
   !*** external "@nestjs/common" ***!
@@ -8691,16 +9049,6 @@ module.exports = require("express-session");
 
 /***/ }),
 
-/***/ "fs":
-/*!*********************!*\
-  !*** external "fs" ***!
-  \*********************/
-/***/ ((module) => {
-
-module.exports = require("fs");
-
-/***/ }),
-
 /***/ "method-override":
 /*!**********************************!*\
   !*** external "method-override" ***!
@@ -8791,13 +9139,13 @@ module.exports = require("slugify");
 
 /***/ }),
 
-/***/ "uuid":
+/***/ "util":
 /*!***********************!*\
-  !*** external "uuid" ***!
+  !*** external "util" ***!
   \***********************/
 /***/ ((module) => {
 
-module.exports = require("uuid");
+module.exports = require("util");
 
 /***/ })
 

@@ -4,6 +4,7 @@ node_modules/
 # Lock files
 package-lock.json
 npm-debug.log
+google-cloud-key.json
 
 # Build output
 dist/

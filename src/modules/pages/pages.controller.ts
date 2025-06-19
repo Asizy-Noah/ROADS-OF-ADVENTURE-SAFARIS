@@ -1,3 +1,5 @@
+// src/modules/pages/pages.controller.ts
+
 import {
   Controller,
   Get,
@@ -18,8 +20,7 @@ import {
   NotFoundException,
   BadRequestException,
 } from "@nestjs/common";
-import { FileFieldsInterceptor } from "@nestjs/platform-express"; // Keep FileFieldsInterceptor
-import { AnyFilesInterceptor } from "@nestjs/platform-express"; 
+import { FileFieldsInterceptor, AnyFilesInterceptor } from "@nestjs/platform-express";
 import { Response } from "express";
 import { PagesService } from "./pages.service";
 import type { CreatePageDto } from "./dto/create-page.dto";
@@ -29,11 +30,15 @@ import { RolesGuard } from "../auth/guards/roles.guard";
 import { Roles } from "../auth/decorators/roles.decorator";
 import { UserRole } from "../users/schemas/user.schema";
 import { PageStatus, PageType } from "./schemas/page.schema";
-import { getMulterConfig } from '../../config/multer.config';
+// import { getMulterConfig } from '../../config/multer.config'; // <-- No longer needed for GCS disk storage
+import { GoogleCloudStorageService } from "../google-cloud/google-cloud-storage.service"; // <--- IMPORT GCS SERVICE
 
 @Controller("pages")
 export class PagesController {
-  constructor(private readonly pagesService: PagesService) {}
+  constructor(
+    private readonly pagesService: PagesService,
+    private readonly googleCloudStorageService: GoogleCloudStorageService // <--- INJECT GCS SERVICE
+  ) {}
 
   // --- Dashboard Pages List ---
   @Get("dashboard")
@@ -63,14 +68,14 @@ export class PagesController {
           error_msg: messages.error_msg,
           error: messages.error,
         },
-        pageStatuses: Object.values(PageStatus), // Pass statuses to template for filters
+        pageStatuses: Object.values(PageStatus),
       };
     } catch (error) {
       console.error("Error fetching dashboard pages:", error);
       req.flash("error_msg", "Failed to load pages: " + error.message);
       return {
         title: "Pages - Dashboard",
-        pages: [], // Return empty array on error
+        pages: [],
         user: req.user,
         query: { search: "", status: "", page: 1, limit: 10 },
         totalPages: 0,
@@ -99,57 +104,65 @@ export class PagesController {
         error: messages.error,
       },
       oldInput: messages.oldInput ? messages.oldInput[0] : {},
-      pageTypes: Object.values(PageType), // Pass page types to template
-      pageStatuses: Object.values(PageStatus), // Pass page statuses to template
+      pageTypes: Object.values(PageType),
+      pageStatuses: Object.values(PageStatus),
     };
   }
-
 
   @Post("dashboard/add")
   @UseGuards(SessionAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @UseInterceptors(
-    AnyFilesInterceptor(getMulterConfig('pages')), // This will still catch all files, but we only process relevant ones
+    // Use FileFieldsInterceptor to explicitly map field names to uploaded files
+    FileFieldsInterceptor([
+      { name: 'coverImage', maxCount: 1 },
+      { name: 'galleryImages', maxCount: 10 }, // Max 10 gallery images
+      // If you have images uploaded via a rich text editor (e.g., TinyMCE's image upload),
+      // they might have a different field name or need a separate interceptor.
+      // For now, assume these are the only direct file uploads.
+    ])
   )
   async addPage(
     @Body() createPageDto: CreatePageDto,
-    @UploadedFiles() files: Array<Express.Multer.File>,
+    @UploadedFiles() uploadedFiles: { coverImage?: Express.Multer.File[], galleryImages?: Express.Multer.File[] },
     @Req() req,
-    @Res() res: Response,
+    @Res() res: Response
   ) {
     try {
-      const categorizedFiles: Record<string, Express.Multer.File[]> = {};
-      files.forEach(file => {
-          if (!categorizedFiles[file.fieldname]) {
-              categorizedFiles[file.fieldname] = [];
-          }
-          categorizedFiles[file.fieldname].push(file);
-      });
-
       // Process cover image
-      if (categorizedFiles.coverImage && categorizedFiles.coverImage.length > 0) {
-        createPageDto.coverImage = `/uploads/pages/${categorizedFiles.coverImage[0].filename}`;
+      const coverImageFile = uploadedFiles.coverImage ? uploadedFiles.coverImage[0] : null;
+      if (coverImageFile) {
+        createPageDto.coverImage = await this.googleCloudStorageService.uploadFile(
+          coverImageFile,
+          "pages/cover_images" // GCS folder for page cover images
+        );
       } else if (createPageDto.coverImage === '') {
-          createPageDto.coverImage = null;
+        createPageDto.coverImage = null; // Clear if client explicitly sends empty string
       }
 
       // Process gallery images
-      if (categorizedFiles.galleryImages && categorizedFiles.galleryImages.length > 0) {
-        createPageDto.galleryImages = categorizedFiles.galleryImages.map(
-          (file) => `/uploads/pages/${file.filename}`,
-        );
-      } else if (createPageDto.galleryImages && createPageDto.galleryImages.length === 0) {
-          createPageDto.galleryImages = [];
+      const galleryImageFiles = uploadedFiles.galleryImages || [];
+      if (galleryImageFiles.length > 0) {
+        const galleryImageUrls: string[] = [];
+        for (const file of galleryImageFiles) {
+          const url = await this.googleCloudStorageService.uploadFile(
+            file,
+            "pages/gallery_images" // GCS folder for page gallery images
+          );
+          galleryImageUrls.push(url);
+        }
+        createPageDto.galleryImages = galleryImageUrls;
+      } else if (!createPageDto.galleryImages) {
+        createPageDto.galleryImages = []; // Ensure it's an empty array if no new files and no existing
       }
 
-      // REMOVED: Logic for processing images within content blocks
-
+      // Handle slug generation
       if (!createPageDto.slug && createPageDto.title) {
-          createPageDto.slug = createPageDto.title
-              .toLowerCase()
-              .replace(/[^a-z0-9\s-]/g, '')
-              .trim()
-              .replace(/\s+/g, '-');
+        createPageDto.slug = createPageDto.title
+          .toLowerCase()
+          .replace(/[^a-z0-9\s-]/g, "")
+          .trim()
+          .replace(/\s+/g, "-");
       }
 
       await this.pagesService.create(createPageDto, req.user.id);
@@ -175,8 +188,11 @@ export class PagesController {
         }
       } else if (error.message) {
         if (error.code === 11000 && error.keyPattern && error.keyValue) {
-          if (error.keyPattern.slug) flashMessage = "A page with this slug already exists. Please choose a different title or slug.";
-          else if (error.keyPattern.title) flashMessage = "A page with this title already exists.";
+          if (error.keyPattern.slug)
+            flashMessage =
+              "A page with this slug already exists. Please choose a different title or slug.";
+          else if (error.keyPattern.title)
+            flashMessage = "A page with this title already exists.";
           else flashMessage = "A duplicate entry error occurred.";
         } else {
           flashMessage = error.message;
@@ -213,8 +229,8 @@ export class PagesController {
           error: messages.error,
         },
         oldInput: messages.oldInput ? messages.oldInput[0] : {},
-        pageTypes: Object.values(PageType), // Pass page types to template
-        pageStatuses: Object.values(PageStatus), // Pass page statuses to template
+        pageTypes: Object.values(PageType),
+        pageStatuses: Object.values(PageStatus),
       };
     } catch (error) {
       console.error("Error fetching page for edit:", error);
@@ -228,12 +244,15 @@ export class PagesController {
   @UseGuards(SessionAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @UseInterceptors(
-    AnyFilesInterceptor(getMulterConfig('pages')),
+    FileFieldsInterceptor([
+      { name: 'coverImage', maxCount: 1 },
+      { name: 'galleryImages', maxCount: 10 },
+    ])
   )
   async updatePage(
     @Param("id") id: string,
     @Body() updatePageDto: UpdatePageDto,
-    @UploadedFiles() files: Array<Express.Multer.File>,
+    @UploadedFiles() uploadedFiles: { coverImage?: Express.Multer.File[], galleryImages?: Express.Multer.File[] },
     @Req() req,
     @Res() res: Response,
   ) {
@@ -243,43 +262,76 @@ export class PagesController {
         throw new NotFoundException(`Page with ID ${id} not found.`);
       }
 
-      const categorizedFiles: Record<string, Express.Multer.File[]> = {};
-      files.forEach(file => {
-          if (!categorizedFiles[file.fieldname]) {
-              categorizedFiles[file.fieldname] = [];
+      // Handle Cover Image
+      const newCoverImageFile = uploadedFiles.coverImage ? uploadedFiles.coverImage[0] : null;
+      if (newCoverImageFile) {
+        const newImageUrl = await this.googleCloudStorageService.uploadFile(
+          newCoverImageFile,
+          "pages/cover_images"
+        );
+        if (existingPage.coverImage) {
+          await this.googleCloudStorageService.deleteFile(existingPage.coverImage);
+        }
+        updatePageDto.coverImage = newImageUrl;
+      } else if (updatePageDto.coverImage === '') { // Client sent "" to explicitly remove
+          if (existingPage.coverImage) {
+              await this.googleCloudStorageService.deleteFile(existingPage.coverImage);
           }
-          categorizedFiles[file.fieldname].push(file);
-      });
-
-      // Process cover image
-      if (categorizedFiles.coverImage && categorizedFiles.coverImage.length > 0) {
-        updatePageDto.coverImage = `/uploads/pages/${categorizedFiles.coverImage[0].filename}`;
-      } else if (updatePageDto.coverImage === '') {
           updatePageDto.coverImage = null;
       } else {
+          // If no new file and not explicitly removed, retain the existing one
           updatePageDto.coverImage = existingPage.coverImage;
       }
 
-      // Process gallery images
-      if (categorizedFiles.galleryImages && categorizedFiles.galleryImages.length > 0) {
-        updatePageDto.galleryImages = categorizedFiles.galleryImages.map(
-          (file) => `/uploads/pages/${file.filename}`,
-        );
-      } else if (updatePageDto.galleryImages && updatePageDto.galleryImages.length === 0) {
-          updatePageDto.galleryImages = [];
-      } else {
-          updatePageDto.galleryImages = existingPage.galleryImages;
+      // Handle Gallery Images
+      const newGalleryImageFiles = uploadedFiles.galleryImages || [];
+      let currentGalleryImages = existingPage.galleryImages || [];
+
+      // Filter out removed gallery images (assuming client sends `removedGalleryImages` as a comma-separated string)
+      const removedGalleryImagePaths = (updatePageDto as any).removedGalleryImages
+        ? (updatePageDto as any).removedGalleryImages.split(',').map((img: string) => img.trim()).filter(Boolean)
+        : [];
+
+      // Delete removed images from GCS
+      for (const imageUrl of removedGalleryImagePaths) {
+          await this.googleCloudStorageService.deleteFile(imageUrl);
       }
+      currentGalleryImages = currentGalleryImages.filter(img => !removedGalleryImagePaths.includes(img));
 
-      // REMOVED: Logic for processing images within content blocks
+      // Add newly uploaded gallery images
+      if (newGalleryImageFiles.length > 0) {
+        const newlyAddedGalleryPaths: string[] = [];
+        for (const file of newGalleryImageFiles) {
+          const url = await this.googleCloudStorageService.uploadFile(
+            file,
+            "pages/gallery_images"
+          );
+          newlyAddedGalleryPaths.push(url);
+        }
+        currentGalleryImages = [...currentGalleryImages, ...newlyAddedGalleryPaths];
+      }
+      updatePageDto.galleryImages = currentGalleryImages;
 
-      if (!updatePageDto.slug && updatePageDto.title) {
+      // Remove the temporary 'removedGalleryImages' from DTO before saving to DB
+      delete (updatePageDto as any).removedGalleryImages;
+
+
+      // Handle slug generation
+      if (updatePageDto.title && updatePageDto.title !== existingPage.title && !updatePageDto.slug) {
           updatePageDto.slug = updatePageDto.title
               .toLowerCase()
               .replace(/[^a-z0-9\s-]/g, '')
               .trim()
               .replace(/\s+/g, '-');
+      } else if (updatePageDto.slug && updatePageDto.slug !== existingPage.slug) {
+          // If slug was manually provided/changed, you might want to sanitize it
+          updatePageDto.slug = updatePageDto.slug
+              .toLowerCase()
+              .replace(/[^a-z0-9\s-]/g, '')
+              .trim()
+              .replace(/\s+/g, '-');
       }
+
 
       await this.pagesService.update(id, updatePageDto, req.user.id);
 
@@ -304,7 +356,9 @@ export class PagesController {
         }
       } else if (error.message) {
         if (error.code === 11000 && error.keyPattern && error.keyValue) {
-          if (error.keyPattern.slug) flashMessage = "A page with this slug already exists. Please choose a different title or slug.";
+          if (error.keyPattern.slug)
+            flashMessage =
+              "A page with this slug already exists. Please choose a different title or slug.";
           else flashMessage = "A duplicate entry error occurred.";
         } else {
           flashMessage = error.message;
@@ -323,12 +377,25 @@ export class PagesController {
   @Roles(UserRole.ADMIN)
   async deletePage(@Param("id") id: string, @Req() req, @Res() res: Response) {
     try {
+      const pageToDelete = await this.pagesService.findOne(id);
+      if (!pageToDelete) {
+          throw new NotFoundException(`Page with ID ${id} not found.`);
+      }
+
+      // Delete associated images from GCS
+      if (pageToDelete.coverImage) {
+          await this.googleCloudStorageService.deleteFile(pageToDelete.coverImage);
+      }
+      if (pageToDelete.galleryImages && pageToDelete.galleryImages.length > 0) {
+          for (const imageUrl of pageToDelete.galleryImages) {
+              await this.googleCloudStorageService.deleteFile(imageUrl);
+          }
+      }
+
       await this.pagesService.remove(id);
 
       req.flash("success_msg", "Page deleted successfully");
-      // Use status 200 OK or 204 No Content for successful deletion
-      // You might redirect or send a success response depending on frontend.
-      // For simple page reload, redirect is fine.
+      // For simple page reload after deletion, redirect is fine.
       return res.redirect("/pages/dashboard");
     } catch (error) {
       console.error("Error deleting page:", error);
@@ -369,7 +436,7 @@ export class PagesController {
   async getPublicSinglePage(@Param("slug") slug: string, @Req() req, @Res({ passthrough: true }) res: Response) {
       try {
           const page = await this.pagesService.findBySlug(slug);
-          if (!page) {
+          if (!page || page.status !== PageStatus.PUBLISHED) { // Ensure only published pages are viewable publicly
               throw new NotFoundException(`Page with slug '${slug}' not found or not published.`);
           }
           return {
@@ -387,11 +454,12 @@ export class PagesController {
       } catch (error) {
           if (error instanceof NotFoundException) {
               req.flash('error_msg', error.message);
-              return res.redirect('/pages'); // Redirect to a public pages index, or 404 page
+              // Consider a dedicated 404 page render or redirect to a more general page list.
+              return res.redirect('/'); // Redirect to homepage or general pages list
           }
           console.error('Error loading public page:', error);
           req.flash('error_msg', 'An unexpected error occurred while loading the page.');
-          return res.redirect('/pages'); // Or render an error page
+          return res.redirect('/'); // Redirect to homepage or general pages list
       }
   }
 }

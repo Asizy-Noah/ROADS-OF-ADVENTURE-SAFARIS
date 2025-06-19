@@ -5,8 +5,7 @@ import type { User } from "../../users/schemas/user.schema";
 import type { Country } from "../../countries/schemas/country.schema"
 import type { Category } from "../../categories/schemas/category.schema"
 
-// The TourStatus enum is likely specific to Tour, so it's kept as it's not
-// directly contradicted by the "Add Country" form.
+
 export enum TourStatus {
   DRAFT = "draft",
   PUBLISHED = "published",
@@ -28,15 +27,12 @@ export class Tour extends Document {
   highlights: string;
 
   @Prop()
-  summary: string; // Corresponds to 'countrySummary' in HTML
+  summary: string; 
 
   @Prop()
-  coverImage: string; // Corresponds to 'coverImage' in HTML
+  coverImage: string; 
 
-  // Keeping these tour-specific fields from your original schema, as the request was
-  // to "update the schema and dto in the fields to match the add tour form below"
-  // implying the existing tour concept, but *also* matching the *newly provided form fields*.
-  // If these should be removed because they aren't in the provided *HTML form*, let me know.
+  
   @Prop({ required: true })
   days: number;
 

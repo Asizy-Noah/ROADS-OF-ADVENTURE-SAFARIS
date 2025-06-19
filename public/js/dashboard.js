@@ -761,27 +761,6 @@ document.addEventListener('DOMContentLoaded', function() {
             // Show the current image preview
             document.getElementById('imagePreview').style.display = 'block';
         }
-        
-        // Handle form submission
-        const categoryForm = document.getElementById('addCategoryForm') || document.getElementById('editCategoryForm');
-        if (categoryForm) {
-            categoryForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                // Get content from Quill editor and set to hidden input
-                document.getElementById('categoryDescription').value = categoryDescriptionEditor.root.innerHTML;
-                
-                // Show success message
-                if (window.location.pathname.includes('add-category')) {
-                    alert('Category added successfully!');
-                } else {
-                    alert('Category updated successfully!');
-                }
-                
-                // Redirect to categories page
-                window.location.href = 'categories.html';
-            });
-        }
     }
     
     // Handle file upload preview

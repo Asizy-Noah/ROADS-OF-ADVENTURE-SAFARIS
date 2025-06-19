@@ -26,12 +26,14 @@ import type { UpdateBlogDto } from "./dto/update-blog.dto";
 import { SessionAuthGuard } from "../auth/guards/session-auth.guard";
 import { UserRole } from "../users/schemas/user.schema";
 import { BlogStatus } from "./schemas/blog.schema";
-import { getMulterConfig } from '../../config/multer.config'; 
+import { getMulterConfig } from '../../config/multer.config';
 import { CountriesService } from "../countries/countries.service";
 import { ToursService } from '../tours/tours.service';
 import { CategoriesService } from "../categories/categories.service";
-import { RolesGuard } from "../auth/guards/roles.guard"; // Adjust path based on your project structure
-import { Roles } from "../auth/decorators/roles.decorator"; // Adjust path based on your project structure
+import { RolesGuard } from "../auth/guards/roles.guard";
+import { Roles } from "../auth/decorators/roles.decorator";
+import { GoogleCloudStorageService } from '../google-cloud/google-cloud-storage.service'; // Import the GCS Service
+
 // Define interfaces for clarity
 interface PublicBlogsQuery {
     search?: string;
@@ -60,6 +62,7 @@ export class BlogsController {
         private readonly countriesService: CountriesService,
         private readonly categoriesService: CategoriesService,
         private readonly toursService: ToursService,
+        private readonly googleCloudStorageService: GoogleCloudStorageService, // Inject the GCS Service
     ) {}
 
     // ===============================================
@@ -79,10 +82,6 @@ export class BlogsController {
                 { content: { $regex: query.search, $options: 'i' } }
             ];
         }
-        // Removed category and tag filtering for this specific request,
-        // but you had it before, consider if you want to keep it as an option.
-        // if (query.category) { filterOptions.category = query.category; }
-        // if (query.tag) { filterOptions.tag = query.tag; }
 
         const { blogs, totalBlogs, currentPage, totalPages } = await this.blogsService.findAll({
             ...filterOptions,
@@ -92,24 +91,11 @@ export class BlogsController {
         });
 
         // Fetch popular blogs for the sidebar
-        const popularBlogs = await this.blogsService.findPopular(5); // Fetch top 5 popular blogs
-
-        // Countries and Categories are no longer needed here if you remove the sections from the sidebar.
-        // If you remove them, you can also remove the lines fetching them and passing them to the template.
-        // For now, I'll remove passing them, assume the service calls themselves are fine for other uses.
-        // const countriesResult = await this.countriesService.findAll({});
-        // const categoriesResult = await this.categoriesService.findAll({});
-
-        // The allTags and uniqueTags calculation is also not needed if the Tags section is removed.
-        // const allTags = blogs.reduce((tags: string[], blog) => { /* ... */ }, []);
-        // const uniqueTags = [...new Set(allTags)];
+        const popularBlogs = await this.blogsService.findPopular(15);
 
         return {
             title: "Safari Updates & Blog - Roads of Adventure Safaris",
             blogs,
-            // countries: countriesResult.data || [], // Removed based on request
-            // categories: categoriesResult.data || [], // Removed based on request
-            // tags: uniqueTags, // Removed based on request
             query, // Still pass query for the search bar to keep sticky value
             currentPage,
             totalPages,
@@ -133,7 +119,7 @@ export class BlogsController {
     async getDashboardBlogs(@Query() query: DashboardBlogsQuery, @Req() req) {
         const filters: any = {};
         const page = parseInt(query.page as string, 10) || 1;
-        const limit = parseInt(query.limit as string, 10) || 10; // Default limit for dashboard
+        const limit = parseInt(query.limit as string, 10) || 100; // Default limit for dashboard
 
         // Apply Status Filter
         if (query.status && query.status !== 'all' && Object.values(BlogStatus).includes(query.status as BlogStatus)) {
@@ -253,30 +239,26 @@ export class BlogsController {
         };
     }
 
-   @Post("dashboard/add") // POST /blogs/dashboard/add
+    @Post("dashboard/add") // POST /blogs/dashboard/add
     @UseGuards(SessionAuthGuard, RolesGuard)
     @Roles(UserRole.ADMIN, UserRole.AGENT)
-    @UseInterceptors(FileInterceptor("coverImage", getMulterConfig('blogs')))
+    @UseInterceptors(FileInterceptor("coverImage", getMulterConfig('blogs'))) // Multer now uses memoryStorage
     async addBlog(
         @Body() createBlogDto: CreateBlogDto,
         @UploadedFile() file: Express.Multer.File,
         @Req() req,
         @Res() res: Response
     ) {
-        
-
         try {
             if (file) {
-                createBlogDto.coverImage = `/uploads/blogs/${file.filename}`;
-               
+                // Upload to GCS
+                createBlogDto.coverImage = await this.googleCloudStorageService.uploadFile(file, 'blogs/'); // 'blogs/' is your subfolder in the bucket
             } else if (createBlogDto.coverImage === '') {
-                createBlogDto.coverImage = null; // Handle case where no file uploaded and no old image (if it's an edit)
+                // This means the user explicitly removed an image (though for 'add', this path is less common)
+                createBlogDto.coverImage = null;
             } else {
-                // If no new file uploaded and createBlogDto.coverImage is not empty,
-                // it means it's an existing image (e.g., during an edit).
-                // For 'add' route, this might imply a missing file;
-                // adjust as per your form's requirement if image is optional.
-                // For 'add' route, if file is mandatory:
+                // If no file uploaded and createBlogDto.coverImage is also null/undefined,
+                // it means no image was provided. If image is mandatory, handle it here.
                 req.flash("error_msg", "Please upload a cover image.");
                 req.flash('oldInput', createBlogDto);
                 return res.redirect("/blogs/dashboard/add");
@@ -293,23 +275,19 @@ export class BlogsController {
             }
 
             // Set author and updatedBy for new blog
-            // (Assuming req.user.id is populated by SessionAuthGuard)
             (createBlogDto as any).author = req.user.id;
             (createBlogDto as any).updatedBy = req.user.id;
 
-           
             await this.blogsService.create(createBlogDto, req.user.id);
-            
+
             req.flash("success_msg", "Blog added successfully");
-            
-            return res.redirect("/blogs/dashboard/blogs"); // Redirect to dashboard index
-            // -------- MISSING CRITICAL PART ENDS HERE --------
+
+            return res.redirect("/blogs/dashboard/blogs");
 
         } catch (error) {
             console.error('Error adding blog:', error);
             let flashMessage = "Failed to add blog post.";
 
-            // Your existing comprehensive error handling
             if (error instanceof HttpException) {
                 const response = error.getResponse();
                 if (typeof response === 'object' && response !== null && 'message' in response) {
@@ -335,7 +313,7 @@ export class BlogsController {
 
             req.flash("error_msg", flashMessage);
             req.flash('oldInput', createBlogDto);
-            return res.redirect("/blogs/dashboard/add"); // Redirect back to add form
+            return res.redirect("/blogs/dashboard/add");
         }
     }
 
@@ -397,7 +375,7 @@ export class BlogsController {
         try {
             const existingBlog = await this.blogsService.findOne(id);
             if (!existingBlog) {
-                 throw new NotFoundException(`Blog with ID ${id} not found.`);
+                throw new NotFoundException(`Blog with ID ${id} not found.`);
             }
 
             // Authorization check
@@ -407,10 +385,26 @@ export class BlogsController {
             }
 
             if (file) {
-                updateBlogDto.coverImage = `/uploads/blogs/${file.filename}`;
+                // Upload new file to GCS
+                const newImageUrl = await this.googleCloudStorageService.uploadFile(file, 'blogs/');
+                // Delete old file from GCS if it exists and is different
+                if (existingBlog.coverImage && existingBlog.coverImage !== newImageUrl) {
+                    // Extract file path from URL for deletion
+                    // The GCS service's deleteFile method is designed to handle full URLs or just the path in the bucket.
+                    await this.googleCloudStorageService.deleteFile(existingBlog.coverImage);
+                }
+                updateBlogDto.coverImage = newImageUrl;
             } else if (updateBlogDto.coverImage === '') {
+                // If image is being removed (frontend sends empty string)
+                if (existingBlog.coverImage) {
+                    await this.googleCloudStorageService.deleteFile(existingBlog.coverImage);
+                }
                 updateBlogDto.coverImage = null;
             }
+            // If file is null and updateBlogDto.coverImage is NOT empty,
+            // it means no new file was uploaded and the existing image URL should be preserved.
+            // No action needed here, as the existingBlog.coverImage will implicitly carry over if updateBlogDto.coverImage is not touched.
+
 
             if (typeof updateBlogDto.tags === "string") {
                 updateBlogDto.tags = (updateBlogDto.tags as string).split(",").map((tag) => tag.trim()).filter(tag => tag.length > 0);
@@ -429,7 +423,7 @@ export class BlogsController {
             await this.blogsService.update(id, updateBlogDto, req.user.id);
 
             req.flash("success_msg", "Blog updated successfully");
-            return res.redirect("/blogs/dashboard/blogs"); // Redirect to dashboard index
+            return res.redirect("/blogs/dashboard/blogs");
         } catch (error) {
             console.error('Error updating blog:', error);
             let flashMessage = "Failed to update blog.";
@@ -444,7 +438,7 @@ export class BlogsController {
                 } else if (typeof response === 'string') {
                     flashMessage = response;
                 } else {
-                        flashMessage = error.message || "An unknown error occurred.";
+                    flashMessage = error.message || "An unknown error occurred.";
                 }
             } else if (error.message) {
                 if (error.code === 11000 && error.keyPattern && error.keyValue) {
@@ -458,18 +452,18 @@ export class BlogsController {
 
             req.flash("error_msg", flashMessage);
             req.flash('oldInput', updateBlogDto);
-            return res.redirect(`/blogs/dashboard/edit/${id}`); // Redirect back to edit form
+            return res.redirect(`/blogs/dashboard/edit/${id}`);
         }
     }
 
     @Delete("dashboard/blogs/:id") // DELETE /blogs/dashboard/blogs/:id
     @UseGuards(SessionAuthGuard, RolesGuard)
-    @Roles(UserRole.ADMIN, UserRole.AGENT) 
+    @Roles(UserRole.ADMIN, UserRole.AGENT)
     async deleteBlog(@Param("id") id: string, @Req() req, @Res() res: Response) {
         try {
             const blog = await this.blogsService.findOne(id);
             if (!blog) {
-                 throw new NotFoundException(`Blog with ID ${id} not found.`);
+                throw new NotFoundException(`Blog with ID ${id} not found.`);
             }
 
             // Authorization check
@@ -478,10 +472,15 @@ export class BlogsController {
                 return res.redirect("/blogs/dashboard/blogs");
             }
 
+            // Delete image from GCS before deleting the blog entry
+            if (blog.coverImage) {
+                await this.googleCloudStorageService.deleteFile(blog.coverImage);
+            }
+
             await this.blogsService.remove(id);
 
             req.flash("success_msg", "Blog deleted successfully");
-            return res.redirect("/blogs/dashboard/blogs"); // Redirect to dashboard index
+            return res.redirect("/blogs/dashboard/blogs");
         } catch (error) {
             console.error('Error deleting blog:', error);
             req.flash("error_msg", error.message || "Failed to delete blog.");
@@ -505,7 +504,7 @@ export class BlogsController {
 
             const blog = await this.blogsService.findOne(id);
             if (!blog) {
-                 throw new NotFoundException(`Blog with ID ${id} not found.`);
+                throw new NotFoundException(`Blog with ID ${id} not found.`);
             }
 
             // Authorization check
@@ -517,7 +516,7 @@ export class BlogsController {
             await this.blogsService.updateStatus(id, status, req.user.id);
 
             req.flash("success_msg", `Blog status updated to ${status}`);
-            return res.redirect("/blogs/dashboard/blogs"); // Redirect to dashboard index
+            return res.redirect("/blogs/dashboard/blogs");
         } catch (error) {
             console.error('Error updating blog status:', error);
             req.flash("error_msg", error.message || "Failed to update blog status.");
@@ -529,52 +528,50 @@ export class BlogsController {
     // PUBLIC-FACING SINGLE BLOG POST ROUTE (Must be last to avoid capturing dashboard routes)
     // ===============================================
     @Get(":slug") // GET /blogs/:slug (public single blog post)
-  @Render("public/blogs/show") // <--- THIS IS FOR THE PUBLIC VIEW
-  async getPublicSingleBlog(@Param("slug") slug: string, @Req() req, @Res({ passthrough: true }) res: Response) {
-    try {
-      const blog = await this.blogsService.findBySlug(slug);
-      if (!blog) {
-        throw new NotFoundException(`Blog with slug '${slug}' not found or not visible.`);
-      }
+    @Render("public/blogs/show") // <--- THIS IS FOR THE PUBLIC VIEW
+    async getPublicSingleBlog(@Param("slug") slug: string, @Req() req, @Res({ passthrough: true }) res: Response) {
+        try {
+            const blog = await this.blogsService.findBySlug(slug);
+            if (!blog) {
+                throw new NotFoundException(`Blog with slug '${slug}' not found or not visible.`);
+            }
 
-      // --- New: Fetch Popular Tour Packages ---
-      const popularTours = await this.toursService.findPopular(10); // Fetch 4 popular tours
-      
-      // --- End New ---
+            // --- Increment views for the blog post ---
+            await this.blogsService.incrementViews(slug); // Call the new method
 
-      // Optional: Increment views for the blog post (if you have a views field for blogs)
-      // await this.blogsService.incrementViews(slug); // You'd need to create this method in BlogsService
+            // --- Fetch Popular Tour Packages ---
+            const popularTours = await this.toursService.findPopular(10); // Fetch 4 popular tours
 
-      // Get related blogs from the same categories or countries
-      const relatedBlogsResult = await this.blogsService.findAll({
-        status: BlogStatus.VISIBLE,
-        limit: 4, // Fetch a few more to filter out current blog
-      });
+            // Get related blogs from the same categories or countries
+            const relatedBlogsResult = await this.blogsService.findAll({
+                status: BlogStatus.VISIBLE,
+                limit: 4, // Fetch a few more to filter out current blog
+            });
 
-      const filteredRelatedBlogs = relatedBlogsResult.blogs.filter((relatedBlog) => relatedBlog._id.toString() !== blog._id.toString());
+            const filteredRelatedBlogs = relatedBlogsResult.blogs.filter((relatedBlog) => relatedBlog._id.toString() !== blog._id.toString());
 
-      return {
-        title: `${blog.title} - Roads of Adventure Safaris`,
-        blog,
-        popularTours, // <-- Pass popular tours to the EJS template
-        relatedBlogs: filteredRelatedBlogs.slice(0, 3),
-        layout: "layouts/public",
-        seo: {
-          title: blog.seoTitle || `${blog.title} - Roads of Adventure Safaris`,
-          description: blog.seoDescription || blog.excerpt,
-          keywords: blog.seoKeywords,
-          canonicalUrl: blog.seoCanonicalUrl,
-          ogImage: blog.seoOgImage || blog.coverImage,
-        },
-      };
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        req.flash('error_msg', error.message);
-        return res.redirect('/blogs');
-      }
-      console.error('Error loading public blog post:', error);
-      req.flash('error_msg', 'An unexpected error occurred while loading the blog post.');
-      return res.redirect('/blogs');
+            return {
+                title: `${blog.title} - Roads of Adventure Safaris`,
+                blog,
+                popularTours, // <-- Pass popular tours to the EJS template
+                relatedBlogs: filteredRelatedBlogs.slice(0, 3),
+                layout: "layouts/public",
+                seo: {
+                    title: blog.seoTitle || `${blog.title} - Roads of Adventure Safaris`,
+                    description: blog.seoDescription || blog.excerpt,
+                    keywords: blog.seoKeywords,
+                    canonicalUrl: blog.seoCanonicalUrl,
+                    ogImage: blog.seoOgImage || blog.coverImage,
+                },
+            };
+        } catch (error) {
+            if (error instanceof NotFoundException) {
+                req.flash('error_msg', error.message);
+                return res.redirect('/blogs');
+            }
+            console.error('Error loading public blog post:', error);
+            req.flash('error_msg', 'An unexpected error occurred while loading the blog post.');
+            return res.redirect('/blogs');
+        }
     }
-  }
 }
