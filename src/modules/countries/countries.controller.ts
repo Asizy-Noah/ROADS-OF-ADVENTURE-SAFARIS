@@ -51,7 +51,7 @@ export class CountriesController {
     const countries = await this.countriesService.findAll();
 
     return {
-      title: "Safari Destinations - Roads of Adventure Safaris",
+      title: "Safari Destinations",
       countries,
       layout: "layouts/public",
     };

@@ -522,24 +522,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // This is a placeholder for pagination update logic
         // In a real application, you would update the pagination based on the filtered results
     }
-    
-    // Handle delete buttons on updates page
-    const deleteButtons = document.querySelectorAll('.delete-btn');
-    if (deleteButtons.length > 0) {
-        deleteButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                if (confirm('Are you sure you want to delete this blog post? This action cannot be undone.')) {
-                    // In a real application, this would send a request to delete the post
-                    // For this demo, we'll just remove the card from the DOM
-                    const blogCard = this.closest('.blog-card');
-                    blogCard.style.opacity = '0';
-                    setTimeout(() => {
-                        blogCard.remove();
-                    }, 300);
-                }
-            });
-        });
-    }
 });
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -670,26 +652,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // In a real application, this would open an edit form or modal
             alert(`Edit review from ${name}`);
-        });
-    });
-    
-    // Delete review
-    deleteButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const row = this.closest('tr');
-            const name = row.querySelector('td:nth-child(2)').textContent;
-            
-            if (confirm(`Are you sure you want to delete the review from ${name}? This action cannot be undone.`)) {
-                // In a real application, this would send a request to delete the review
-                // For this demo, we'll just remove the row from the DOM
-                row.style.opacity = '0';
-                setTimeout(() => {
-                    row.remove();
-                    
-                    // Update record count and re-apply filters
-                    filterReviews();
-                }, 300);
-            }
         });
     });
 });
@@ -835,26 +797,6 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
                 this.classList.remove('refreshing');
             }, 1000);
-        });
-    }
-    
-    // Handle delete buttons
-    const deleteButtons = document.querySelectorAll('.delete-btn');
-    if (deleteButtons.length > 0) {
-        deleteButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const card = this.closest('.category-card');
-                const title = card.querySelector('.category-title').textContent;
-                
-                if (confirm(`Are you sure you want to delete "${title}"? This action cannot be undone.`)) {
-                    // In a real application, this would send a request to delete the item
-                    // For this demo, we'll just remove the card from the DOM
-                    card.style.opacity = '0';
-                    setTimeout(() => {
-                        card.remove();
-                    }, 300);
-                }
-            });
         });
     }
 });
@@ -1047,34 +989,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
-    
-    // Handle delete buttons
-    const deleteButtons = document.querySelectorAll('.delete-btn');
-    deleteButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const row = this.closest('tr');
-            const email = row.querySelector('td:nth-child(3)').textContent;
-            
-            if (confirm(`Are you sure you want to delete the subscriber with email ${email}? This action cannot be undone.`)) {
-                // In a real application, this would send a request to delete the subscriber
-                // For this demo, we'll just remove the row from the DOM
-                row.style.opacity = '0';
-                setTimeout(() => {
-                    row.remove();
-                    
-                    // Update record count
-                    const recordsCount = document.querySelector('.records-count');
-                    if (recordsCount) {
-                        const currentCount = parseInt(recordsCount.textContent);
-                        recordsCount.textContent = currentCount - 1;
-                    }
-                    
-                    // Update pagination if needed
-                    updatePagination();
-                }, 300);
-            }
-        });
-    });
     
     // Handle table sorting
     const sortableHeaders = document.querySelectorAll('.sortable');
@@ -1363,35 +1277,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Handle delete buttons
-    const deleteButtons = document.querySelectorAll('.delete-btn');
-    if (deleteButtons.length > 0) {
-        deleteButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const row = this.closest('tr');
-                const title = row.querySelector('td:nth-child(3)').textContent;
-                
-                if (confirm(`Are you sure you want to delete the page "${title}"? This action cannot be undone.`)) {
-                    // In a real application, this would send a request to delete the page
-                    // For this demo, we'll just remove the row from the DOM
-                    row.style.opacity = '0';
-                    setTimeout(() => {
-                        row.remove();
-                        
-                        // Update record count
-                        const recordsCount = document.querySelector('.records-count');
-                        if (recordsCount) {
-                            const currentCount = parseInt(recordsCount.textContent);
-                            recordsCount.textContent = currentCount - 1;
-                        }
-                        
-                        // Update pagination if needed
-                        updatePagination();
-                    }, 300);
-                }
-            });
-        });
-    }
     
     // Handle table sorting
     const sortableHeaders = document.querySelectorAll('.sortable');

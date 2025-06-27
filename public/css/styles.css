@@ -876,6 +876,7 @@ a {
 /* Categories Carousel */
 .categories-carousel {
   display: flex;
+  width: 100%;
   align-items: center;
   justify-content: center;
   overflow-x: auto;
@@ -928,6 +929,14 @@ a {
 .category-img {
   height: 200px;
   object-fit: cover;
+}
+
+@media screen and (max-width: 1118px) {
+.categories-carousel {
+  display: flex;
+  width: 100%;
+  justify-content: flex-start;
+}
 }
 
 @media (max-width: 768px) {

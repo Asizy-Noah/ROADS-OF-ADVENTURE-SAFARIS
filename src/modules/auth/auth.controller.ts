@@ -29,7 +29,7 @@ export class AuthController {
   @Render("auth/register")
   getRegisterPage() {
     return {
-      title: "Register - Roads of Adventure Safaris",
+      title: "Register",
       layout: "layouts/auth",
     };
   }
@@ -63,7 +63,7 @@ export class AuthController {
   @Render("auth/login")
   getLoginPage() {
     return {
-      title: "Login - Roads of Adventure Safaris",
+      title: "Login",
       layout: "layouts/auth",
     };
   }
@@ -94,7 +94,7 @@ export class AuthController {
   @Render("auth/pending-approval")
   getPendingApprovalPage(@Req() req) {
     return {
-      title: "Pending Approval - Roads of Adventure Safaris",
+      title: "Pending Approval",
       user: req.session.user,
       layout: "layouts/auth",
     };
@@ -111,7 +111,7 @@ export class AuthController {
   @Render("auth/forgot-password")
   getForgotPasswordPage() {
     return {
-      title: "Forgot Password - Roads of Adventure Safaris",
+      title: "Forgot Password",
       layout: "layouts/auth",
     };
   }
@@ -141,7 +141,7 @@ async forgotPassword(
   @Render("auth/reset-password")
   getResetPasswordPage(@Req() req) {
     return {
-      title: "Reset Password - Roads of Adventure Safaris",
+      title: "Reset Password",
       token: req.params.token,
       layout: "layouts/auth",
     };

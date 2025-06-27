@@ -154,37 +154,7 @@
             });
         }
 
-        // Event Listeners for Delete Buttons (AJAX)
-        deleteButtons.forEach(button => {
-            button.addEventListener('click', async (event) => {
-                const categoryId = event.currentTarget.dataset.id;
-                if (confirm('Are you sure you want to delete this category? This action cannot be undone.')) {
-                    try {
-                        const response = await fetch(`/categories/dashboard/delete/${categoryId}`, {
-                            method: 'POST', // Use POST method as updated in controller
-                            headers: {
-                                'Content-Type': 'application/json',
-                                // Include CSRF token if you're using one
-                                // 'X-CSRF-TOKEN': 'your-csrf-token-here' 
-                            }
-                        });
-
-                        const result = await response.json();
-
-                        if (response.ok && result.success) {
-                            alert(result.message || 'Category deleted successfully!');
-                            updateCategoriesList(); // Refresh the list after deletion
-                        } else {
-                            alert(result.message || 'Failed to delete category.');
-                        }
-                    } catch (error) {
-                        console.error('Error during delete request:', error);
-                        alert('An error occurred while deleting the category.');
-                    }
-                }
-            });
-        });
-
+        
         // Initialize search/filter values from URL on page load
         const urlParams = new URLSearchParams(window.location.search);
         categorySearchInput.value = urlParams.get('search') || '';

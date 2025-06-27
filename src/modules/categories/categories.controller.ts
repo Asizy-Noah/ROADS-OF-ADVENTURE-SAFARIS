@@ -361,18 +361,19 @@ export class CategoriesController {
     }
   }
 
-  @Delete("dashboard/delete/:id") // Keep as DELETE for RESTfulness, handled via JS fetch
+  @Delete("dashboard/delete/:id") // Keep this as DELETE if your frontend sends _method=DELETE
   async deleteCategory(
     @Param("id") id: string,
     @Req() req,
-    @Res() res: Response
+    @Res() res: Response // Ensure @Res() is not { passthrough: true } for explicit redirects
   ) {
     try {
       const user = req.user as any;
       const existingCategory = await this.categoriesService.findOne(id);
 
       if (!existingCategory) {
-          throw new HttpException("Category not found", HttpStatus.NOT_FOUND);
+        req.flash("error_msg", "Category not found."); // Flash message for not found
+        return res.redirect("/categories/dashboard"); // Redirect on not found
       }
 
       // Authorization check
@@ -380,10 +381,8 @@ export class CategoriesController {
         user.role === UserRole.AGENT &&
         existingCategory.createdBy.toString() !== user._id.toString()
       ) {
-        return res.status(HttpStatus.FORBIDDEN).json({
-          success: false,
-          message: "You are not authorized to delete this category.",
-        });
+        req.flash("error_msg", "You are not authorized to delete this category.");
+        return res.redirect("/categories/dashboard"); // Redirect on unauthorized
       }
 
       // Delete associated image from GCS before deleting the category document
@@ -393,25 +392,23 @@ export class CategoriesController {
 
       await this.categoriesService.remove(id);
 
-      // For AJAX/fetch requests, return a success JSON response.
-      // The frontend JS will then handle showing the flash message and redirecting.
-      return res.status(HttpStatus.OK).json({
-        success: true,
-        message: "Category deleted successfully!",
-        redirectUrl: "/categories/dashboard", // Indicate where frontend should redirect
-      });
+      req.flash("success_msg", "Category deleted successfully!");
+      return res.redirect("/categories/dashboard"); // <--- THIS IS THE KEY CHANGE FOR SUCCESS
     } catch (error) {
       console.error("Error deleting category:", error);
-
       let errorMessage = error.message || "Failed to delete category.";
+
       if (error instanceof HttpException) {
-        errorMessage = (error.getResponse() as any).message || errorMessage;
+        const response = error.getResponse();
+        errorMessage = typeof response === 'object' && response !== null && 'message' in response
+            ? (Array.isArray(response.message) ? response.message.join(', ') : (response.message as string))
+            : (typeof response === 'string' ? response : error.message || errorMessage);
+      } else if (error.code === 11000) { // MongoDB duplicate key error example
+          errorMessage = "A duplicate entry error occurred.";
       }
 
-      // For AJAX/fetch requests, return an error JSON response.
-      return res
-        .status(error instanceof HttpException ? error.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR)
-        .json({ success: false, message: errorMessage });
+      req.flash("error_msg", errorMessage);
+      return res.redirect("/categories/dashboard"); // <--- REDIRECT ON ERROR AS WELL
     }
   }
 }

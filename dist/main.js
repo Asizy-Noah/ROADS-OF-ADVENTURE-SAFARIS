@@ -66,7 +66,7 @@ let AppController = class AppController {
             status: blog_schema_1.BlogStatus.VISIBLE,
         });
         return {
-            title: "Roads of Adventure Safaris - African Safari Tours",
+            title: "Home",
             aboutUsPage,
             featuredTours,
             countries,
@@ -80,11 +80,11 @@ let AppController = class AppController {
     async getPage(slug) {
         const page = await this.pagesService.findBySlug(slug);
         return {
-            title: `${page.title} - Roads of Adventure Safaris`,
+            title: `${page.title}`,
             page,
             layout: 'layouts/public',
             seo: {
-                title: page.seoTitle || `${page.title} - Roads of Adventure Safaris`,
+                title: page.seoTitle || `${page.title} `,
                 description: page.seoDescription || page.description,
                 keywords: page.seoKeywords,
                 canonicalUrl: page.seoCanonicalUrl,
@@ -126,7 +126,7 @@ let AppController = class AppController {
     }
     getEnquiryPage() {
         return {
-            title: "Enquiry - Roads of Adventure Safaris",
+            title: "Enquiry",
             layout: "layouts/public",
         };
     }
@@ -146,11 +146,11 @@ let AppController = class AppController {
             throw new common_1.NotFoundException('Impact page not found.');
         }
         return {
-            title: impactPage.seoTitle || `${impactPage.title} - Roads of Adventure Safaris`,
+            title: impactPage.seoTitle || `${impactPage.title}`,
             impactPage,
             layout: "layouts/public",
             seo: {
-                title: impactPage.seoTitle || `${impactPage.title} - Roads of Adventure Safaris`,
+                title: impactPage.seoTitle || `${impactPage.title}`,
                 description: impactPage.seoDescription || impactPage.description,
                 keywords: impactPage.seoKeywords,
                 canonicalUrl: impactPage.seoCanonicalUrl,
@@ -164,11 +164,11 @@ let AppController = class AppController {
             throw new common_1.NotFoundException('Terms and Conditions page not found.');
         }
         return {
-            title: termsPage.seoTitle || `${termsPage.title} - Roads of Adventure Safaris`,
+            title: termsPage.seoTitle || `${termsPage.title}`,
             termsPage,
             layout: "layouts/public",
             seo: {
-                title: termsPage.seoTitle || `${termsPage.title} - Roads of Adventure Safaris`,
+                title: termsPage.seoTitle || `${termsPage.title}`,
                 description: termsPage.seoDescription || termsPage.description,
                 keywords: termsPage.seoKeywords,
                 canonicalUrl: termsPage.seoCanonicalUrl,
@@ -182,11 +182,11 @@ let AppController = class AppController {
             throw new common_1.NotFoundException('Privacy Policy page not found.');
         }
         return {
-            title: privacyPage.seoTitle || `${privacyPage.title} - Roads of Adventure Safaris`,
+            title: privacyPage.seoTitle || `${privacyPage.title}`,
             privacyPage,
             layout: "layouts/public",
             seo: {
-                title: privacyPage.seoTitle || `${privacyPage.title} - Roads of Adventure Safaris`,
+                title: privacyPage.seoTitle || `${privacyPage.title}`,
                 description: privacyPage.seoDescription || privacyPage.description,
                 keywords: privacyPage.seoKeywords,
                 canonicalUrl: privacyPage.seoCanonicalUrl,
@@ -196,7 +196,7 @@ let AppController = class AppController {
     }
     getaboutPage() {
         return {
-            title: "About Us - Roads of Adventure Safaris",
+            title: "About Us",
             layout: "layouts/public",
         };
     }
@@ -225,7 +225,7 @@ let AppController = class AppController {
                 selectedCategory = await this.categoriesService.findOne(categoryId);
             }
             return {
-                title: "Search Results - Roads of Adventure Safaris",
+                title: "Search Results",
                 tours,
                 totalTours,
                 currentPage,
@@ -757,7 +757,7 @@ let AuthController = class AuthController {
     }
     getRegisterPage() {
         return {
-            title: "Register - Roads of Adventure Safaris",
+            title: "Register",
             layout: "layouts/auth",
         };
     }
@@ -786,7 +786,7 @@ let AuthController = class AuthController {
     }
     getLoginPage() {
         return {
-            title: "Login - Roads of Adventure Safaris",
+            title: "Login",
             layout: "layouts/auth",
         };
     }
@@ -807,7 +807,7 @@ let AuthController = class AuthController {
     }
     getPendingApprovalPage(req) {
         return {
-            title: "Pending Approval - Roads of Adventure Safaris",
+            title: "Pending Approval",
             user: req.session.user,
             layout: "layouts/auth",
         };
@@ -819,7 +819,7 @@ let AuthController = class AuthController {
     }
     getForgotPasswordPage() {
         return {
-            title: "Forgot Password - Roads of Adventure Safaris",
+            title: "Forgot Password",
             layout: "layouts/auth",
         };
     }
@@ -836,7 +836,7 @@ let AuthController = class AuthController {
     }
     getResetPasswordPage(req) {
         return {
-            title: "Reset Password - Roads of Adventure Safaris",
+            title: "Reset Password",
             token: req.params.token,
             layout: "layouts/auth",
         };
@@ -1339,7 +1339,7 @@ let BlogsController = class BlogsController {
         const { blogs, totalBlogs, currentPage, totalPages } = await this.blogsService.findAll(Object.assign(Object.assign({}, filterOptions), { page: query.page ? parseInt(query.page) : 1, limit: query.limit ? parseInt(query.limit) : 8, sortBy: query.sortBy || 'newest' }));
         const popularBlogs = await this.blogsService.findPopular(15);
         return {
-            title: "Safari Updates & Blog - Roads of Adventure Safaris",
+            title: "Safari Updates",
             blogs,
             query,
             currentPage,
@@ -1381,7 +1381,7 @@ let BlogsController = class BlogsController {
             const categoriesResult = await this.categoriesService.findAll({});
             const messages = req.flash();
             return {
-                title: "Blogs - Dashboard",
+                title: "Blogs",
                 blogs,
                 countries: countriesResult.data || [],
                 categories: categoriesResult.data || [],
@@ -2847,13 +2847,13 @@ let CategoriesPublicController = class CategoriesPublicController {
                 tours = await this.toursService.findByCategory(category._id.toString());
             }
             return {
-                title: `${category.name} Safaris - Roads of Adventure Safaris`,
+                title: `${category.name}`,
                 category,
                 tours,
                 layout: "layouts/public",
                 messages: req.flash(),
                 seo: {
-                    title: category.seoTitle || `${category.name} Safaris - Roads of Adventure Safaris`,
+                    title: category.seoTitle || `${category.name}`,
                     description: category.seoDescription || category.description,
                     keywords: category.seoKeywords,
                     canonicalUrl: `YOUR_BASE_URL/categories/${category.slug}`,
@@ -3239,34 +3239,35 @@ let CategoriesController = class CategoriesController {
             const user = req.user;
             const existingCategory = await this.categoriesService.findOne(id);
             if (!existingCategory) {
-                throw new common_1.HttpException("Category not found", common_1.HttpStatus.NOT_FOUND);
+                req.flash("error_msg", "Category not found.");
+                return res.redirect("/categories/dashboard");
             }
             if (user.role === user_schema_1.UserRole.AGENT &&
                 existingCategory.createdBy.toString() !== user._id.toString()) {
-                return res.status(common_1.HttpStatus.FORBIDDEN).json({
-                    success: false,
-                    message: "You are not authorized to delete this category.",
-                });
+                req.flash("error_msg", "You are not authorized to delete this category.");
+                return res.redirect("/categories/dashboard");
             }
             if (existingCategory.image) {
                 await this.googleCloudStorageService.deleteFile(existingCategory.image);
             }
             await this.categoriesService.remove(id);
-            return res.status(common_1.HttpStatus.OK).json({
-                success: true,
-                message: "Category deleted successfully!",
-                redirectUrl: "/categories/dashboard",
-            });
+            req.flash("success_msg", "Category deleted successfully!");
+            return res.redirect("/categories/dashboard");
         }
         catch (error) {
             console.error("Error deleting category:", error);
             let errorMessage = error.message || "Failed to delete category.";
             if (error instanceof common_1.HttpException) {
-                errorMessage = error.getResponse().message || errorMessage;
+                const response = error.getResponse();
+                errorMessage = typeof response === 'object' && response !== null && 'message' in response
+                    ? (Array.isArray(response.message) ? response.message.join(', ') : response.message)
+                    : (typeof response === 'string' ? response : error.message || errorMessage);
             }
-            return res
-                .status(error instanceof common_1.HttpException ? error.getStatus() : common_1.HttpStatus.INTERNAL_SERVER_ERROR)
-                .json({ success: false, message: errorMessage });
+            else if (error.code === 11000) {
+                errorMessage = "A duplicate entry error occurred.";
+            }
+            req.flash("error_msg", errorMessage);
+            return res.redirect("/categories/dashboard");
         }
     }
 };
@@ -3772,7 +3773,7 @@ let CountriesController = class CountriesController {
     async getAllCountries() {
         const countries = await this.countriesService.findAll();
         return {
-            title: "Safari Destinations - Roads of Adventure Safaris",
+            title: "Safari Destinations",
             countries,
             layout: "layouts/public",
         };
@@ -7321,7 +7322,7 @@ let ToursController = class ToursController {
         const countries = await this.countriesService.findAll({});
         const categories = await this.categoriesService.findAll({});
         return {
-            title: "Safari Tours - Roads of Adventure Safaris",
+            title: "Safari Tours",
             tours,
             countries: countries.data,
             categories: categories.data,
@@ -7358,12 +7359,12 @@ let ToursController = class ToursController {
         });
         const filteredRelatedTours = relatedToursResult.tours.filter((relatedTour) => relatedTour._id.toString() !== tour._id.toString());
         return {
-            title: `${tour.title} - Roads of Adventure Safaris`,
+            title: `${tour.title}`,
             tour,
             relatedTours: filteredRelatedTours.slice(0, 3),
             layout: "layouts/public",
             seo: {
-                title: tour.seoTitle || `${tour.title} - Roads of Adventure Safaris`,
+                title: tour.seoTitle || `${tour.title}`,
                 description: tour.seoDescription || tour.overview,
                 keywords: tour.seoKeywords,
                 canonicalUrl: tour.seoCanonicalUrl,

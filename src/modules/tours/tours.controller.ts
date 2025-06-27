@@ -81,7 +81,7 @@ export class ToursController {
     const categories = await this.categoriesService.findAll({});
 
     return {
-      title: "Safari Tours - Roads of Adventure Safaris",
+      title: "Safari Tours",
       tours,
       countries: countries.data,
       categories: categories.data,
@@ -128,12 +128,12 @@ export class ToursController {
     );
 
     return {
-      title: `${tour.title} - Roads of Adventure Safaris`,
+      title: `${tour.title}`,
       tour,
       relatedTours: filteredRelatedTours.slice(0, 3),
       layout: "layouts/public",
       seo: {
-        title: tour.seoTitle || `${tour.title} - Roads of Adventure Safaris`,
+        title: tour.seoTitle || `${tour.title}`,
         description: tour.seoDescription || tour.overview,
         keywords: tour.seoKeywords,
         canonicalUrl: tour.seoCanonicalUrl,

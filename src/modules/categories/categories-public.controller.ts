@@ -50,13 +50,13 @@ export class CategoriesPublicController {
 
 
       return {
-        title: `${category.name} Safaris - Roads of Adventure Safaris`,
+        title: `${category.name}`,
         category,
         tours,
         layout: "layouts/public",
         messages: req.flash(),
         seo: {
-          title: category.seoTitle || `${category.name} Safaris - Roads of Adventure Safaris`,
+          title: category.seoTitle || `${category.name}`,
           description: category.seoDescription || category.description,
           keywords: category.seoKeywords,
           canonicalUrl: `YOUR_BASE_URL/categories/${category.slug}`, // Update with your actual base URL

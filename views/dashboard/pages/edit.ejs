@@ -229,89 +229,111 @@
         }
 
         // --- Handle existing image removals (Cover and Gallery) ---
-        const removeCoverBtn = document.querySelector("#coverImagePreview .remove-current-image-btn");
-        if (removeCoverBtn) {
-            removeCoverBtn.addEventListener("click", (e) => {
-                console.log("Removing cover image.");
-                const btn = e.target;
-                const inputName = btn.dataset.inputName;
-                const previewContainer = document.querySelector(btn.dataset.previewSelector);
+    // This part is largely fine for *explicit* removals via the "Remove Current" button.
+    const removeCoverBtn = document.querySelector("#coverImagePreview .remove-current-image-btn");
+    if (removeCoverBtn) {
+        removeCoverBtn.addEventListener("click", (e) => {
+            console.log("Removing cover image via button.");
+            const btn = e.currentTarget; // Use currentTarget to ensure you get the element the listener is on
+            const inputName = btn.dataset.inputName;
+            const previewContainer = document.querySelector(btn.dataset.previewSelector);
 
-                const hiddenInput = document.createElement('input');
-                hiddenInput.type = 'hidden';
-                hiddenInput.name = inputName;
-                hiddenInput.value = '';
-                document.getElementById('editPageForm').appendChild(hiddenInput);
+            // Add hidden input to tell server to clear the image
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = inputName;
+            hiddenInput.value = ''; // Send an empty string to indicate removal
+            document.getElementById('editPageForm').appendChild(hiddenInput);
 
-                if (previewContainer) {
-                    previewContainer.innerHTML = '';
-                }
-                btn.remove();
-            });
-        }
-
-        document.querySelectorAll(".remove-gallery-image-btn").forEach(btn => {
-            btn.addEventListener("click", (e) => {
-                const btn = e.target;
-                const imageUrl = btn.dataset.imageUrl;
-                const wrapper = btn.closest(".gallery-image-wrapper");
-                console.log(`Removing gallery image: ${imageUrl}`);
-
-                const hiddenInput = document.createElement('input');
-                hiddenInput.type = 'hidden';
-                hiddenInput.name = 'removedGalleryImages[]';
-                hiddenInput.value = imageUrl;
-                document.getElementById('editPageForm').appendChild(hiddenInput);
-
-                if (wrapper) {
-                    wrapper.remove();
-                }
-            });
+            // Clear the preview area
+            if (previewContainer) {
+                previewContainer.innerHTML = '';
+            }
+            btn.remove(); // Remove the button itself
         });
+    }
 
-        // Event listeners for file input previews (Cover & Gallery)
-        const coverImageInput = document.getElementById('pageCoverImage');
-        const coverImagePreview = document.getElementById('coverImagePreview');
-        const galleryImagesInput = document.getElementById('pageGalleryImages');
-        const galleryImagesPreview = document.getElementById('galleryImagesPreview');
+    document.querySelectorAll(".remove-gallery-image-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            const clickedBtn = e.currentTarget; // Use currentTarget
+            const imageUrl = clickedBtn.dataset.imageUrl;
+            const wrapper = clickedBtn.closest(".gallery-image-wrapper");
+            console.log(`Removing gallery image: ${imageUrl}`);
 
-        if (coverImageInput) {
-            coverImageInput.addEventListener('change', (e) => {
-                if (e.target.files && e.target.files[0]) {
+            // Add hidden input to tell server which image URL to remove
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'removedGalleryImages'; // Use a single name for all removed images
+            hiddenInput.value = imageUrl;
+            document.getElementById('editPageForm').appendChild(hiddenInput);
+
+            if (wrapper) {
+                wrapper.remove(); // Remove the image preview from the DOM
+            }
+        });
+    });
+
+    // --- Event listeners for file input previews (Cover & Gallery) ---
+    const coverImageInput = document.getElementById('pageCoverImage');
+    const coverImagePreview = document.getElementById('coverImagePreview');
+    const galleryImagesInput = document.getElementById('pageGalleryImages');
+    const galleryImagesPreview = document.getElementById('galleryImagesPreview');
+
+    if (coverImageInput) {
+        coverImageInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    // Clear the existing content completely before adding the new preview
+                    coverImagePreview.innerHTML = `<img src="${event.target.result}" class="preview-image" alt="New Cover Image Preview">`;
+
+                    // Remove the "Remove Current" button if it exists, as it's now irrelevant for the new preview
+                    const existingRemoveBtn = coverImagePreview.querySelector(".remove-current-image-btn");
+                    if (existingRemoveBtn) {
+                        existingRemoveBtn.remove();
+                    }
+
+                    // Remove the hidden input that might have been added by the "Remove Current" button click
+                    // This handles the case where a user first clicks 'Remove' then uploads a new image.
+                    const hiddenRemoveInput = document.querySelector('input[name="coverImage"][value=""]');
+                    if (hiddenRemoveInput) {
+                        hiddenRemoveInput.remove();
+                    }
+                };
+                reader.readAsDataURL(e.target.files[0]);
+            } else {
+                // If no file is selected (e.g., user opens dialog and cancels), clear the preview
+                coverImagePreview.innerHTML = '';
+                // You might want to re-add the original image if available here, or a placeholder
+                // For simplicity, we just clear it for now.
+            }
+        });
+    }
+
+    if (galleryImagesInput) {
+        galleryImagesInput.addEventListener('change', (e) => {
+            // Remove *all* previously generated new image previews
+            const newImagePreviews = galleryImagesPreview.querySelectorAll('.new-gallery-image-preview');
+            newImagePreviews.forEach(el => el.remove());
+
+            if (e.target.files && e.target.files.length > 0) {
+                Array.from(e.target.files).forEach(file => {
                     const reader = new FileReader();
                     reader.onload = function(event) {
-                        coverImagePreview.innerHTML = `<img src="${event.target.result}" class="preview-image" alt="New Cover Image Preview">`;
+                        // Append new previews to the existing galleryImagesPreview container
+                        // Existing images from the database will remain unless explicitly removed by their button
+                        galleryImagesPreview.innerHTML += `
+                            <div class="gallery-image-wrapper new-gallery-image-preview">
+                                <img src="${event.target.result}" class="preview-image" alt="New Gallery Image">
+                            </div>
+                        `;
                     };
-                    reader.readAsDataURL(e.target.files[0]);
-                    const existingRemoveInput = document.querySelector('input[name="coverImage"][value=""]');
-                    if (existingRemoveInput) {
-                        existingRemoveInput.remove();
-                    }
-                }
-            });
-        }
-
-        if (galleryImagesInput) {
-            galleryImagesInput.addEventListener('change', (e) => {
-                const newImagePreviews = galleryImagesPreview.querySelectorAll('.new-gallery-image-preview');
-                newImagePreviews.forEach(el => el.remove());
-
-                if (e.target.files && e.target.files.length > 0) {
-                    Array.from(e.target.files).forEach(file => {
-                        const reader = new FileReader();
-                        reader.onload = function(event) {
-                            galleryImagesPreview.innerHTML += `
-                                <div class="gallery-image-wrapper new-gallery-image-preview">
-                                    <img src="${event.target.result}" class="preview-image" alt="New Gallery Image">
-                                </div>
-                            `;
-                        };
-                        reader.readAsDataURL(file);
-                    });
-                }
-            });
-        }
-    });
+                    reader.readAsDataURL(file);
+                });
+            }
+        });
+    }
+});
 
     // --- Add New Content Block Button Listener ---
     addContentBtn.addEventListener("click", () => {

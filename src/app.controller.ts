@@ -61,7 +61,7 @@ export class AppController {
     });
 
     return {
-      title: "Roads of Adventure Safaris - African Safari Tours",
+      title: "Home",
       aboutUsPage,
       featuredTours,
       countries,
@@ -79,11 +79,11 @@ export class AppController {
     const page = await this.pagesService.findBySlug(slug);
 
     return {
-      title: `${page.title} - Roads of Adventure Safaris`,
+      title: `${page.title}`,
       page,
       layout: 'layouts/public',
       seo: {
-        title: page.seoTitle || `${page.title} - Roads of Adventure Safaris`,
+        title: page.seoTitle || `${page.title} `,
         description: page.seoDescription || page.description,
         keywords: page.seoKeywords,
         canonicalUrl: page.seoCanonicalUrl,
@@ -138,7 +138,7 @@ export class AppController {
   @Render('public/enquiry') // Assuming your EJS file is public/enquiry.ejs
   getEnquiryPage() {
     return {
-      title: "Enquiry - Roads of Adventure Safaris",
+      title: "Enquiry",
       layout: "layouts/public",
     };
   }
@@ -176,11 +176,11 @@ export class AppController {
 
     // Pass the page data to the EJS template
     return {
-      title: impactPage.seoTitle || `${impactPage.title} - Roads of Adventure Safaris`,
+      title: impactPage.seoTitle || `${impactPage.title}`,
       impactPage, // Pass the entire page object
       layout: "layouts/public",
       seo: {
-        title: impactPage.seoTitle || `${impactPage.title} - Roads of Adventure Safaris`,
+        title: impactPage.seoTitle || `${impactPage.title}`,
         description: impactPage.seoDescription || impactPage.description,
         keywords: impactPage.seoKeywords,
         canonicalUrl: impactPage.seoCanonicalUrl,
@@ -203,11 +203,11 @@ export class AppController {
 
     // Pass the page data to the EJS template
     return {
-      title: termsPage.seoTitle || `${termsPage.title} - Roads of Adventure Safaris`,
+      title: termsPage.seoTitle || `${termsPage.title}`,
       termsPage, // Pass the entire page object
       layout: "layouts/public",
       seo: {
-        title: termsPage.seoTitle || `${termsPage.title} - Roads of Adventure Safaris`,
+        title: termsPage.seoTitle || `${termsPage.title}`,
         description: termsPage.seoDescription || termsPage.description,
         keywords: termsPage.seoKeywords,
         canonicalUrl: termsPage.seoCanonicalUrl,
@@ -229,11 +229,11 @@ export class AppController {
 
     // Pass the page data to the EJS template
     return {
-      title: privacyPage.seoTitle || `${privacyPage.title} - Roads of Adventure Safaris`,
+      title: privacyPage.seoTitle || `${privacyPage.title}`,
       privacyPage, // Pass the entire page object
       layout: "layouts/public",
       seo: {
-        title: privacyPage.seoTitle || `${privacyPage.title} - Roads of Adventure Safaris`,
+        title: privacyPage.seoTitle || `${privacyPage.title}`,
         description: privacyPage.seoDescription || privacyPage.description,
         keywords: privacyPage.seoKeywords,
         canonicalUrl: privacyPage.seoCanonicalUrl,
@@ -247,7 +247,7 @@ export class AppController {
   @Render('public/about') // Assuming your EJS file is public/about.ejs
   getaboutPage() {
     return {
-      title: "About Us - Roads of Adventure Safaris",
+      title: "About Us",
       layout: "layouts/public",
     };
   }
@@ -293,7 +293,7 @@ export class AppController {
 
 
       return {
-        title: "Search Results - Roads of Adventure Safaris",
+        title: "Search Results",
         tours,
         totalTours,
         currentPage,

@@ -94,7 +94,7 @@ export class BlogsController {
         const popularBlogs = await this.blogsService.findPopular(15);
 
         return {
-            title: "Safari Updates & Blog - Roads of Adventure Safaris",
+            title: "Safari Updates",
             blogs,
             query, // Still pass query for the search bar to keep sticky value
             currentPage,
@@ -169,7 +169,7 @@ export class BlogsController {
             const messages = req.flash();
 
             return {
-                title: "Blogs - Dashboard",
+                title: "Blogs",
                 blogs,
                 countries: countriesResult.data || [],
                 categories: categoriesResult.data || [],
