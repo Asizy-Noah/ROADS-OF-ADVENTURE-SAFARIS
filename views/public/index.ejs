@@ -4,7 +4,7 @@
             <div class="carousel-inner">
                 <div class="carousel-item active">
                     <div class="carousel-image">
-                        <img class="" src="img/Rwandahms.jpg" alt="Image">
+                        <img class="" src="img/Gorilla_trekking.jpg" alt="Image">
                     </div>
                     <div class="carousel-caption d-flex flex-column align-items-center justify-content-center">
                         <div class="p-3" style="max-width: 900px;">
@@ -16,7 +16,7 @@
                 </div>
                 <div class="carousel-item">
                     <div class="carousel-image">
-                        <img class="" src="img/Tanzaniaws.jpg" alt="Image">
+                        <img class="" src="img/Tanzania-Safari-Adventure.jpg" alt="Image">
                     </div>    
                     <div class="carousel-caption d-flex flex-column align-items-center justify-content-center">
                         <div class="p-3" style="max-width: 900px;">
@@ -90,14 +90,14 @@
                     <% if (aboutUsPage && aboutUsPage.coverImage) { %>
                         <img class="position-absolute w-100 h-100" src="<%= aboutUsPage.coverImage %>" style="object-fit: cover;" alt="<%= aboutUsPage.title %> Main Image">
                     <% } else { %>
-                        <img class="position-absolute w-100 h-100" src="/img/Madagascar.jpg" style="object-fit: cover;" alt="Default About Us Image">
+                        <img class="position-absolute w-100 h-100" src="/img/Gorilla_trekking.jpg" style="object-fit: cover;" alt="Default About Us Image">
                     <% } %>
                 </div>
             </div>
             <div class="col-lg-6 pt-5 pb-lg-5">
                 <div class="about-text bg-white p-4 p-lg-5 my-lg-5">
                     <h6 class="text-dark h2 font-weight-bold text-uppercase" style="letter-spacing: 4px;">
-                        <%= aboutUsPage ? aboutUsPage.title : "roa" %>
+                        <%= aboutUsPage ? aboutUsPage.title : "Roads of Adventure Safaris" %>
                     </h6>
                     <% if (aboutUsPage && aboutUsPage.contentBlocks && aboutUsPage.contentBlocks.length > 0) { %>
                         <% aboutUsPage.contentBlocks.forEach(function(block) { %>
@@ -109,9 +109,9 @@
                             <% } %>
                         <% }); %>
                     <% } else { %>
-                        <p>Roads of Adventure Safaris is one of the most trusted and leading Africa safari tour operators...</p>
-                        <p>We craft exceptional primate tour packages that include gorilla trekking...</p>
-                        <p>Join us for extraordinary adventures in iconic locations such as Bwindi Impenetrable National Park...</p>
+                        <p>Roads of Adventure Safaris is one of the most trusted and leading Africa safari tour operators, specializing in  gorilla trekking experiences in Uganda and Rwanda, as well as thrilling wildlife safaris across Kenya, Tanzania, Botswana, Zambia, South Africa, Namibia, Zimbabwe, and Madagascar.</p>
+                        <p>We craft exceptional primate tour packages that include gorilla trekking, chimpanzee tracking, and combined wildlife safaris. Our diverse offerings feature birding safaris, honeymoon safaris, family safaris, Budget safaris, Luxury safaris, group tours, game drive safaris, Big five safaris, Africa big cats safaris, Masai Mara safaris, Serengeti safaris, beach holidays, mountaineering, hot air balloon safaris, , photography safaris, filming safaris, walking safaris, camping safaris, canoeing safaris, wildebeest migration safaris, boat excursions, Mokoro tours, cultural tours, and unforgettable trips to Victoria Falls.</p>
+                        <p>Join us for extraordinary adventures in iconic locations such as Bwindi Impenetrable National Park, Kibale forest park, Murchison falls national park,  Masai Mara National Reserve, Serengeti National Park, Kilimanjaro National Park, Zanzibar Island, Diani Beach, Kruger National Park, Chobe National Park, Okavango Delta, Etosha National Park, Hwange National Park, and South Luangwa National Park.</p>
                     <% } %>
 
                     <div class="row-about mb-4">
@@ -146,7 +146,8 @@
                             <i class="fa fa-2x fa-handshake text-white"></i> </div>
                         <div class="d-flex flex-column">
                             <h5 class="font-weight-bold">Exceptional Services</h5>
-                            <p class="m-0">We guarantee a seamless and enjoyable journey with personalized itineraries and comfortable accommodations.</p>
+                            <p class="m-0">We guarantee a seamless and enjoyable journey with personalized itineraries and comfortable accommodations.
+                            </p>
                         </div>
                     </div>
                 </div>
