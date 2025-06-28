@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "roads-of-adventure-safaris",
+  "private_key_id": "ae15783af55e0aeb27baff96ca98fc003a7ec957",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCqaCCe2Bdq6qTT\nUFM1wpEOeS89AZ9o7uiYAYqeXnmvHFQ7z1p+x4VdnxN5Ziq7eEJApEqUTg4ozgjs\nuEBh/4ad1Z4kbPzNtBHIkThcwUEJ4uysSu7GipzTO699hzTXkCTKakYlf98xZJoT\nOUV07neAr2xUhDZOmgzgWk1na2qrvVi05ftuL8lyr0sGIlsr5sB+AooDxK0Y3P23\nLWFm80ZHwoPOc5CA2g9D8yySyZ2Uv+9sWpi0ZTR7dqpTdAqbk/cWuaRWJq4lIApy\nbBWICMsBy2tVTvSBOc/APPHwdtLxMQ3FBKgg0NbvVfnCm6qd878e1q9kY2Rxagyj\no5ns+LIFAgMBAAECggEACVLSrBY7K8akV4p+zwNy/9V6E+6ti+Z8c+qrrLATHNVi\nN3aIJ0Uf4ygzvtHr9x9kkpham0QtCqcBPoBzR1ldgm/AbBJJf7DBQ1XMvWh2eEXB\n+MhNya+mVnlex/G4nq28kZWgemdFbTSpqHEa/4OXpsMSXIpyVTkhCLpwHz81kile\nYMov6Yelk39ICc4rTQckiSu6V/nYRzZVr0brTVy2AMLoQRJBAcJF2XyFk7W1xRpF\nkP88w3Tx/Yv92GuDV6oM6XSKGXKAF3viOyJGQE5ZQ3ryN4Ggx/DPTzjjuVThP+eA\nPI4B57qmPRHAL/Oz2L1zkyNWhvIqD+V3yJzwVS9pCQKBgQDRsezTU2c8/q33DKIA\nbY1T9usy4afj9h4iNDMpv3JyJOD7CXhjn4p0Ny/ptcxk48C6ssjmLOkXbEUK8DBL\n5yEBXZolUzywo1wDU0pdBqbsBKnTz9GRO5EdyT0469ktBSOw05Mu5HgopGahf7Vh\nlyX2EpCy8MZjbKcY07SeFVp8iQKBgQDQCTvAqFE03FJSWB5ywONH2DqpT4qEfJGQ\nxbSMoOFqh3IItWGMXkiVX5awaw9bXc1qJNWXkHKapDYugLTwVCWHJtc95rlncD2G\nSlemJsbMhyNc1tYOXLsB9Y6MuGVG6ZbNwlLm7uFdzG0RkSw60sWyBF9tG8R777dR\n+YpJa6dCnQKBgQC9y+NlKxpIVOO0tlRzOrUuiFE9zo0dggioQMMGSGgX9FVGIr46\nvY6dvc26JXiI4LPyyBuaao/XSYH8coXkTaDMEaKRohNOda20vNCT/o9bFKV6N6Gh\naF7irOCjAqWhYAN76yROzzAK6TKTfnn3iM0tOoSJ0fBe0Vs013mllAJAsQKBgG8R\n3vMXanPchZ8tKOR/k1kSWw92RjBCCb3PsHu8kV08/2ci3/f/hqUpqdx67HINfNSE\n4fzPxEBIGB1v3irJ4ldsJ1MHUkmlpVODcZRl85HTPNAea56zZ6y+G+OJt5jKshcc\n/wII3A4mTL0qUwD880v+BazNPHQnIisEHg7hCSYJAoGBAIO9moDl2iUuir5820+o\nsDbenOYHHWDMAe/CccltPxRqrKPRBJaAbB7Y5SzohMQhc7jr1g1Gaa4Ui2X1pNGO\n1M9JoUxNXp6E23lHw5tAb45uKJzfmvxntesGB2XQLlj3UuOsPkzvOiprDvuoCl+Z\nyKqxLsVY8TOB2dqZ0tAEIhsL\n-----END PRIVATE KEY-----\n",
+  "client_email": "storage-uploader@roads-of-adventure-safaris.iam.gserviceaccount.com",
+  "client_id": "102700872641870807781",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/storage-uploader%40roads-of-adventure-safaris.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
