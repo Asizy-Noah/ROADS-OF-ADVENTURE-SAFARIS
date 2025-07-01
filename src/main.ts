@@ -32,7 +32,7 @@ async function bootstrap() {
   const mongoUri = configService.get<string>("MONGODB_URI");
 
   // --- Configure MongoDB Session Store ---
-  // Ensure mongoUri is available before creating the store
+  // Ensure mongoUri is available before creating the store 
   if (!mongoUri) {
     throw new Error("MONGODB_URI is not defined in the environment variables.");
   }

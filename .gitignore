@@ -1,12 +1,13 @@
 # Dependency directories
 node_modules/
-
+roads-of-adventure-safaris-ec5fcee3c35b.json
 # Lock files
 package-lock.json
 npm-debug.log
 
 # Build output
 dist/
+google-cloud-key.json
 
 # Environment variables
 .env
